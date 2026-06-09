@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import templates, components
+from .views import components, templates
 
 urlpatterns = [
     path("templates/", templates.index, name="templates_index"),

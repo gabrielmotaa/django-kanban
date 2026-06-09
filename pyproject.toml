@@ -12,3 +12,6 @@ dependencies = [
 dev = [
     "ruff>=0.15.16",
 ]
+
+[tool.ruff.lint]
+extend-select = ["I"]
