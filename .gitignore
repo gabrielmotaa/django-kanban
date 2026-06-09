@@ -8,3 +8,13 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Database
+*.sqlite3
+*.sqlite
+
+# Node
+node_modules/
+
+# Vite build output
+kanban/static/kanban/js/

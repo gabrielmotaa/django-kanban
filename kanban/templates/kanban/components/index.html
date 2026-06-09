@@ -1,8 +1,14 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Kanban Board - Web Components{% endblock %}
 
+{% block extra_head %}
+<script type="module" src="{% static 'kanban/js/kanban-elements.js' %}"></script>
+{% endblock %}
+
 {% block content %}
-    <h1>Kanban Board - Web Components</h1>
-    <p>This page demonstrates the use of Web Components in a Django application.</p>
+<h1>Kanban Board - Web Components</h1>
+<p>This page demonstrates the use of Web Components in a Django application.</p>
+<kanban-board title="Meu Board"></kanban-board>
 {% endblock %}
