@@ -2,9 +2,9 @@ import { defineConfig } from "vite";
 import { resolve } from "path";
 import { copyFileSync, mkdirSync } from "fs";
 
-function copyHtmx() {
+function copyExternalLibs() {
   return {
-    name: "copy-htmx",
+    name: "copy-external-libs",
     closeBundle() {
       const dest = "kanban/static/kanban/js";
       mkdirSync(dest, { recursive: true });
@@ -12,6 +12,11 @@ function copyHtmx() {
         "node_modules/htmx.org/dist/htmx.min.js",
         `${dest}/htmx.min.js`,
       );
+      copyFileSync(
+        "node_modules/alpinejs/dist/cdn.min.js",
+        `${dest}/alpine.min.js`,
+      );
+      console.log("external libraries copied to", dest);
     },
   };
 }
@@ -30,5 +35,5 @@ export default defineConfig({
       external: [],
     },
   },
-  plugins: [copyHtmx()],
+  plugins: [copyExternalLibs()],
 });

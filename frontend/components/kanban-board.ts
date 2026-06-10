@@ -1,30 +1,67 @@
 import { LitElement, html, css } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement } from "lit/decorators.js";
+import type { KanbanCard } from "./kanban-card";
+import type { KanbanColumn } from "./kanban-column";
+
+export interface CardMoveDetail {
+  cardId: string;
+  from: string | null;
+  to: string | null;
+  index: number;
+}
+
+export interface ColumnState {
+  columnId: string | null;
+  cards: { id: string | null; order: number; title: string }[];
+}
 
 @customElement("kanban-board")
 export class KanbanBoard extends LitElement {
-  static styles = css`
+  static override styles = css`
     :host {
-      display: block;
-      font-family: sans-serif;
-      padding: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
-
-    h2 {
-      margin: 0 0 0.5rem;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
     }
   `;
 
-  @property({ type: String })
-  title = "Kanban Board";
+  /** The card currently being dragged. Set by KanbanCard. */
+  draggingCard: KanbanCard | null = null;
 
-  render() {
-    return html`
-      <h2>${this.title}</h2>
-      <slot></slot>
-    `;
+  /** The column the drag originated from. Set by KanbanCard. */
+  sourceColumn: Element | null = null;
+
+  override connectedCallback() {
+    super.connectedCallback();
+
+    this.updateOrders();
+
+    this.addEventListener("cardmove", (e: Event) => {
+      const detail = (e as CustomEvent<CardMoveDetail>).detail;
+      this.dispatchEvent(
+        new CustomEvent<CardMoveDetail>("kanban-cardmove", {
+          bubbles: true,
+          composed: true,
+          detail,
+        })
+      );
+    });
+  }
+
+  /** Stamps order attributes onto every card in every column. */
+  updateOrders() {
+    this.querySelectorAll<KanbanColumn>("kanban-column").forEach((column) => {
+      [...column.querySelectorAll<KanbanCard>("kanban-card")].forEach(
+        (card, index) => {
+          card.setAttribute("order", String(index));
+          card.order = index;
+        }
+      );
+    });
+  }
+
+  override render() {
+    return html`<slot></slot>`;
   }
 }
 

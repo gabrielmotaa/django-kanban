@@ -6,12 +6,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Django Kanban{% endblock %}</title>
-    <script src="{% static 'kanban/js/htmx.min.js' %}" defer></script>
+    <link rel="stylesheet" href="{% static 'kanban/css/reset.css' %}">
     {% block extra_css %}{% endblock %}
+    <script src="{% static 'kanban/js/htmx.min.js' %}" defer></script>
     {% block extra_head %}{% endblock %}
 </head>
 
-<body>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
     {% block content %}{% endblock %}
     {% block extra_js %}{% endblock %}
 </body>

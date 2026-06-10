@@ -10,5 +10,23 @@
 {% block content %}
 <h1>Kanban Board - Web Components</h1>
 <p>This page demonstrates the use of Web Components in a Django application.</p>
-<kanban-board title="Meu Board"></kanban-board>
+
+<kanban-board id="board">
+
+    <kanban-column column-id="todo" title="Todo">
+        <kanban-card card-id="1">Implement login</kanban-card>
+        <kanban-card card-id="2">Create dashboard</kanban-card>
+        <kanban-card card-id="3">Write tests</kanban-card>
+    </kanban-column>
+
+    <kanban-column column-id="doing" title="Doing">
+        <kanban-card card-id="4">Refactor API</kanban-card>
+    </kanban-column>
+
+    <kanban-column column-id="done" title="Done">
+        <kanban-card card-id="5">Setup project</kanban-card>
+    </kanban-column>
+
+</kanban-board>
+
 {% endblock %}

@@ -1,0 +1,100 @@
+[
+  {
+    "model": "kanban.board",
+    "pk": 1,
+    "fields": {
+      "title": "My Kanban Board",
+      "created_at": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "kanban.column",
+    "pk": 1,
+    "fields": {
+      "board": 1,
+      "title": "Todo",
+      "order": 0,
+      "color": "#3b82f6"
+    }
+  },
+  {
+    "model": "kanban.column",
+    "pk": 2,
+    "fields": {
+      "board": 1,
+      "title": "Doing",
+      "order": 1,
+      "color": "#f59e0b"
+    }
+  },
+  {
+    "model": "kanban.column",
+    "pk": 3,
+    "fields": {
+      "board": 1,
+      "title": "Done",
+      "order": 2,
+      "color": "#10b981"
+    }
+  },
+  {
+    "model": "kanban.card",
+    "pk": 1,
+    "fields": {
+      "column": 1,
+      "title": "Implement login",
+      "description": "",
+      "order": 0,
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "kanban.card",
+    "pk": 2,
+    "fields": {
+      "column": 1,
+      "title": "Create dashboard",
+      "description": "",
+      "order": 1,
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "kanban.card",
+    "pk": 3,
+    "fields": {
+      "column": 1,
+      "title": "Write tests",
+      "description": "",
+      "order": 2,
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "kanban.card",
+    "pk": 4,
+    "fields": {
+      "column": 2,
+      "title": "Refactor API",
+      "description": "",
+      "order": 0,
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "kanban.card",
+    "pk": 5,
+    "fields": {
+      "column": 3,
+      "title": "Setup project",
+      "description": "",
+      "order": 0,
+      "created_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  }
+]
