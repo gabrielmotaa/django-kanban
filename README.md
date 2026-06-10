@@ -16,7 +16,7 @@ O objetivo central é comparar e integrar essas duas estratégias num mesmo proj
 | Backend | Python 3.14 · Django 6 |
 | Gerenciador de pacotes Python | [uv](https://github.com/astral-sh/uv) |
 | Frontend (Web Components) | [Lit](https://lit.dev/) · TypeScript |
-| Hipermídia | [HTMX](https://htmx.org/) |
+| Hipermídia / Interatividade | [HTMX](https://htmx.org/) · [Alpine.js](https://alpinejs.dev/) |
 | Bundler | Vite (library mode) |
 | Linter / Formatter | Ruff · pyupgrade |
 | Pre-commit hooks | uv-lock · ruff-check · ruff-format · pyupgrade |
@@ -54,7 +54,9 @@ django-kanban/
 ├── frontend/                    # Código-fonte dos Web Components
 │   ├── index.ts                 # Entry point — registra todos os custom elements
 │   └── components/
-│       └── kanban-board.ts      # Exemplo: <kanban-board> (Lit + TypeScript)
+│       ├── kanban-board.ts      # Componente <kanban-board> (Lit + TypeScript)
+│       ├── kanban-column.ts     # Componente <kanban-column> (Lit + TypeScript)
+│       └── kanban-card.ts       # Componente <kanban-card> (Lit + TypeScript)
 │
 ├── package.json                 # Dependências Node (Lit, Vite, TypeScript)
 ├── tsconfig.json                # Config TypeScript (ES2021, decorators)
@@ -97,6 +99,9 @@ npm install
 
 # 4. Aplicar migrações
 uv run manage.py migrate
+
+# 5. Carregar os dados iniciais (fixture)
+uv run manage.py loaddata initial_data
 ```
 
 ---
@@ -122,7 +127,13 @@ npm run build
 npm run typecheck
 ```
 
-O Vite compila `frontend/` e gera o bundle em `kanban/static/kanban/js/kanban-elements.js`.
+O Vite compila `frontend/` e gera o bundle em `kanban/static/kanban/js/kanban-elements.js`, além de copiar as bibliotecas externas (`htmx.min.js` e `alpine.min.js`) para a mesma pasta.
+### Testes
+
+Para executar os testes unitários do Django:
+```bash
+uv run manage.py test
+```
 
 ### Usando um Web Component nos templates Django
 
