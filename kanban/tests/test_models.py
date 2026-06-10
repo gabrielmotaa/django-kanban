@@ -27,7 +27,7 @@ class ColumnTestCase(TestCase):
         cls.col_b = Column.objects.create(board=cls.board, title="Col B", order=0)
 
     def test_str(self):
-        self.assertEqual(str(self.col_a), "Test Board / Col A")
+        self.assertEqual(str(self.col_a), "Col A")
 
     def test_board_fk(self):
         self.assertEqual(self.col_a.board, self.board)

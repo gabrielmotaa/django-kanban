@@ -43,7 +43,7 @@ class Column(models.Model):
         return map.get(self.color, "#ffffff")
 
     def __str__(self):
-        return f"{self.board.title} / {self.title}"
+        return self.title
 
 
 class Card(models.Model):
