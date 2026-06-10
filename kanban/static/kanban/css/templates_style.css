@@ -686,7 +686,8 @@ body {
 }
 
 .column-create__color-dot--active {
-    border-color: var(--color-text-secondary);
+    outline: 3px solid #000;
+    outline-offset: -3px;
 }
 
 .column-create__actions {

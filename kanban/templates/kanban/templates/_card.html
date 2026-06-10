@@ -35,6 +35,7 @@
             value="{{ card.title }}"
             class="card__edit-input"
             maxlength="200"
+            @keydown.escape="editing = false"
         >
         <div class="card__edit-actions">
             <button 
