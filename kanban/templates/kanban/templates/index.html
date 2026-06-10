@@ -1,8 +1,310 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Kanban Board - Django Templates{% endblock %}
 
+{% block extra_head %}
+<script src="{% static 'kanban/js/alpine.min.js' %}" defer></script>
+{% endblock extra_head %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'kanban/css/templates_style.css' %}">
+{% endblock extra_css %}
+
 {% block content %}
-    <h1>Kanban Board - Django Templates</h1>
-    <p>This page demonstrates the use of Django templates in a Kanban board application.</p>
-{% endblock %}
+{% include "kanban/templates/_board_title.html" %}
+
+<div class="board-wrapper">
+    <div id="card-move-trigger" hx-post="{% url 'templates_card_move' %}" hx-trigger="cardmove" hx-swap="none"
+        style="display: none;"></div>
+    <div id="column-move-trigger" hx-post="{% url 'templates_column_move' %}" hx-trigger="columnmove" hx-swap="none"
+        style="display: none;"></div>
+
+    <div class="board" id="board">
+        {% for column in board.columns.all %}
+        {% include "kanban/templates/_column.html" %}
+        {% endfor %}
+    </div>
+
+    {# Add Column Section #}
+    <div class="column-create" x-data="{ adding: false, selectedColor: '#64748b' }">
+        <button x-show="!adding" 
+                @click="adding = true; $nextTick(() => $refs.columnInput.focus())"
+                class="column-create__trigger"
+        >
+            + Adicionar coluna
+        </button>
+        <form x-show="adding" 
+              x-cloak 
+              hx-post="{% url 'templates_column_create' board.pk %}" 
+              hx-target="#board"
+              hx-swap="beforeend" 
+              @htmx:after-request="adding = false; selectedColor = '#64748b'; $el.reset()"
+              class="column-create__form"
+        >
+            {% csrf_token %}
+            <input x-ref="columnInput" 
+                   type="text" 
+                   name="title" 
+                   placeholder="Nome da coluna..." 
+                   required
+                   class="column-create__input"
+                   maxlength="100"
+            >
+            
+            <!-- Color Selector -->
+            <div>
+                <label class="column-create__color-label">Cor da Coluna</label>
+                <div class="column-create__color-grid">
+                    <input type="hidden" name="color" :value="selectedColor">
+                    <template x-for="color in ['#64748b', '#ef4444', '#f97316', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899']" :key="color">
+                        <button type="button" 
+                                @click="selectedColor = color"
+                                class="column-create__color-dot"
+                                :class="selectedColor === color ? 'column-create__color-dot--active' : ''"
+                                :style="'--dot-color: ' + color"
+                        ></button>
+                    </template>
+                </div>
+            </div>
+            
+            <div class="column-create__actions">
+                <button type="button" @click="adding = false" class="column-create__btn-cancel">Cancelar</button>
+                <button type="submit" class="column-create__btn-submit">Adicionar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+    (function () {
+        const board = document.getElementById("board");
+        let draggingCard = null;
+        let sourceColumn = null;
+        let sourceIndex = -1;
+        let dragging = false;
+        window.dragging = false;
+        let draggingColumn = null;
+        let sourceColumnIndex = -1;
+
+        // Cards
+        function initCard(card) {
+            if (card.dataset.initialized) return;
+            card.dataset.initialized = "true";
+
+            card.addEventListener("dragstart", (e) => {
+                e.stopPropagation();
+                dragging = true;
+                window.dragging = true;
+                draggingCard = card;
+                sourceColumn = card.closest(".column");
+                sourceIndex = [...sourceColumn.querySelectorAll(".card")].indexOf(card);
+                requestAnimationFrame(() => card.classList.add("dragging"));
+            });
+
+            card.addEventListener("dragend", () => {
+                card.classList.remove("dragging");
+
+                const destColumn = card.closest(".column");
+                const cards = [...destColumn.querySelectorAll(".card")];
+                const index = cards.indexOf(card);
+
+                updateOrders();
+
+                if (sourceColumn === destColumn && sourceIndex === index) {
+                    draggingCard = null;
+                    sourceColumn = null;
+                    sourceIndex = -1;
+                    setTimeout(() => { dragging = false; window.dragging = false; }, 0);
+                    return;
+                }
+
+                const trigger = document.getElementById("card-move-trigger");
+                trigger.setAttribute("hx-vals", JSON.stringify({
+                    card_id: card.dataset.cardId,
+                    column_id: destColumn.dataset.columnId,
+                    order: index,
+                }));
+
+                trigger.dispatchEvent(new CustomEvent("cardmove"));
+
+                draggingCard = null;
+                sourceColumn = null;
+                sourceIndex = -1;
+
+                // Reset dragging flag after the click event that follows dragend fires.
+                setTimeout(() => { dragging = false; window.dragging = false; }, 0);
+            });
+        }
+
+        // Columns
+        function initColumn(column) {
+            if (column.dataset.initialized) return;
+            column.dataset.initialized = "true";
+
+            const cardsContainer = column.querySelector(".column__cards");
+            const titleText = column.querySelector(".column__title-text");
+
+            if (titleText) {
+                titleText.addEventListener("mousedown", () => {
+                    column.setAttribute("draggable", "true");
+                });
+
+                titleText.addEventListener("mouseup", () => {
+                    column.removeAttribute("draggable");
+                });
+            }
+
+            column.addEventListener("dragstart", (e) => {
+                if (e.target !== column) {
+                    return;
+                }
+                draggingColumn = column;
+                sourceColumnIndex = [...board.querySelectorAll(".column")].indexOf(column);
+                requestAnimationFrame(() => column.classList.add("dragging-col"));
+            });
+
+            column.addEventListener("dragend", () => {
+                column.classList.remove("dragging-col");
+                column.removeAttribute("draggable");
+
+                if (draggingColumn) {
+                    const columns = [...board.querySelectorAll(".column")];
+                    const index = columns.indexOf(column);
+
+                    updateColumnOrders();
+
+                    if (sourceColumnIndex === index) {
+                        draggingColumn = null;
+                        sourceColumnIndex = -1;
+                        return;
+                    }
+
+                    const trigger = document.getElementById("column-move-trigger");
+                    trigger.setAttribute("hx-vals", JSON.stringify({
+                        column_id: column.dataset.columnId,
+                        order: index
+                    }));
+                    trigger.dispatchEvent(new CustomEvent("columnmove"));
+
+                    draggingColumn = null;
+                    sourceColumnIndex = -1;
+                }
+            });
+
+            column.addEventListener("dragenter", () => {
+                if (!draggingCard) return;
+                column.classList.add("drag-over");
+            });
+
+            column.addEventListener("dragleave", (e) => {
+                if (!draggingCard) return;
+                if (!column.contains(e.relatedTarget)) {
+                    column.classList.remove("drag-over");
+                }
+            });
+
+            column.addEventListener("dragover", (e) => {
+                e.preventDefault();
+                if (!draggingCard) return;
+
+                const after = getCardAfterPosition(column, e.clientY);
+                if (!after) {
+                    cardsContainer.appendChild(draggingCard);
+                } else {
+                    cardsContainer.insertBefore(draggingCard, after);
+                }
+            });
+
+            column.addEventListener("drop", () => {
+                column.classList.remove("drag-over");
+            });
+        }
+
+        function getCardAfterPosition(column, mouseY) {
+            const cards = [...column.querySelectorAll(".card:not(.dragging)")];
+            let closestOffset = Number.NEGATIVE_INFINITY;
+            let closestEl = null;
+
+            for (const card of cards) {
+                const box = card.getBoundingClientRect();
+                const offset = mouseY - box.top - box.height / 2;
+                if (offset < 0 && offset > closestOffset) {
+                    closestOffset = offset;
+                    closestEl = card;
+                }
+            }
+            return closestEl;
+        }
+
+        function getColumnAfterPosition(boardEl, mouseX) {
+            const columns = [...boardEl.querySelectorAll(".column:not(.dragging-col)")];
+            let closestOffset = Number.NEGATIVE_INFINITY;
+            let closestEl = null;
+
+            for (const col of columns) {
+                const box = col.getBoundingClientRect();
+                const offset = mouseX - box.left - box.width / 2;
+                if (offset < 0 && offset > closestOffset) {
+                    closestOffset = offset;
+                    closestEl = col;
+                }
+            }
+            return closestEl;
+        }
+
+        // Orders
+        function updateOrders() {
+            board.querySelectorAll(".column").forEach((col) => {
+                [...col.querySelectorAll(".card")].forEach((card, i) => {
+                    card.dataset.order = i;
+                });
+            });
+        }
+
+        function updateColumnOrders() {
+            board.querySelectorAll(".column").forEach((col, i) => {
+                col.dataset.order = i;
+            });
+        }
+
+        // Dragover for board (when dragging columns)
+        board.addEventListener("dragover", (e) => {
+            if (!draggingColumn) return;
+            e.preventDefault();
+
+            const after = getColumnAfterPosition(board, e.clientX);
+            if (!after) {
+                board.appendChild(draggingColumn);
+            } else {
+                board.insertBefore(draggingColumn, after);
+            }
+        });
+
+        // Init
+        board.querySelectorAll(".column").forEach(initColumn);
+        board.querySelectorAll(".card").forEach(initCard);
+        updateOrders();
+        updateColumnOrders();
+
+        // Re-init drag events on elements inserted/swapped by HTMX.
+        document.body.addEventListener("htmx:load", (e) => {
+            const target = e.detail.elt;
+            if (!target) return;
+
+            if (target.classList && target.classList.contains("card")) {
+                initCard(target);
+            } else if (target.classList && target.classList.contains("column")) {
+                initColumn(target);
+                target.querySelectorAll(".card").forEach(initCard);
+            } else {
+                target.querySelectorAll(".card").forEach(initCard);
+                target.querySelectorAll(".column").forEach(initColumn);
+            }
+        });
+    })();
+</script>
+{% endblock extra_js %}

@@ -42,6 +42,26 @@ class ColumnTestCase(TestCase):
         board.delete()
         self.assertFalse(Column.objects.filter(title="Orphan").exists())
 
+    def test_default_color(self):
+        self.assertEqual(self.col_a.color, "#64748b")
+
+    def test_color_choices(self):
+        choices = self.col_a.color_choices
+        self.assertIsInstance(choices, list)
+        self.assertEqual(len(choices), 8)
+        self.assertIn(("#64748b", "Cinza"), choices)
+        self.assertIn(("#f59e0b", "Âmbar"), choices)
+
+    def test_fg_color(self):
+        # Default or other colors should fall back to #ffffff
+        self.assertEqual(self.col_a.fg_color, "#ffffff")
+
+        # Specific color #f59e0b (Âmbar) should map to #1e293b
+        col_amber = Column.objects.create(
+            board=self.board, title="Amber Col", order=2, color="#f59e0b"
+        )
+        self.assertEqual(col_amber.fg_color, "#1e293b")
+
 
 class CardTestCase(TestCase):
     @classmethod

@@ -1,0 +1,54 @@
+<div 
+    x-data="{ editing: false }"
+    class="card"
+    draggable="true"
+    id="card-{{ card.pk }}"
+    data-card-id="{{ card.pk }}"
+    data-order="{{ card.order }}"
+    @click="if (!window.dragging) { editing = true; $nextTick(() => $refs.input.focus()) }"
+>
+
+    {# View mode #}
+    <div 
+        x-show="!editing"
+        class="card__title-view"
+    >
+        {{ card.title }}
+    </div>
+
+    {# Edit mode #}
+    <form 
+        @click.stop
+        x-show="editing"
+        x-cloak
+        hx-post="{% url 'templates_card_edit' card.pk %}"
+        hx-target="#card-{{ card.pk }}"
+        hx-swap="outerHTML"
+        @htmx:after-swap.window="editing = false"
+        class="card__edit-form"
+    >
+        {% csrf_token %}
+        <input
+            x-ref="input"
+            type="text"
+            name="title"
+            value="{{ card.title }}"
+            class="card__edit-input"
+            maxlength="200"
+        >
+        <div class="card__edit-actions">
+            <button 
+                type="button"
+                hx-delete="{% url 'templates_card_delete' card.pk %}"
+                hx-target="#card-{{ card.pk }}"
+                hx-swap="outerHTML"
+                hx-confirm="Deletar este card?"
+                class="card__btn-delete"
+            >
+                Deletar
+            </button>
+            <button type="button" @click="editing = false" class="card__btn-cancel">Cancelar</button>
+            <button type="submit" class="card__btn-save">Salvar</button>
+        </div>
+    </form>
+</div>

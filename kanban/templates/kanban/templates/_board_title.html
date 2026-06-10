@@ -1,0 +1,38 @@
+<div id="board-title-container" class="board-header" x-data="{ editingTitle: false }">
+    {# View mode #}
+    <div x-show="!editingTitle" class="board-header__view">
+        <h1 class="board-header__title">{{ board.title }}</h1>
+        <button 
+            type="button"
+            @click="editingTitle = true; $nextTick(() => $refs.boardTitleInput.focus())"
+            class="board-header__edit-btn"
+            title="Editar título do quadro"
+        >
+            ✏️
+        </button>
+    </div>
+    
+    {# Edit mode #}
+    <form 
+        x-show="editingTitle"
+        x-cloak
+        hx-post="{% url 'templates_board_edit' board.pk %}"
+        hx-target="#board-title-container"
+        hx-swap="outerHTML"
+        @htmx:after-request="editingTitle = false"
+        class="board-header__form"
+    >
+        {% csrf_token %}
+        <input
+            x-ref="boardTitleInput"
+            type="text"
+            name="title"
+            value="{{ board.title }}"
+            required
+            class="board-header__input"
+            maxlength="100"
+        />
+        <button type="submit" class="board-header__btn-save">Salvar</button>
+        <button type="button" @click="editingTitle = false" class="board-header__btn-cancel">Cancelar</button>
+    </form>
+</div>
