@@ -5,15 +5,14 @@ import type { KanbanCard } from "./kanban-card";
 
 @customElement("kanban-column")
 export class KanbanColumn extends LitElement {
-  static override styles = css`
+  static styles = css`
     :host {
       display: block;
       width: 280px;
       background: white;
       border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
       padding: 12px;
-      box-sizing: border-box;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
     }
 
     .title {
@@ -31,81 +30,115 @@ export class KanbanColumn extends LitElement {
 
     ::slotted(kanban-card) {
       display: block;
-      background: white;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 12px;
-      margin-bottom: 8px;
-      cursor: grab;
-      user-select: none;
-    }
-
-    ::slotted(kanban-card.dragging) {
-      opacity: 0.4;
     }
   `;
 
-  @property({ attribute: "column-id", type: String })
-  columnId = "";
+  @property({ attribute: "column-id", type: Number })
+  columnId = 0;
 
-  @property({ type: String })
-  override title = "";
+  @property()
+  title = "";
 
   override connectedCallback() {
     super.connectedCallback();
 
-    this.addEventListener("dragenter", this._onDragEnter);
-    this.addEventListener("dragleave", this._onDragLeave);
-    this.addEventListener("dragover", this._onDragOver);
-    this.addEventListener("drop", this._onDrop);
+    this.addEventListener("dragenter", this.onDragEnter);
+    this.addEventListener("dragleave", this.onDragLeave);
+    this.addEventListener("dragover", this.onDragOver);
+    this.addEventListener("drop", this.onDrop);
   }
 
   override disconnectedCallback() {
     super.disconnectedCallback();
 
-    this.removeEventListener("dragenter", this._onDragEnter);
-    this.removeEventListener("dragleave", this._onDragLeave);
-    this.removeEventListener("dragover", this._onDragOver);
-    this.removeEventListener("drop", this._onDrop);
+    this.removeEventListener("dragenter", this.onDragEnter);
+    this.removeEventListener("dragleave", this.onDragLeave);
+    this.removeEventListener("dragover", this.onDragOver);
+    this.removeEventListener("drop", this.onDrop);
   }
 
-  private _onDragEnter = () => {
+  private get board(): KanbanBoard {
+    return this.closest("kanban-board") as KanbanBoard;
+  }
+
+  private get dragState() {
+    return this.board.dragState;
+  }
+
+  updateOrders() {
+    const cards = [...this.querySelectorAll("kanban-card")];
+    cards.forEach((card, index) => {
+      card.order = index;
+    });
+  }
+
+  private onDragEnter = () => {
     this.classList.add("drag-over");
   };
 
-  private _onDragLeave = (e: DragEvent) => {
+  private onDragLeave = (e: DragEvent) => {
     if (!this.contains(e.relatedTarget as Node)) {
       this.classList.remove("drag-over");
     }
   };
 
-  private _onDragOver = (e: DragEvent) => {
+  private onDragOver = (e: DragEvent) => {
     e.preventDefault();
 
-    const board = this.closest("kanban-board") as KanbanBoard | null;
-    const dragging = board?.draggingCard as KanbanCard | null;
-    if (!dragging) return;
+    const state = this.dragState;
+    if (!state || state.type !== "card") return;
 
-    const after = this._getCardAfterPosition(e.clientY);
+    const after = this.getCardAfterPosition(e.clientY);
 
     if (!after) {
-      this.appendChild(dragging);
+      this.appendChild(state.card);
     } else {
-      this.insertBefore(dragging, after);
+      this.insertBefore(state.card, after);
     }
   };
 
-  private _onDrop = () => {
+  private onDrop = () => {
     this.classList.remove("drag-over");
+
+    const state = this.board.dragState;
+    if (!state || state.type !== "card") return;
+
+    const cards = [...this.querySelectorAll("kanban-card")];
+    const toIndex = cards.indexOf(state.card);
+
+    // Early return if the card was dropped in the same position
+    if (state.fromColumn === this && state.fromIndex === toIndex) {
+      return;
+    }
+
+    // Update kanban-cards order in columns
+    if (state.fromColumn !== this) {
+      state.fromColumn.updateOrders();
+      this.updateOrders();
+    } else {
+      this.updateOrders();
+    }
+
+    this.dispatchEvent(
+      new CustomEvent("cardmove", {
+        bubbles: true,
+        composed: true,
+        detail: {
+          card_id: state.card.cardId,
+          column_id: this.columnId,
+          order: toIndex,
+        },
+      })
+    );
   };
 
-  private _getCardAfterPosition(mouseY: number): Element | null {
+  private getCardAfterPosition(mouseY: number): Element | null {
     const cards = [
       ...this.querySelectorAll<KanbanCard>("kanban-card:not(.dragging)"),
     ];
 
+    let closest: Element | null = null;
     let closestOffset = Number.NEGATIVE_INFINITY;
-    let closestElement: Element | null = null;
 
     for (const card of cards) {
       const box = card.getBoundingClientRect();
@@ -113,11 +146,11 @@ export class KanbanColumn extends LitElement {
 
       if (offset < 0 && offset > closestOffset) {
         closestOffset = offset;
-        closestElement = card;
+        closest = card;
       }
     }
 
-    return closestElement;
+    return closest;
   }
 
   override render() {

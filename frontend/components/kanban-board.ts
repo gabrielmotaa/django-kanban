@@ -1,23 +1,40 @@
 import { LitElement, html, css } from "lit";
-import { customElement } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import type { KanbanCard } from "./kanban-card";
 import type { KanbanColumn } from "./kanban-column";
 
-export interface CardMoveDetail {
-  cardId: string;
-  from: string | null;
-  to: string | null;
-  index: number;
-}
+export type DragState =
+  | {
+    type: "card";
+    card: KanbanCard;
+    fromColumn: KanbanColumn;
+    fromIndex: number;
+  }
+  | {
+    type: "column";
+    column: KanbanColumn;
+    fromIndex: number;
+  }
+  | null;
 
-export interface ColumnState {
-  columnId: string | null;
-  cards: { id: string | null; order: number; title: string }[];
+export type CardMoveDetail = {
+  card_id: number;
+  column_id: number;
+  order: number;
 }
 
 @customElement("kanban-board")
 export class KanbanBoard extends LitElement {
-  static override styles = css`
+
+  @property({ attribute: "move-card-url" })
+  moveCardUrl = "";
+
+  @property({ attribute: "move-column-url" })
+  moveColumnUrl = "";
+
+  dragState: DragState = null;
+
+  static styles = css`
     :host {
       display: flex;
       gap: 16px;
@@ -25,42 +42,32 @@ export class KanbanBoard extends LitElement {
     }
   `;
 
-  /** The card currently being dragged. Set by KanbanCard. */
-  draggingCard: KanbanCard | null = null;
-
-  /** The column the drag originated from. Set by KanbanCard. */
-  sourceColumn: Element | null = null;
-
   override connectedCallback() {
     super.connectedCallback();
 
-    this.updateOrders();
-
-    this.addEventListener("cardmove", (e: Event) => {
-      const detail = (e as CustomEvent<CardMoveDetail>).detail;
-      this.dispatchEvent(
-        new CustomEvent<CardMoveDetail>("kanban-cardmove", {
-          bubbles: true,
-          composed: true,
-          detail,
-        })
-      );
-    });
+    this.addEventListener("kanban-dragstart", this.onDragStart as EventListener);
+    this.addEventListener("kanban-dragend", this.onDragEnd as EventListener);
+    this.addEventListener("cardmove", this.onCardMove as EventListener);
   }
 
-  /** Stamps order attributes onto every card in every column. */
-  updateOrders() {
-    this.querySelectorAll<KanbanColumn>("kanban-column").forEach((column) => {
-      [...column.querySelectorAll<KanbanCard>("kanban-card")].forEach(
-        (card, index) => {
-          card.setAttribute("order", String(index));
-          card.order = index;
-        }
-      );
-    });
-  }
+  private onDragStart = (e: CustomEvent) => {
+    this.dragState = e.detail;
+  };
 
-  override render() {
+  private onDragEnd = () => {
+    this.dragState = null;
+  };
+
+  private onCardMove = (e: CustomEvent<CardMoveDetail>) => {
+    window.htmx.ajax("post", this.moveCardUrl, {
+      values: e.detail,
+      swap: "none",
+    });
+
+    this.dragState = null;
+  };
+
+  render() {
     return html`<slot></slot>`;
   }
 }
