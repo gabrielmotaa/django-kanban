@@ -51,7 +51,7 @@ uv run manage.py loaddata initial_data
 uv run manage.py runserver
 
 # Run all unit tests
-uv run manage.py test
+uv run pytest
 ```
 
 ### Frontend (Lit / Vite)
