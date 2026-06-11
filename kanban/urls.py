@@ -1,43 +1,41 @@
 from django.urls import path
 
-from .views import components, templates
+from . import views
 
 urlpatterns = [
-    path("templates/", templates.index, name="templates_index"),
-    path("templates/card-move/", templates.card_move, name="templates_card_move"),
+    path("templates/", views.templates_index, name="templates_index"),
+    path("components/", views.components_index, name="components_index"),
+    path("card-move/", views.card_move, name="card_move"),
+    path("card/<int:pk>/edit/", views.card_edit, name="card_edit"),
     path(
-        "templates/card/<int:pk>/edit/", templates.card_edit, name="templates_card_edit"
+        "card/<int:pk>/delete/",
+        views.card_delete,
+        name="card_delete",
+    ),
+    path("column-move/", views.column_move, name="column_move"),
+    path(
+        "column/<int:pk>/delete/",
+        views.column_delete,
+        name="column_delete",
     ),
     path(
-        "templates/card/<int:pk>/delete/",
-        templates.card_delete,
-        name="templates_card_delete",
-    ),
-    path("templates/column-move/", templates.column_move, name="templates_column_move"),
-    path(
-        "templates/column/<int:pk>/delete/",
-        templates.column_delete,
-        name="templates_column_delete",
+        "column/<int:pk>/edit/",
+        views.column_edit,
+        name="column_edit",
     ),
     path(
-        "templates/column/<int:pk>/edit/",
-        templates.column_edit,
-        name="templates_column_edit",
+        "column/<int:column_id>/card-create/",
+        views.card_create,
+        name="card_create",
     ),
     path(
-        "templates/column/<int:column_id>/card-create/",
-        templates.card_create,
-        name="templates_card_create",
+        "board/<int:board_id>/column-create/",
+        views.column_create,
+        name="column_create",
     ),
     path(
-        "templates/board/<int:board_id>/column-create/",
-        templates.column_create,
-        name="templates_column_create",
+        "board/<int:pk>/edit/",
+        views.board_edit,
+        name="board_edit",
     ),
-    path(
-        "templates/board/<int:pk>/edit/",
-        templates.board_edit,
-        name="templates_board_edit",
-    ),
-    path("components/", components.index, name="components_index"),
 ]

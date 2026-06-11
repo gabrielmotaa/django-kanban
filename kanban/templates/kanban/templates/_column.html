@@ -35,7 +35,7 @@
                             <div class="column__color-grid">
                                 {% for hex, name in column.color_choices %}
                                 <button type="button" 
-                                        hx-post="{% url 'templates_column_edit' column.pk %}"
+                                        hx-post="{% url 'column_edit' column.pk %}"
                                         hx-vals='{"color": "{{ hex }}"}'
                                         hx-target="closest .column"
                                         hx-swap="outerHTML"
@@ -50,7 +50,7 @@
                         <div class="column__menu-divider"></div>
                         
                         <button type="button" 
-                                hx-delete="{% url 'templates_column_delete' column.pk %}"
+                                hx-delete="{% url 'column_delete' column.pk %}"
                                 hx-target="closest .column"
                                 hx-swap="outerHTML"
                                 hx-confirm="Deseja realmente apagar a coluna '{{ column.title }}' e todos os seus cards?"
@@ -65,7 +65,7 @@
             {# Edit mode #}
             <form x-show="editingTitle"
                   x-cloak
-                  hx-post="{% url 'templates_column_edit' column.pk %}"
+                  hx-post="{% url 'column_edit' column.pk %}"
                   hx-target="closest .column"
                   hx-swap="outerHTML"
                   @htmx:after-request="editingTitle = false"
@@ -104,7 +104,7 @@
             <form 
                 x-show="adding" 
                 x-cloak 
-                hx-post="{% url 'templates_card_create' column.pk %}" 
+                hx-post="{% url 'card_create' column.pk %}" 
                 hx-target="#column-{{ column.pk }}-cards" 
                 hx-swap="beforeend" 
                 @htmx:after-request="adding = false; $el.reset()"

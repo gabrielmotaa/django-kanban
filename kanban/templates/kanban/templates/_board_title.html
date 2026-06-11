@@ -17,7 +17,7 @@
     <form 
         x-show="editing"
         x-cloak
-        hx-post="{% url 'templates_board_edit' board.pk %}"
+        hx-post="{% url 'board_edit' board.pk %}"
         hx-target="#board-title-container"
         hx-swap="outerHTML"
         @htmx:after-request="editing = false"

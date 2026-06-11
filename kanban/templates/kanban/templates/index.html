@@ -15,11 +15,6 @@
 {% include "kanban/templates/_board_title.html" %}
 
 <div class="board-wrapper">
-    <div id="card-move-trigger" hx-post="{% url 'templates_card_move' %}" hx-trigger="cardmove" hx-swap="none"
-        style="display: none;"></div>
-    <div id="column-move-trigger" hx-post="{% url 'templates_column_move' %}" hx-trigger="columnmove" hx-swap="none"
-        style="display: none;"></div>
-
     <div class="board" id="board">
         {% for column in board.columns.all %}
         {% include "kanban/templates/_column.html" %}
@@ -36,7 +31,7 @@
         </button>
         <form x-show="adding" 
               x-cloak 
-              hx-post="{% url 'templates_column_create' board.pk %}" 
+              hx-post="{% url 'column_create' board.pk %}" 
               hx-target="#board"
               hx-swap="beforeend" 
               @htmx:after-request="adding = false; selectedColor = '#64748b'; $el.reset()"
@@ -123,14 +118,15 @@
                     return;
                 }
 
-                const trigger = document.getElementById("card-move-trigger");
-                trigger.setAttribute("hx-vals", JSON.stringify({
-                    card_id: card.dataset.cardId,
-                    column_id: destColumn.dataset.columnId,
-                    order: index,
-                }));
-
-                trigger.dispatchEvent(new CustomEvent("cardmove"));
+                htmx.ajax("post", "{% url 'card_move' %}", {
+                    values: {
+                        card_id: card.dataset.cardId,
+                        column_id: destColumn.dataset.columnId,
+                        order: index,
+                    },
+                    swap: "none",
+                    event: "cardmove",
+                });
 
                 draggingCard = null;
                 sourceColumn = null;
@@ -184,12 +180,14 @@
                         return;
                     }
 
-                    const trigger = document.getElementById("column-move-trigger");
-                    trigger.setAttribute("hx-vals", JSON.stringify({
-                        column_id: column.dataset.columnId,
-                        order: index
-                    }));
-                    trigger.dispatchEvent(new CustomEvent("columnmove"));
+                    htmx.ajax("post", "{% url 'column_move' %}", {
+                        values: {
+                            column_id: column.dataset.columnId,
+                            order: index,
+                        },
+                        swap: "none",
+                        event: "columnmove",
+                    });
 
                     draggingColumn = null;
                     sourceColumnIndex = -1;

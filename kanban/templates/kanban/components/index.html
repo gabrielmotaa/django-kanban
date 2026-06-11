@@ -8,25 +8,20 @@
 {% endblock %}
 
 {% block content %}
-<h1>Kanban Board - Web Components</h1>
-<p>This page demonstrates the use of Web Components in a Django application.</p>
+<div hx-headers='{"X-Web-Components": "true"}'>
+    <h1>Kanban Board - Web Components</h1>
 
-<kanban-board id="board">
-
-    <kanban-column column-id="todo" title="Todo">
-        <kanban-card card-id="1">Implement login</kanban-card>
-        <kanban-card card-id="2">Create dashboard</kanban-card>
-        <kanban-card card-id="3">Write tests</kanban-card>
-    </kanban-column>
-
-    <kanban-column column-id="doing" title="Doing">
-        <kanban-card card-id="4">Refactor API</kanban-card>
-    </kanban-column>
-
-    <kanban-column column-id="done" title="Done">
-        <kanban-card card-id="5">Setup project</kanban-card>
-    </kanban-column>
-
-</kanban-board>
+    <p>This page demonstrates the use of Web Components in a Django application.</p>
+    
+    <kanban-board id="board" move-card-url="{% url 'card_move' %}" move-column-url="{% url 'column_move' %}">
+        {% for column in board.columns.all %}
+        <kanban-column column-id="{{ column.id }}" title="{{ card.title }}">
+            {% for card in column.cards.all %}
+                <kanban-card card-id="{{ card.id }}" order="{{ card.order }}">{{ card.title }}</kanban-card>
+            {% endfor %}
+        </kanban-column>
+        {% endfor %}
+    </kanban-board>
+</div>
 
 {% endblock %}

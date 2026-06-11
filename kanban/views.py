@@ -15,11 +15,17 @@ from kanban.forms import (
     ColumnMoveForm,
 )
 from kanban.models import Board, Card, Column
+from kanban.utils import template_for_request
 
 
-def index(request: HttpRequest) -> HttpResponse:
+def templates_index(request: HttpRequest) -> HttpResponse:
     board = get_object_or_404(Board.objects.prefetch_related("columns__cards"), pk=1)
     return render(request, "kanban/templates/index.html", {"board": board})
+
+
+def components_index(request: HttpRequest) -> HttpResponse:
+    board = get_object_or_404(Board.objects.prefetch_related("columns__cards"), pk=1)
+    return render(request, "kanban/components/index.html", {"board": board})
 
 
 @require_http_methods(["POST"])
@@ -76,7 +82,8 @@ def card_edit(request: HttpRequest, pk: int) -> HttpResponse:
         card.title = form.cleaned_data["title"]
         card.save(update_fields=["title"])
 
-    return render(request, "kanban/templates/_card.html", {"card": card})
+    template_path = template_for_request(request, "_card.html")
+    return render(request, template_path, {"card": card})
 
 
 @require_http_methods(["DELETE"])
@@ -126,7 +133,8 @@ def card_create(request: HttpRequest, column_id: int) -> HttpResponse:
     card = Card.objects.create(
         column=column, title=form.cleaned_data["title"], order=order
     )
-    return render(request, "kanban/templates/_card.html", {"card": card})
+    template_path = template_for_request(request, "_card.html")
+    return render(request, template_path, {"card": card})
 
 
 @require_http_methods(["POST"])
@@ -146,7 +154,8 @@ def column_create(request: HttpRequest, board_id: int) -> HttpResponse:
     if color:
         create_kwargs["color"] = color
     column = Column.objects.create(**create_kwargs)
-    return render(request, "kanban/templates/_column.html", {"column": column})
+    template_path = template_for_request(request, "_column.html")
+    return render(request, template_path, {"column": column})
 
 
 @require_http_methods(["POST"])
@@ -172,7 +181,8 @@ def column_edit(request: HttpRequest, pk: int) -> HttpResponse:
 
     if update_fields:
         column.save(update_fields=update_fields)
-    return render(request, "kanban/templates/_column.html", {"column": column})
+    template_path = template_for_request(request, "_column.html")
+    return render(request, template_path, {"column": column})
 
 
 @require_http_methods(["POST"])
@@ -184,4 +194,5 @@ def board_edit(request: HttpRequest, pk: int) -> HttpResponse:
 
     board.title = form.cleaned_data["title"]
     board.save(update_fields=["title"])
-    return render(request, "kanban/templates/_board_title.html", {"board": board})
+    template_path = template_for_request(request, "_board_title.html")
+    return render(request, template_path, {"board": board})
