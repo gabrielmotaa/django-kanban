@@ -21,7 +21,7 @@
         @click.stop
         x-show="editing"
         x-cloak
-        hx-post="{% url 'card_edit' card.pk %}"
+        hx-patch="{% url 'card_detail' card.pk %}"
         hx-target="#card-{{ card.pk }}"
         hx-swap="outerHTML"
         @htmx:after-swap.window="editing = false"
@@ -40,7 +40,7 @@
         <div class="card__edit-actions">
             <button 
                 type="button"
-                hx-delete="{% url 'card_delete' card.pk %}"
+                hx-delete="{% url 'card_detail' card.pk %}"
                 hx-target="#card-{{ card.pk }}"
                 hx-swap="outerHTML"
                 hx-confirm="Deletar este card?"

@@ -31,13 +31,14 @@
         </button>
         <form x-show="adding" 
               x-cloak 
-              hx-post="{% url 'column_create' board.pk %}" 
+              hx-post="{% url 'column_create' %}" 
               hx-target="#board"
               hx-swap="beforeend" 
               @htmx:after-request="adding = false; selectedColor = '#64748b'; $el.reset()"
               class="column-create__form"
         >
             {% csrf_token %}
+            <input type="hidden" name="board_id" value="{{ board.pk }}">
             <input x-ref="columnInput" 
                    type="text" 
                    name="title" 
@@ -118,15 +119,15 @@
                     return;
                 }
 
-                htmx.ajax("post", "{% url 'card_move' %}", {
-                    values: {
-                        card_id: card.dataset.cardId,
-                        column_id: destColumn.dataset.columnId,
-                        order: index,
-                    },
-                    swap: "none",
-                    event: "cardmove",
-                });
+                 const cardId = card.dataset.cardId;
+                 htmx.ajax("patch", "{% url 'card_detail' 0 %}".replace('/0/', `/${cardId}/`), {
+                     values: {
+                         column_id: destColumn.dataset.columnId,
+                         order: index,
+                     },
+                     swap: "none",
+                     event: "cardmove",
+                 });
 
                 draggingCard = null;
                 sourceColumn = null;
@@ -180,14 +181,14 @@
                         return;
                     }
 
-                    htmx.ajax("post", "{% url 'column_move' %}", {
-                        values: {
-                            column_id: column.dataset.columnId,
-                            order: index,
-                        },
-                        swap: "none",
-                        event: "columnmove",
-                    });
+                     const colId = column.dataset.columnId;
+                     htmx.ajax("patch", `{% url 'column_detail' 0 %}`.replace('/0/', `/${colId}/`), {
+                         values: {
+                             order: index,
+                         },
+                         swap: "none",
+                         event: "columnmove",
+                     });
 
                     draggingColumn = null;
                     sourceColumnIndex = -1;

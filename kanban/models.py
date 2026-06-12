@@ -22,18 +22,16 @@ class Column(models.Model):
     class Meta:
         ordering = ["order"]
 
-    @property
-    def color_choices(self):
-        return [
-            ("#64748b", "Cinza"),
-            ("#ef4444", "Vermelho"),
-            ("#f97316", "Laranja"),
-            ("#f59e0b", "Âmbar"),
-            ("#10b981", "Esmeralda"),
-            ("#3b82f6", "Azul"),
-            ("#8b5cf6", "Roxo"),
-            ("#ec4899", "Rosa"),
-        ]
+    COLOR_CHOICES = [
+        ("#64748b", "Cinza"),
+        ("#ef4444", "Vermelho"),
+        ("#f97316", "Laranja"),
+        ("#f59e0b", "Âmbar"),
+        ("#10b981", "Esmeralda"),
+        ("#3b82f6", "Azul"),
+        ("#8b5cf6", "Roxo"),
+        ("#ec4899", "Rosa"),
+    ]
 
     @property
     def fg_color(self):

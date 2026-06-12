@@ -70,7 +70,7 @@ class TestColumn:
         assert col_a.color == "#64748b"
 
     def test_color_choices(self, col_a: Column) -> None:
-        choices = col_a.color_choices
+        choices = col_a.COLOR_CHOICES
         assert isinstance(choices, list)
         assert len(choices) == 8
         assert ("#64748b", "Cinza") in choices

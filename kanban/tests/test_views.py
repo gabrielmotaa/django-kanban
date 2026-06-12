@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+
 import pytest
 from django.test import Client
 from django.urls import reverse
@@ -24,21 +26,22 @@ def col_b(board) -> Column:
 
 
 def test_template_index(client: Client, board: Board):
-    response = client.get(reverse("templates_index"))
+    response = client.get(reverse("index", args=["templates"]))
     assert response.status_code == 200
     assertTemplateUsed(response, "kanban/templates/index.html")
 
 
 def test_components_index(client: Client, board: Board):
-    response = client.get(reverse("components_index"))
+    response = client.get(reverse("index", args=["components"]))
     assert response.status_code == 200
     assertTemplateUsed(response, "kanban/components/index.html")
 
 
 def test_column_move(client: Client, col_a: Column, col_b: Column):
-    response = client.post(
-        reverse("column_move"),
-        {"column_id": col_b.pk, "order": 0},
+    response = client.patch(
+        reverse("column_detail", args=[col_b.pk]),
+        data=urlencode({"order": 0}),
+        content_type="application/x-www-form-urlencoded",
     )
     assert response.status_code == 204
     col_a.refresh_from_db()
@@ -48,14 +51,14 @@ def test_column_move(client: Client, col_a: Column, col_b: Column):
 
 
 def test_column_delete(client: Client, col_a: Column):
-    response = client.delete(reverse("column_delete", args=[col_a.pk]))
+    response = client.delete(reverse("column_detail", args=[col_a.pk]))
     assert response.status_code == 200
     assert not Column.objects.filter(pk=col_a.pk).exists()
 
 
 def test_card_delete(client: Client, col_a: Column):
     card = Card.objects.create(column=col_a, title="Delete Me", order=0)
-    response = client.delete(reverse("card_delete", args=[card.pk]))
+    response = client.delete(reverse("card_detail", args=[card.pk]))
     assert response.status_code == 200
     assert not Card.objects.filter(pk=card.pk).exists()
 
@@ -70,8 +73,8 @@ def test_card_create(client: Client, col_a: Column, web_components: bool):
     )
 
     response = client.post(
-        reverse("card_create", args=[col_a.pk]),
-        {"title": "New Test Card"},
+        reverse("card_create"),
+        {"column_id": col_a.pk, "title": "New Test Card"},
         headers=headers,
     )
     assert response.status_code == 200
@@ -94,8 +97,8 @@ def test_column_create(
     )
 
     response = client.post(
-        reverse("column_create", args=[board.pk]),
-        {"title": "New Column"},
+        reverse("column_create"),
+        {"board_id": board.pk, "title": "New Column"},
         headers=headers,
     )
     assert response.status_code == 200
@@ -114,9 +117,10 @@ def test_column_edit(client: Client, col_a: Column, web_components: bool):
         else "kanban/templates/_column.html"
     )
 
-    response = client.post(
-        reverse("column_edit", args=[col_a.pk]),
-        {"title": "Renamed Col A"},
+    response = client.patch(
+        reverse("column_detail", args=[col_a.pk]),
+        data=urlencode({"title": "Renamed Col A"}),
+        content_type="application/x-www-form-urlencoded",
         headers=headers,
     )
     assert response.status_code == 200
@@ -137,8 +141,8 @@ def test_column_create_with_color(
     )
 
     response = client.post(
-        reverse("column_create", args=[board.pk]),
-        {"title": "New Green Column", "color": "#10b981"},
+        reverse("column_create"),
+        {"board_id": board.pk, "title": "New Green Column", "color": "#10b981"},
         headers=headers,
     )
     assert response.status_code == 200
@@ -157,9 +161,10 @@ def test_column_edit_color(client: Client, col_a: Column, web_components: bool):
         else "kanban/templates/_column.html"
     )
 
-    response = client.post(
-        reverse("column_edit", args=[col_a.pk]),
-        {"title": "Col A", "color": "#ec4899"},
+    response = client.patch(
+        reverse("column_detail", args=[col_a.pk]),
+        data=urlencode({"title": "Col A", "color": "#ec4899"}),
+        content_type="application/x-www-form-urlencoded",
         headers=headers,
     )
     assert response.status_code == 200
@@ -177,9 +182,10 @@ def test_board_edit(client: Client, board: Board, web_components: bool):
         else "kanban/templates/_board_title.html"
     )
 
-    response = client.post(
-        reverse("board_edit", args=[board.pk]),
-        {"title": "Renamed Board"},
+    response = client.patch(
+        reverse("board_detail", args=[board.pk]),
+        data=urlencode({"title": "Renamed Board"}),
+        content_type="application/x-www-form-urlencoded",
         headers=headers,
     )
     assert response.status_code == 200
@@ -189,33 +195,42 @@ def test_board_edit(client: Client, board: Board, web_components: bool):
 
 
 def test_column_move_invalid(client: Client, col_a: Column, col_b: Column):
-    response = client.post(
-        reverse("column_move"), {"column_id": "invalid_id", "order": -5}
+    response = client.patch(
+        reverse("column_detail", args=[col_b.pk]),
+        data=urlencode({"order": -5}),
+        content_type="application/x-www-form-urlencoded",
     )
     assert response.status_code == 400
 
 
 def test_card_create_invalid(client: Client, col_a: Column):
-    response = client.post(reverse("card_create", args=[col_a.pk]), {"title": ""})
+    response = client.post(reverse("card_create"), {"column_id": col_a.pk, "title": ""})
     assert response.status_code == 400
 
 
 def test_column_create_invalid(client: Client, board: Board):
-    response = client.post(reverse("column_create", args=[board.pk]), {"title": ""})
+    response = client.post(
+        reverse("column_create"), {"board_id": board.pk, "title": ""}
+    )
     assert response.status_code == 400
 
 
 def test_column_edit_invalid_empty_fields(client: Client, col_a: Column):
-    response = client.post(
-        reverse("column_edit", args=[col_a.pk]),
-        {"title": "", "color": ""},
+    response = client.patch(
+        reverse("column_detail", args=[col_a.pk]),
+        data=urlencode({"title": "", "color": ""}),
+        content_type="application/x-www-form-urlencoded",
     )
     assert response.status_code == 400
     assert response.content.decode("utf-8") == "No title or color provided"
 
 
 def test_board_edit_invalid(client: Client, board: Board):
-    response = client.post(reverse("board_edit", args=[board.pk]), {"title": ""})
+    response = client.patch(
+        reverse("board_detail", args=[board.pk]),
+        data=urlencode({"title": ""}),
+        content_type="application/x-www-form-urlencoded",
+    )
     assert response.status_code == 400
 
 
@@ -229,11 +244,10 @@ def test_card_edit_get(client: Client, col_a: Column, web_components: bool):
     )
 
     card = Card.objects.create(column=col_a, title="Original Card", order=0)
-    response = client.get(reverse("card_edit", args=[card.pk]), headers=headers)
+    response = client.get(reverse("card_detail", args=[card.pk]), headers=headers)
     assert response.status_code == 200
     assertTemplateUsed(response, template_name)
-    if not web_components:
-        assert b"Original Card" in response.content
+    assert b"Original Card" in response.content
 
 
 @pytest.mark.parametrize("web_components", [True, False])
@@ -246,9 +260,10 @@ def test_card_edit_post_success(client: Client, col_a: Column, web_components: b
     )
 
     card = Card.objects.create(column=col_a, title="Original Card", order=0)
-    response = client.post(
-        reverse("card_edit", args=[card.pk]),
-        {"title": "Updated Card Title"},
+    response = client.patch(
+        reverse("card_detail", args=[card.pk]),
+        data=urlencode({"title": "Updated Card Title"}),
+        content_type="application/x-www-form-urlencoded",
         headers=headers,
     )
     assert response.status_code == 200
@@ -259,16 +274,21 @@ def test_card_edit_post_success(client: Client, col_a: Column, web_components: b
 
 def test_card_edit_post_invalid(client: Client, col_a: Column):
     card = Card.objects.create(column=col_a, title="Original Card", order=0)
-    response = client.post(reverse("card_edit", args=[card.pk]), {"title": ""})
+    response = client.patch(
+        reverse("card_detail", args=[card.pk]),
+        data=urlencode({"title": ""}),
+        content_type="application/x-www-form-urlencoded",
+    )
     assert response.status_code == 400
 
 
 def test_card_move_same_column(client: Client, col_a: Column):
     card_1 = Card.objects.create(column=col_a, title="Card 1", order=0)
     card_2 = Card.objects.create(column=col_a, title="Card 2", order=1)
-    response = client.post(
-        reverse("card_move"),
-        {"card_id": card_1.pk, "column_id": col_a.pk, "order": 1},
+    response = client.patch(
+        reverse("card_detail", args=[card_1.pk]),
+        data=urlencode({"column_id": col_a.pk, "order": 1}),
+        content_type="application/x-www-form-urlencoded",
     )
     assert response.status_code == 204
     card_1.refresh_from_db()
@@ -279,9 +299,10 @@ def test_card_move_same_column(client: Client, col_a: Column):
 
 def test_card_move_different_column(client: Client, col_a: Column, col_b: Column):
     card_1 = Card.objects.create(column=col_a, title="Card 1", order=0)
-    response = client.post(
-        reverse("card_move"),
-        {"card_id": card_1.pk, "column_id": col_b.pk, "order": 0},
+    response = client.patch(
+        reverse("card_detail", args=[card_1.pk]),
+        data=urlencode({"column_id": col_b.pk, "order": 0}),
+        content_type="application/x-www-form-urlencoded",
     )
     assert response.status_code == 204
     card_1.refresh_from_db()
@@ -290,8 +311,10 @@ def test_card_move_different_column(client: Client, col_a: Column, col_b: Column
 
 
 def test_card_move_invalid(client: Client, col_b: Column):
-    response = client.post(
-        reverse("card_move"),
-        {"card_id": -1, "column_id": col_b.pk, "order": 0},
+    card = Card.objects.create(column=col_b, title="Test Card", order=0)
+    response = client.patch(
+        reverse("card_detail", args=[card.pk]),
+        data=urlencode({"column_id": col_b.pk, "order": -1}),
+        content_type="application/x-www-form-urlencoded",
     )
     assert response.status_code == 400

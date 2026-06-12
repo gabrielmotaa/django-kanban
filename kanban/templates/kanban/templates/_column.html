@@ -33,9 +33,9 @@
                         <div>
                             <div class="column__menu-section-title">Cor da Coluna</div>
                             <div class="column__color-grid">
-                                {% for hex, name in column.color_choices %}
+                                {% for hex, name in column.COLOR_CHOICES %}
                                 <button type="button" 
-                                        hx-post="{% url 'column_edit' column.pk %}"
+                                        hx-patch="{% url 'column_detail' column.pk %}"
                                         hx-vals='{"color": "{{ hex }}"}'
                                         hx-target="closest .column"
                                         hx-swap="outerHTML"
@@ -50,7 +50,7 @@
                         <div class="column__menu-divider"></div>
                         
                         <button type="button" 
-                                hx-delete="{% url 'column_delete' column.pk %}"
+                                hx-delete="{% url 'column_detail' column.pk %}"
                                 hx-target="closest .column"
                                 hx-swap="outerHTML"
                                 hx-confirm="Deseja realmente apagar a coluna '{{ column.title }}' e todos os seus cards?"
@@ -65,7 +65,7 @@
             {# Edit mode #}
             <form x-show="editingTitle"
                   x-cloak
-                  hx-post="{% url 'column_edit' column.pk %}"
+                  hx-patch="{% url 'column_detail' column.pk %}"
                   hx-target="closest .column"
                   hx-swap="outerHTML"
                   @htmx:after-request="editingTitle = false"
@@ -104,13 +104,14 @@
             <form 
                 x-show="adding" 
                 x-cloak 
-                hx-post="{% url 'card_create' column.pk %}" 
+                hx-post="{% url 'card_create' %}" 
                 hx-target="#column-{{ column.pk }}-cards" 
                 hx-swap="beforeend" 
                 @htmx:after-request="adding = false; $el.reset()"
                 class="column__add-card-form"
             >
                 {% csrf_token %}
+                <input type="hidden" name="column_id" value="{{ column.pk }}">
                 <input 
                     x-ref="cardInput"
                     type="text" 
