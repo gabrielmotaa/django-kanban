@@ -102,7 +102,6 @@ npm run lint:fix
 3.  **`Card`**:
     *   ForeignKey to `Column` (`related_name="cards"`, Cascade Delete).
     *   `title` (CharField, max 200)
-    *   `description` (TextField, optional)
     *   `order` (PositiveIntegerField)
     *   `created_at` / `updated_at` (DateTimeField, auto populated)
 

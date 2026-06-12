@@ -49,7 +49,6 @@ class Card(models.Model):
 
     column = models.ForeignKey(Column, on_delete=models.CASCADE, related_name="cards")
     title = models.CharField(max_length=200)
-    description = models.TextField(blank=True, default="")
     order = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

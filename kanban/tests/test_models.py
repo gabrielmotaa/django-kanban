@@ -92,15 +92,6 @@ class TestCard:
     def test_column_fk(self, card_a: Card, column: Column) -> None:
         assert card_a.column == column
 
-    def test_description_defaults_to_empty_string(self, card_a: Card) -> None:
-        assert card_a.description == ""
-
-    def test_description_stored_correctly(self, column: Column) -> None:
-        card = Card.objects.create(
-            column=column, title="With Desc", description="Hello"
-        )
-        assert card.description == "Hello"
-
     def test_order_default_is_zero(self, column: Column) -> None:
         card = Card.objects.create(column=column, title="Default Order")
         assert card.order == 0
