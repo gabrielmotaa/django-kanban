@@ -35,9 +35,7 @@ django-kanban/
 │   └── wsgi.py
 │
 ├── kanban/                      # App principal
-│   ├── views/
-│   │   ├── templates.py         # View da página server-side (Django Templates)
-│   │   └── components.py        # View da página de Web Components
+│   ├── views.py                 # Views CBV (index, Card, Column, Board views)
 │   ├── templates/
 │   │   ├── base.html            # Layout base (blocos: title, content, extra_js…)
 │   │   └── kanban/
@@ -56,7 +54,8 @@ django-kanban/
 │   └── components/
 │       ├── kanban-board.ts      # Componente <kanban-board> (Lit + TypeScript)
 │       ├── kanban-column.ts     # Componente <kanban-column> (Lit + TypeScript)
-│       └── kanban-card.ts       # Componente <kanban-card> (Lit + TypeScript)
+│       ├── kanban-card.ts       # Componente <kanban-card> (Lit + TypeScript)
+│       └── kanban-board-title.ts # Componente <kanban-board-title> (Lit + TypeScript)
 │
 ├── package.json                 # Dependências Node (Lit, Vite, TypeScript)
 ├── tsconfig.json                # Config TypeScript (ES2021, decorators)
@@ -68,11 +67,16 @@ django-kanban/
 
 ### Rotas disponíveis
 
-| URL | View | Descrição |
-|---|---|---|
-| `/templates/` | `views/templates.py` | Página renderizada com Django Templates |
-| `/components/` | `views/components.py` | Página com Web Components (Lit) |
-| `/admin/` | Django Admin | Painel de administração |
+| URL | View Class | Métodos | Descrição |
+|---|---|---|---|
+| `/templates/` | `index` | GET | Página renderizada com Django Templates |
+| `/components/` | `index` | GET | Página com Web Components (Lit) |
+| `/card/` | `CardCreateView` | POST | Criação de novo card |
+| `/card/<id>/` | `CardDetailView` | GET, PATCH, DELETE | Visualização, atualização (movimentação/título) e deleção de card |
+| `/column/` | `ColumnCreateView` | POST | Criação de nova coluna |
+| `/column/<id>/` | `ColumnDetailView` | GET, PATCH, DELETE | Visualização, atualização (movimentação/detalhes) e deleção de coluna |
+| `/board/<id>/` | `BoardDetailView` | GET, PATCH | Visualização e edição do título do quadro |
+| `/admin/` | Django Admin | - | Painel de administração |
 
 ---
 
@@ -89,6 +93,7 @@ django-kanban/
 ```bash
 # 1. Clonar o repositório
 git clone <repo-url>
+git checkout master
 cd django-kanban
 
 # 2. Criar o ambiente virtual e instalar dependências Python
@@ -128,61 +133,13 @@ npm run typecheck
 ```
 
 O Vite compila `frontend/` e gera o bundle em `kanban/static/kanban/js/kanban-elements.js`, além de copiar as bibliotecas externas (`htmx.min.js` e `alpine.min.js`) para a mesma pasta.
+
 ### Testes
 
 Para executar os testes unitários do Django:
 ```bash
-uv run manage.py test
+uv run pytest
 ```
-
-### Usando um Web Component nos templates Django
-
-```html
-{% load static %}
-
-{% block extra_head %}
-  <script src="{% static 'kanban/js/htmx.min.js' %}" defer></script>
-  <script type="module" src="{% static 'kanban/js/kanban-elements.js' %}"></script>
-{% endblock %}
-
-{% block content %}
-  <kanban-board title="Meu Board"></kanban-board>
-
-  <!-- Exemplo de uso do HTMX -->
-  <button hx-get="/components/" hx-target="#resultado" hx-swap="innerHTML">
-    Carregar via HTMX
-  </button>
-  <div id="resultado"></div>
-{% endblock %}
-```
-
----
-
-## Criando novos Web Components
-
-1. Crie o componente em `frontend/components/meu-componente.ts`:
-
-```typescript
-import { LitElement, html, css } from "lit";
-import { customElement, property } from "lit/decorators.js";
-
-@customElement("meu-componente")
-export class MeuComponente extends LitElement {
-  @property({ type: String }) label = "";
-
-  render() {
-    return html`<div>${this.label}</div>`;
-  }
-}
-```
-
-2. Exporte-o em `frontend/index.ts`:
-
-```typescript
-export * from "./components/meu-componente";
-```
-
-3. Rode `npm run build` (ou deixe `npm run dev` rodando em watch mode).
 
 ---
 
