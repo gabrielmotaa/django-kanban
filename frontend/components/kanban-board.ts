@@ -1,7 +1,7 @@
-import { LitElement, html, css } from "lit";
+import { css, html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import type { KanbanColumn } from "./kanban-column";
 import type { KanbanCard } from "./kanban-card";
+import type { KanbanColumn } from "./kanban-column";
 
 export type DragState =
   | {
@@ -21,11 +21,10 @@ export type CardMoveDetail = {
   card_id: number;
   column_id: number;
   order: number;
-}
+};
 
 @customElement("kanban-board")
 export class KanbanBoard extends LitElement {
-
   @property({ type: Number, attribute: "board-id" })
   boardId = 0;
 
@@ -199,16 +198,29 @@ export class KanbanBoard extends LitElement {
   override connectedCallback() {
     super.connectedCallback();
 
-    this.addEventListener("kanban-card-dragstart", this.onCardDragStart as EventListener);
-    this.addEventListener("kanban-card-dragend", this.onCardDragEnd as EventListener);
-    this.addEventListener("kanban-column-dragstart", this.onColumnDragStart as EventListener);
-    this.addEventListener("kanban-column-dragend", this.onColumnDragEnd as EventListener);
+    this.addEventListener(
+      "kanban-card-dragstart",
+      this.onCardDragStart as EventListener,
+    );
+    this.addEventListener(
+      "kanban-card-dragend",
+      this.onCardDragEnd as EventListener,
+    );
+    this.addEventListener(
+      "kanban-column-dragstart",
+      this.onColumnDragStart as EventListener,
+    );
+    this.addEventListener(
+      "kanban-column-dragend",
+      this.onColumnDragEnd as EventListener,
+    );
     this.addEventListener("cardmove", this.onCardMove as EventListener);
     this.addEventListener("columnmove", this.onColumnMove as EventListener);
   }
 
   override updated() {
     if (this.shadowRoot) {
+      // biome-ignore lint: htmx.process() accepts ShadowRoot at runtime but TS types don't reflect it
       window.htmx.process(this.shadowRoot as any);
     }
   }
@@ -231,7 +243,7 @@ export class KanbanBoard extends LitElement {
 
   private onCardMove = (e: CustomEvent<CardMoveDetail>) => {
     const { card_id, column_id, order } = e.detail;
-    const url = window.urls.cardDetail.replace('/0/', `/${card_id}/`);
+    const url = window.urls.cardDetail.replace("/0/", `/${card_id}/`);
     window.htmx.ajax("patch", url, {
       values: { column_id, order },
       swap: "none",
@@ -245,7 +257,7 @@ export class KanbanBoard extends LitElement {
     this.updateColumnOrders();
 
     if (fromIndex !== order) {
-      const url = window.urls.columnDetail.replace('/0/', `/${column_id}/`);
+      const url = window.urls.columnDetail.replace("/0/", `/${column_id}/`);
       window.htmx.ajax("patch", url, {
         values: { order },
         swap: "none",
@@ -258,7 +270,7 @@ export class KanbanBoard extends LitElement {
   private updateColumnOrders() {
     const columns = [...this.querySelectorAll("kanban-column")];
     columns.forEach((col, index) => {
-      col.order = index
+      col.order = index;
     });
   }
 
@@ -268,7 +280,9 @@ export class KanbanBoard extends LitElement {
     this.newColumnTitle = "";
     this.newColumnColor = "#64748b";
     this.updateComplete.then(() => {
-      const input = this.shadowRoot?.querySelector(".input") as HTMLInputElement;
+      const input = this.shadowRoot?.querySelector(
+        ".input",
+      ) as HTMLInputElement;
       input?.focus();
     });
   };
@@ -315,7 +329,7 @@ export class KanbanBoard extends LitElement {
                     required
                     maxlength="100"
                     .value=${this.newColumnTitle}
-                    @input=${(e: Event) => this.newColumnTitle = (e.target as HTMLInputElement).value}
+                    @input=${(e: Event) => (this.newColumnTitle = (e.target as HTMLInputElement).value)}
                     @keydown=${this.onColumnKeyDown}
                   />
                   <input type="hidden" name="color" .value=${this.newColumnColor} />
@@ -323,14 +337,16 @@ export class KanbanBoard extends LitElement {
                   <div>
                     <label class="color-label">Cor da Coluna</label>
                     <div class="color-grid">
-                      ${this.colorChoices.map(color => html`
+                      ${this.colorChoices.map(
+          (color) => html`
                         <button
                           type="button"
-                          class="color-dot ${this.newColumnColor === color ? 'color-dot--active' : ''}"
+                          class="color-dot ${this.newColumnColor === color ? "color-dot--active" : ""}"
                           style="--dot-color: ${color}"
-                          @click=${() => this.newColumnColor = color}
+                          @click=${() => (this.newColumnColor = color)}
                         ></button>
-                      `)}
+                      `,
+        )}
                     </div>
                   </div>
 
@@ -344,7 +360,8 @@ export class KanbanBoard extends LitElement {
                 <button class="trigger" @click=${this.onStartColumnAdd}>
                   + Adicionar coluna
                 </button>
-              `}
+              `
+      }
         </div>
       </div>
     `;

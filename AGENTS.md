@@ -11,7 +11,7 @@ This document serves as a quick reference for the architecture, commands, and co
 *   **Frontend (Web Components Approach):** [Lit](https://lit.dev/) + TypeScript
 *   **Interactivity (Django Templates Approach):** [HTMX](https://htmx.org/) + [Alpine.js](https://alpinejs.dev/)
 *   **Asset Bundler:** Vite (runs in library mode, compiling TypeScript/Lit and copying `htmx.min.js` and `alpine.min.js` to the Django static directory)
-*   **Code Quality:** Ruff (linter and formatter) + pyupgrade
+*   **Code Quality:** Ruff (linter and formatter) + pyupgrade · [Biome](https://biomejs.dev/) (TypeScript linter and formatter)
 
 ---
 
@@ -74,6 +74,15 @@ npm run build
 
 # Typecheck TypeScript files
 npm run typecheck
+
+# Lint TypeScript (Biome)
+npm run lint
+
+# Format TypeScript (Biome)
+npm run format
+
+# Lint + format with auto-fix (safe fixes only)
+npm run lint:fix
 ```
 
 ---
@@ -107,6 +116,10 @@ npm run typecheck
 ### 2. Django Admin
 *   All database models must be registered in [admin.py](file:///Users/gabrieldamota/Code/django-kanban/kanban/admin.py).
 
-### 3. Tests
+### 3. TypeScript Linting (Biome)
+*   Use `npm run lint` to check for issues and `npm run lint:fix` to apply safe auto-fixes.
+*   To suppress a rule on a specific line, use a `// biome-ignore lint: <reason>` comment (prefer the broad `lint` category over a specific rule unless targeting a single rule).
+
+### 4. Tests
 *   Always ensure unit test coverage in [kanban/tests/](file:///Users/gabrieldamota/Code/django-kanban/kanban/tests/) for any new model properties, form validations, views, or endpoints.
 *   Template tests must verify error handling paths (e.g. invalid form submits, missing parameters) in addition to success paths.

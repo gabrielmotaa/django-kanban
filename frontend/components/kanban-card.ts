@@ -1,13 +1,10 @@
-import { LitElement, html, css } from "lit";
+import { css, html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import type { DragState } from "./kanban-board";
 import type { KanbanColumn } from "./kanban-column";
 
-
-
 @customElement("kanban-card")
 export class KanbanCard extends LitElement {
-
   @property({ attribute: "card-id", type: Number })
   cardId = 0;
 
@@ -134,15 +131,16 @@ export class KanbanCard extends LitElement {
   `;
 
   get editUrl(): string {
-    return window.urls.cardDetail.replace('/0/', `/${this.cardId}/`);
+    return window.urls.cardDetail.replace("/0/", `/${this.cardId}/`);
   }
 
   get deleteUrl(): string {
-    return window.urls.cardDetail.replace('/0/', `/${this.cardId}/`);
+    return window.urls.cardDetail.replace("/0/", `/${this.cardId}/`);
   }
 
   override updated() {
     if (this.shadowRoot) {
+      // biome-ignore lint: htmx.process() accepts ShadowRoot at runtime but TS types don't reflect it
       window.htmx.process(this.shadowRoot as any);
     }
   }
@@ -185,7 +183,7 @@ export class KanbanCard extends LitElement {
           fromColumn: column,
           fromIndex: index,
         } satisfies DragState,
-      })
+      }),
     );
 
     this.isDragging = true;
@@ -202,7 +200,7 @@ export class KanbanCard extends LitElement {
       new CustomEvent("kanban-card-dragend", {
         bubbles: true,
         composed: true,
-      })
+      }),
     );
   };
 
@@ -211,7 +209,9 @@ export class KanbanCard extends LitElement {
     if (this.isDragging) return;
     this.editing = true;
     this.updateComplete.then(() => {
-      const input = this.shadowRoot?.querySelector(".edit-input") as HTMLInputElement;
+      const input = this.shadowRoot?.querySelector(
+        ".edit-input",
+      ) as HTMLInputElement;
       input?.focus();
     });
   };
@@ -232,7 +232,7 @@ export class KanbanCard extends LitElement {
     return html`
       <div class="card">
         ${this.editing
-          ? html`
+        ? html`
               <form class="edit-form" hx-patch=${this.editUrl} hx-target="host" hx-swap="outerHTML" @click=${(e: Event) => e.stopPropagation()}>
                 <input
                   type="text"
@@ -260,7 +260,8 @@ export class KanbanCard extends LitElement {
                 </div>
               </form>
             `
-          : html`<div class="title-view">${this.title}</div>`}
+        : html`<div class="title-view">${this.title}</div>`
+      }
       </div>
     `;
   }

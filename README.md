@@ -18,7 +18,8 @@ O objetivo central é comparar e integrar essas duas estratégias num mesmo proj
 | Frontend (Web Components) | [Lit](https://lit.dev/) · TypeScript |
 | Hipermídia / Interatividade | [HTMX](https://htmx.org/) · [Alpine.js](https://alpinejs.dev/) |
 | Bundler | Vite (library mode) |
-| Linter / Formatter | Ruff · pyupgrade |
+| Linter / Formatter (Python) | Ruff · pyupgrade |
+| Linter / Formatter (TypeScript) | [Biome](https://biomejs.dev/) |
 | Pre-commit hooks | uv-lock · ruff-check · ruff-format · pyupgrade |
 
 ---
@@ -128,6 +129,12 @@ npm run build
 
 # Checar tipos TypeScript sem buildar
 npm run typecheck
+
+# Lint + verificar formatação (Biome)
+npm run lint
+
+# Lint + auto-fix (safe fixes)
+npm run lint:fix
 ```
 
 O Vite compila `frontend/` e gera o bundle em `kanban/static/kanban/js/kanban-elements.js`, além de copiar as bibliotecas externas (`htmx.min.js` e `alpine.min.js`) para a mesma pasta.

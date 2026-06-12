@@ -1,11 +1,11 @@
-import { LitElement, html, css } from "lit";
+import { css, html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import type { KanbanCard } from "./kanban-card";
 import type { KanbanBoard } from "./kanban-board";
+import type { KanbanCard } from "./kanban-card";
 
 @customElement("kanban-column")
 export class KanbanColumn extends LitElement {
-  static styles = css`
+	static styles = css`
     input, button, select, textarea {
       font: inherit;
     }
@@ -325,284 +325,291 @@ export class KanbanColumn extends LitElement {
     }
   `;
 
-  @property({ attribute: "column-id", type: Number })
-  columnId = 0;
+	@property({ attribute: "column-id", type: Number })
+	columnId = 0;
 
-  @property()
-  title = "";
+	@property()
+	title = "";
 
-  @property()
-  color = "#64748b";
+	@property()
+	color = "#64748b";
 
-  @property({ type: Number, reflect: true })
-  order = 0;
+	@property({ type: Number, reflect: true })
+	order = 0;
 
-  @state()
-  private editingTitle = false;
+	@state()
+	private editingTitle = false;
 
-  @state()
-  private menuOpen = false;
+	@state()
+	private menuOpen = false;
 
-  @state()
-  private addingCard = false;
+	@state()
+	private addingCard = false;
 
-  colorChoices = window.colorChoices;
+	colorChoices = window.colorChoices;
 
-  get fgColor(): string {
-    const map: Record<string, string> = {
-      "#f59e0b": "#1e293b",
-    };
-    return map[this.color] || "#ffffff";
-  }
+	get fgColor(): string {
+		const map: Record<string, string> = {
+			"#f59e0b": "#1e293b",
+		};
+		return map[this.color] || "#ffffff";
+	}
 
-  get editUrl(): string {
-    return window.urls.columnDetail.replace('/0/', `/${this.columnId}/`);
-  }
+	get editUrl(): string {
+		return window.urls.columnDetail.replace("/0/", `/${this.columnId}/`);
+	}
 
-  get deleteUrl(): string {
-    return window.urls.columnDetail.replace('/0/', `/${this.columnId}/`);
-  }
+	get deleteUrl(): string {
+		return window.urls.columnDetail.replace("/0/", `/${this.columnId}/`);
+	}
 
-  get createCardUrl(): string {
-    return window.urls.cardCreate;
-  }
+	get createCardUrl(): string {
+		return window.urls.cardCreate;
+	}
 
-  override connectedCallback() {
-    super.connectedCallback();
+	override connectedCallback() {
+		super.connectedCallback();
 
-    this.addEventListener("dragenter", this.onDragEnter);
-    this.addEventListener("dragleave", this.onDragLeave);
-    this.addEventListener("dragover", this.onDragOver);
-    this.addEventListener("drop", this.onDrop);
+		this.addEventListener("dragenter", this.onDragEnter);
+		this.addEventListener("dragleave", this.onDragLeave);
+		this.addEventListener("dragover", this.onDragOver);
+		this.addEventListener("drop", this.onDrop);
 
-    // Column dragging listeners
-    this.addEventListener("dragstart", this.onColumnDragStart);
-    this.addEventListener("dragend", this.onColumnDragEnd);
+		// Column dragging listeners
+		this.addEventListener("dragstart", this.onColumnDragStart);
+		this.addEventListener("dragend", this.onColumnDragEnd);
 
-    // Document click to close menu on click away
-    document.addEventListener("click", this.onDocumentClick);
-  }
+		// Document click to close menu on click away
+		document.addEventListener("click", this.onDocumentClick);
+	}
 
-  override disconnectedCallback() {
-    super.disconnectedCallback();
+	override disconnectedCallback() {
+		super.disconnectedCallback();
 
-    this.removeEventListener("dragenter", this.onDragEnter);
-    this.removeEventListener("dragleave", this.onDragLeave);
-    this.removeEventListener("dragover", this.onDragOver);
-    this.removeEventListener("drop", this.onDrop);
+		this.removeEventListener("dragenter", this.onDragEnter);
+		this.removeEventListener("dragleave", this.onDragLeave);
+		this.removeEventListener("dragover", this.onDragOver);
+		this.removeEventListener("drop", this.onDrop);
 
-    this.removeEventListener("dragstart", this.onColumnDragStart);
-    this.removeEventListener("dragend", this.onColumnDragEnd);
+		this.removeEventListener("dragstart", this.onColumnDragStart);
+		this.removeEventListener("dragend", this.onColumnDragEnd);
 
-    document.removeEventListener("click", this.onDocumentClick);
-  }
+		document.removeEventListener("click", this.onDocumentClick);
+	}
 
-  private get board(): KanbanBoard {
-    return this.closest("kanban-board") as KanbanBoard;
-  }
+	private get board(): KanbanBoard {
+		return this.closest("kanban-board") as KanbanBoard;
+	}
 
-  private get dragState() {
-    return this.board.dragState;
-  }
+	private get dragState() {
+		return this.board.dragState;
+	}
 
-  updateOrders() {
-    const cards = [...this.querySelectorAll("kanban-card")];
-    cards.forEach((card, index) => {
-      card.order = index;
-    });
-  }
+	updateOrders() {
+		const cards = [...this.querySelectorAll("kanban-card")];
+		cards.forEach((card, index) => {
+			card.order = index;
+		});
+	}
 
-  private onDragEnter = () => {
-    if (!this.dragState || this.dragState.type !== "card") return;
-    this.classList.add("drag-over");
-  };
+	private onDragEnter = () => {
+		if (this.dragState?.type !== "card") return;
+		this.classList.add("drag-over");
+	};
 
-  private onDragLeave = (e: DragEvent) => {
-    if (!this.dragState || this.dragState.type !== "card") return;
-    if (!this.contains(e.relatedTarget as Node)) {
-      this.classList.remove("drag-over");
-    }
-  };
+	private onDragLeave = (e: DragEvent) => {
+		if (this.dragState?.type !== "card") return;
+		if (!this.contains(e.relatedTarget as Node)) {
+			this.classList.remove("drag-over");
+		}
+	};
 
-  private onDragOver = (e: DragEvent) => {
-    e.preventDefault();
+	private onDragOver = (e: DragEvent) => {
+		e.preventDefault();
 
-    const state = this.dragState;
-    if (!state) return;
+		const state = this.dragState;
+		if (!state) return;
 
-    if (state.type === "card") {
-      const after = this.getCardAfterPosition(e.clientY);
+		if (state.type === "card") {
+			const after = this.getCardAfterPosition(e.clientY);
 
-      if (!after) {
-        this.appendChild(state.card);
-      } else {
-        this.insertBefore(state.card, after);
-      }
-    } else if (state.type === "column") {
-      const draggedCol = state.column;
-      if (draggedCol === this) return;
+			if (!after) {
+				this.appendChild(state.card);
+			} else {
+				this.insertBefore(state.card, after);
+			}
+		} else if (state.type === "column") {
+			const draggedCol = state.column;
+			if (draggedCol === this) return;
 
-      const box = this.getBoundingClientRect();
-      const mouseX = e.clientX;
-      const middleX = box.left + box.width / 2;
-      const board = this.board;
+			const box = this.getBoundingClientRect();
+			const mouseX = e.clientX;
+			const middleX = box.left + box.width / 2;
+			const board = this.board;
 
-      if (mouseX < middleX) {
-        board.insertBefore(draggedCol, this);
-      } else {
-        board.insertBefore(draggedCol, this.nextElementSibling);
-      }
-    }
-  };
+			if (mouseX < middleX) {
+				board.insertBefore(draggedCol, this);
+			} else {
+				board.insertBefore(draggedCol, this.nextElementSibling);
+			}
+		}
+	};
 
-  private onDrop = () => {
-    this.classList.remove("drag-over");
+	private onDrop = () => {
+		this.classList.remove("drag-over");
 
-    const state = this.board.dragState;
-    if (!state) return;
+		const state = this.board.dragState;
+		if (!state) return;
 
-    if (state.type === "card") {
-      const cards = [...this.querySelectorAll("kanban-card")];
-      const toIndex = cards.indexOf(state.card);
+		if (state.type === "card") {
+			const cards = [...this.querySelectorAll("kanban-card")];
+			const toIndex = cards.indexOf(state.card);
 
-      if (state.fromColumn === this && state.fromIndex === toIndex) {
-        return;
-      }
+			if (state.fromColumn === this && state.fromIndex === toIndex) {
+				return;
+			}
 
-      if (state.fromColumn !== this) {
-        state.fromColumn.updateOrders();
-        this.updateOrders();
-      } else {
-        this.updateOrders();
-      }
+			if (state.fromColumn !== this) {
+				state.fromColumn.updateOrders();
+				this.updateOrders();
+			} else {
+				this.updateOrders();
+			}
 
-      this.dispatchEvent(
-        new CustomEvent("cardmove", {
-          bubbles: true,
-          composed: true,
-          detail: {
-            card_id: state.card.cardId,
-            column_id: this.columnId,
-            order: toIndex,
-          },
-        })
-      );
-    } else if (state.type === "column") {
-      const column = state.column;
-      const columns = [...this.board.querySelectorAll("kanban-column")];
-      const toIndex = columns.indexOf(column);
+			this.dispatchEvent(
+				new CustomEvent("cardmove", {
+					bubbles: true,
+					composed: true,
+					detail: {
+						card_id: state.card.cardId,
+						column_id: this.columnId,
+						order: toIndex,
+					},
+				}),
+			);
+		} else if (state.type === "column") {
+			const column = state.column;
+			const columns = [...this.board.querySelectorAll("kanban-column")];
+			const toIndex = columns.indexOf(column);
 
-      this.dispatchEvent(
-        new CustomEvent("columnmove", {
-          bubbles: true,
-          composed: true,
-          detail: {
-            column_id: column.columnId,
-            order: toIndex,
-            fromIndex: state.fromIndex,
-          },
-        })
-      );
-    }
-  };
+			this.dispatchEvent(
+				new CustomEvent("columnmove", {
+					bubbles: true,
+					composed: true,
+					detail: {
+						column_id: column.columnId,
+						order: toIndex,
+						fromIndex: state.fromIndex,
+					},
+				}),
+			);
+		}
+	};
 
-  private getCardAfterPosition(mouseY: number): Element | null {
-    const cards = [
-      ...this.querySelectorAll<KanbanCard>("kanban-card:not(.dragging)"),
-    ];
+	private getCardAfterPosition(mouseY: number): Element | null {
+		const cards = [
+			...this.querySelectorAll<KanbanCard>("kanban-card:not(.dragging)"),
+		];
 
-    let closest: Element | null = null;
-    let closestOffset = Number.NEGATIVE_INFINITY;
+		let closest: Element | null = null;
+		let closestOffset = Number.NEGATIVE_INFINITY;
 
-    for (const card of cards) {
-      const box = card.getBoundingClientRect();
-      const offset = mouseY - box.top - box.height / 2;
+		for (const card of cards) {
+			const box = card.getBoundingClientRect();
+			const offset = mouseY - box.top - box.height / 2;
 
-      if (offset < 0 && offset > closestOffset) {
-        closestOffset = offset;
-        closest = card;
-      }
-    }
+			if (offset < 0 && offset > closestOffset) {
+				closestOffset = offset;
+				closest = card;
+			}
+		}
 
-    return closest;
-  }
+		return closest;
+	}
 
-  override updated() {
-    if (this.shadowRoot) {
-      window.htmx.process(this.shadowRoot as any);
-    }
-  }
+	override updated() {
+		if (this.shadowRoot) {
+			// biome-ignore lint/suspicious/noExplicitAny: htmx.process() accepts ShadowRoot at runtime but TS types don't reflect it
+			window.htmx.process(this.shadowRoot as any);
+		}
+	}
 
-  // Column Drag Handlers
-  private onTitleMouseDown = () => {
-    this.draggable = true
-  };
+	// Column Drag Handlers
+	private onTitleMouseDown = () => {
+		this.draggable = true;
+	};
 
-  private onTitleMouseUp = () => {
-    this.draggable = false
-  };
+	private onTitleMouseUp = () => {
+		this.draggable = false;
+	};
 
-  private onColumnDragStart = (e: DragEvent) => {
-    if (e.target !== this) return;
+	private onColumnDragStart = (e: DragEvent) => {
+		if (e.target !== this) return;
 
-    const columns = [...this.board.querySelectorAll("kanban-column")];
-    const index = columns.indexOf(this);
+		const columns = [...this.board.querySelectorAll("kanban-column")];
+		const index = columns.indexOf(this);
 
-    this.dispatchEvent(
-      new CustomEvent("kanban-column-dragstart", {
-        bubbles: true,
-        composed: true,
-        detail: {
-          type: "column",
-          column: this,
-          fromIndex: index,
-        },
-      })
-    );
+		this.dispatchEvent(
+			new CustomEvent("kanban-column-dragstart", {
+				bubbles: true,
+				composed: true,
+				detail: {
+					type: "column",
+					column: this,
+					fromIndex: index,
+				},
+			}),
+		);
 
-    requestAnimationFrame(() => this.classList.add("dragging-col"));
-  };
+		requestAnimationFrame(() => this.classList.add("dragging-col"));
+	};
 
-  private onColumnDragEnd = () => {
-    this.classList.remove("dragging-col");
-    this.removeAttribute("draggable");
+	private onColumnDragEnd = () => {
+		this.classList.remove("dragging-col");
+		this.removeAttribute("draggable");
 
-    this.dispatchEvent(
-      new CustomEvent("kanban-column-dragend", {
-        bubbles: true,
-        composed: true,
-      })
-    );
-  };
+		this.dispatchEvent(
+			new CustomEvent("kanban-column-dragend", {
+				bubbles: true,
+				composed: true,
+			}),
+		);
+	};
 
-  // Document Click Away Menu Handler
-  private onDocumentClick = (e: MouseEvent) => {
-    if (this.menuOpen) {
-      const path = e.composedPath();
-      const trigger = this.shadowRoot?.querySelector(".menu-trigger");
-      const dropdown = this.shadowRoot?.querySelector(".menu-dropdown");
-      if (trigger && !path.includes(trigger) && dropdown && !path.includes(dropdown)) {
-        this.menuOpen = false;
-      }
-    }
-  };
+	// Document Click Away Menu Handler
+	private onDocumentClick = (e: MouseEvent) => {
+		if (this.menuOpen) {
+			const path = e.composedPath();
+			const trigger = this.shadowRoot?.querySelector(".menu-trigger");
+			const dropdown = this.shadowRoot?.querySelector(".menu-dropdown");
+			if (
+				trigger &&
+				!path.includes(trigger) &&
+				dropdown &&
+				!path.includes(dropdown)
+			) {
+				this.menuOpen = false;
+			}
+		}
+	};
 
-  private onRenameCancel = (e: Event) => {
-    e.preventDefault();
-    e.stopPropagation();
-    this.editingTitle = false;
-  };
+	private onRenameCancel = (e: Event) => {
+		e.preventDefault();
+		e.stopPropagation();
+		this.editingTitle = false;
+	};
 
-  private onAddCardSuccess = () => {
-    this.addingCard = false;
-  };
+	private onAddCardSuccess = () => {
+		this.addingCard = false;
+	};
 
-  override render() {
-    return html`
+	override render() {
+		return html`
       <div class="header-bg" style="--column-color: ${this.color}; --column-fg: ${this.fgColor};">
         <div class="title">
-          ${this.editingTitle
-        ? html`
+          ${
+						this.editingTitle
+							? html`
                 <form class="edit-form" hx-patch=${this.editUrl} hx-target="host" hx-swap="outerHTML">
                   <input
                     type="text"
@@ -616,7 +623,7 @@ export class KanbanColumn extends LitElement {
                   <button type="button" class="edit-btn-cancel" @click=${this.onRenameCancel}>✗</button>
                 </form>
               `
-        : html`
+							: html`
                 <div class="header">
                   <span
                     class="title-text"
@@ -630,24 +637,28 @@ export class KanbanColumn extends LitElement {
                     <button
                       type="button"
                       class="menu-trigger"
-                      @click=${() => this.menuOpen = !this.menuOpen}
+                      @click=${() => (this.menuOpen = !this.menuOpen)}
                     >
                       ⋮
                     </button>
                     
-                    ${this.menuOpen ? html`
+                    ${
+											this.menuOpen
+												? html`
                           <div class="menu-dropdown">
                             <button
                               type="button"
                               class="menu-btn"
                               @click=${() => {
-              this.editingTitle = true;
-              this.menuOpen = false;
-              this.updateComplete.then(() => {
-                const input = this.shadowRoot?.querySelector(".edit-input") as HTMLInputElement;
-                input?.focus();
-              });
-            }}
+																this.editingTitle = true;
+																this.menuOpen = false;
+																this.updateComplete.then(() => {
+																	const input = this.shadowRoot?.querySelector(
+																		".edit-input",
+																	) as HTMLInputElement;
+																	input?.focus();
+																});
+															}}
                             >
                               Editar nome
                             </button>
@@ -657,7 +668,8 @@ export class KanbanColumn extends LitElement {
                             <div>
                               <div class="menu-section-title">Cor da Coluna</div>
                               <div class="color-grid">
-                                ${this.colorChoices.map(([hex, name]) => html`
+                                ${this.colorChoices.map(
+																	([hex, name]) => html`
                                     <button
                                       type="button"
                                       title=${name}
@@ -668,7 +680,8 @@ export class KanbanColumn extends LitElement {
                                       hx-target="host"
                                       hx-swap="outerHTML"
                                     ></button>
-                                `)}
+                                `,
+																)}
                               </div>
                             </div>
                             
@@ -685,10 +698,13 @@ export class KanbanColumn extends LitElement {
                               Apagar coluna
                             </button>
                           </div>
-                        ` : ""}
+                        `
+												: ""
+										}
                   </div>
                 </div>
-              `}
+              `
+					}
         </div>
       </div>
       
@@ -698,8 +714,9 @@ export class KanbanColumn extends LitElement {
         </div>
         
         <div>
-          ${this.addingCard
-        ? html`
+          ${
+						this.addingCard
+							? html`
                 <form class="add-card-form" hx-post=${this.createCardUrl} hx-target="host" hx-swap="beforeend" @htmx:after-request=${this.onAddCardSuccess}>
                   <input type="hidden" name="column_id" .value=${this.columnId} />
                   <input
@@ -710,14 +727,14 @@ export class KanbanColumn extends LitElement {
                     required
                     maxlength="200"
                     @keydown=${(e: KeyboardEvent) => {
-            if (e.key === "Escape") this.addingCard = false;
-          }}
+											if (e.key === "Escape") this.addingCard = false;
+										}}
                   />
                   <div class="add-card-actions">
                     <button
                       type="button"
                       class="add-card-cancel"
-                      @click=${() => this.addingCard = false}
+                      @click=${() => (this.addingCard = false)}
                     >
                       Cancelar
                     </button>
@@ -727,28 +744,31 @@ export class KanbanColumn extends LitElement {
                   </div>
                 </form>
               `
-        : html`
+							: html`
                 <button
                   class="add-card-trigger"
                   @click=${() => {
-            this.addingCard = true;
-            this.updateComplete.then(() => {
-              const input = this.shadowRoot?.querySelector(".add-card-input") as HTMLInputElement;
-              input?.focus();
-            });
-          }}
+										this.addingCard = true;
+										this.updateComplete.then(() => {
+											const input = this.shadowRoot?.querySelector(
+												".add-card-input",
+											) as HTMLInputElement;
+											input?.focus();
+										});
+									}}
                 >
                   + Adicionar card
                 </button>
-              `}
+              `
+					}
         </div>
       </div>
     `;
-  }
+	}
 }
 
 declare global {
-  interface HTMLElementTagNameMap {
-    "kanban-column": KanbanColumn;
-  }
+	interface HTMLElementTagNameMap {
+		"kanban-column": KanbanColumn;
+	}
 }

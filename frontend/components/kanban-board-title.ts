@@ -1,4 +1,4 @@
-import { LitElement, html, css } from "lit";
+import { css, html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 
 @customElement("kanban-board-title")
@@ -121,6 +121,7 @@ export class KanbanBoardTitle extends LitElement {
 
   override updated() {
     if (this.shadowRoot) {
+      // biome-ignore lint: htmx.process() accepts ShadowRoot at runtime but TS types don't reflect it
       window.htmx.process(this.shadowRoot as any);
     }
   }
@@ -128,7 +129,9 @@ export class KanbanBoardTitle extends LitElement {
   private onEditClick = () => {
     this.editing = true;
     this.updateComplete.then(() => {
-      const input = this.shadowRoot?.querySelector(".input") as HTMLInputElement;
+      const input = this.shadowRoot?.querySelector(
+        ".input",
+      ) as HTMLInputElement;
       input?.focus();
     });
   };
@@ -147,13 +150,15 @@ export class KanbanBoardTitle extends LitElement {
     return html`
       <div class="board-header">
         ${this.editing
-          ? html`
+        ? html`
               <form
                 class="form"
                 hx-patch=${this.patchUrl}
                 hx-target="host"
                 hx-swap="outerHTML"
-                @submit=${() => { this.editing = false; }}
+                @submit=${() => {
+            this.editing = false;
+          }}
               >
                 <input
                   type="text"
@@ -170,7 +175,7 @@ export class KanbanBoardTitle extends LitElement {
                 </button>
               </form>
             `
-          : html`
+        : html`
               <div class="view">
                 <h1 class="title">${this.title}</h1>
                 <button
@@ -184,7 +189,8 @@ export class KanbanBoardTitle extends LitElement {
                   </svg>
                 </button>
               </div>
-            `}
+            `
+      }
       </div>
     `;
   }
