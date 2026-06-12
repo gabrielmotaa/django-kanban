@@ -1,5 +1,7 @@
 # Django Kanban
 
+![Kanban Board](docs/screenshot.png)
+
 Um projeto de kanban board construído com **Django**, explorando duas abordagens de frontend em paralelo:
 
 1. **Django Templates** — renderização server-side tradicional
