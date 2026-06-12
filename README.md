@@ -136,9 +136,25 @@ O Vite compila `frontend/` e gera o bundle em `kanban/static/kanban/js/kanban-el
 
 ### Testes
 
-Para executar os testes unitários do Django:
+O projeto possui testes unitários (models/views) e testes de integração de ponta a ponta (E2E) usando Playwright.
+
+#### 1. Instalar os navegadores do Playwright (necessário apenas uma vez):
+```bash
+uv run playwright install chromium
+```
+
+#### 2. Executar testes unitários (rápidos, deseleciona integração por padrão):
 ```bash
 uv run pytest
+```
+
+#### 3. Executar testes de integração (browser real rodando E2E):
+```bash
+# Execução headless (em segundo plano)
+uv run pytest -m integration
+
+# Execução headed (abrindo janela visual do navegador) com 1 segundo de intervalo para assistir
+uv run pytest -m integration --headed --slowmo 1000
 ```
 
 ---

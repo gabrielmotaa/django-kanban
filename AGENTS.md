@@ -22,7 +22,7 @@ This document serves as a quick reference for the architecture, commands, and co
     *   `fixtures/initial_data.json` - Initial database seed data for SQLite.
     *   `forms.py` - Django forms used to validate request data.
     *   `models.py` - Database models (`Board`, `Column`, `Card`).
-    *   `tests/` - Unit tests separated by scope (`test_models.py`, `test_views.py`).
+    *   `tests/` - Unit tests (`test_models.py`, `test_views.py`) and browser integration tests (`test_integration.py`).
     *   `views.py` - Route handlers implemented as Class-Based Views (CBVs).
     *   `static/kanban/` - Compiled assets copied by Vite.
     *   `templates/kanban/` - Django HTML template files.
@@ -48,8 +48,11 @@ uv run manage.py loaddata initial_data
 # Start the Django development server
 uv run manage.py runserver
 
-# Run all unit tests
+# Run all unit tests (skips integration tests by default)
 uv run pytest
+
+# Run integration/browser tests explicitly (requires playwright)
+uv run pytest -m integration
 
 # Run unit tests with coverage report
 uv run pytest --cov=kanban
