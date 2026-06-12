@@ -1,4 +1,7 @@
 :root {
+    /* Font Family */
+    --font-family: 'Inter', system-ui, sans-serif;
+
     /* Colors */
     --color-bg-body: #f8fafc;
     --color-bg-column: #f1f5f9;

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Django Kanban — Hypermedia vs Web Components{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'kanban/css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+<main class="home-page">
+    <div class="home-container">
+
+        <header class="home-header">
+            <h1 class="home-title">Django Kanban</h1>
+            <p class="home-description">
+                Implementação de um quadro Kanban explorando duas abordagens para construir a camada de UI
+                sobre uma base comum de <strong>hypermedia com HTMX</strong> e backend Django.
+            </p>
+        </header>
+
+        <div class="home-divider">escolha uma abordagem</div>
+
+        <div class="home-cards">
+            <a href="{% url 'index' 'templates' %}" class="approach-card" id="link-templates">
+                <div class="card-icon card-icon--htmx">🌐</div>
+                <h2 class="card-title">Django Templates</h2>
+                <p class="card-subtitle">HTMX + Alpine.js</p>
+                <p class="card-description">
+                    A UI é composta por templates Django renderizados no servidor e fragmentos HTML
+                    trocados via HTMX. O Alpine.js gerencia o estado local dos componentes.
+                </p>
+                <div class="card-tags">
+                    <span class="tag">HTMX</span>
+                    <span class="tag">Alpine.js</span>
+                    <span class="tag">Django Templates</span>
+                </div>
+                <div class="card-arrow">
+                    Ver implementação <span>→</span>
+                </div>
+            </a>
+
+            <a href="{% url 'index' 'components' %}" class="approach-card" id="link-components">
+                <div class="card-icon card-icon--lit">🧩</div>
+                <h2 class="card-title">Web Components</h2>
+                <p class="card-subtitle">Lit + HTMX + TypeScript</p>
+                <p class="card-description">
+                    A UI é construída com Web Components encapsulados usando Lit. O HTMX é
+                    processado dentro do Shadow DOM para comunicação com o servidor.
+                </p>
+                <div class="card-tags">
+                    <span class="tag">Lit</span>
+                    <span class="tag">HTMX</span>
+                    <span class="tag">TypeScript</span>
+                </div>
+                <div class="card-arrow">
+                    Ver implementação <span>→</span>
+                </div>
+            </a>
+        </div>
+
+        <footer class="home-footer">
+            Ambas as implementações compartilham o mesmo backend Django e banco de dados.
+        </footer>
+
+    </div>
+</main>
+{% endblock %}

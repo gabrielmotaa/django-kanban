@@ -22,6 +22,10 @@ from kanban.models import Board, Card, Column
 from kanban.utils import template_for_request
 
 
+def home(request: HttpRequest) -> HttpResponse:
+    return render(request, "kanban/home.html")
+
+
 def index(request: HttpRequest, tech: str) -> HttpResponse:
     board = get_object_or_404(Board.objects.prefetch_related("columns__cards"), pk=1)
     match tech:
