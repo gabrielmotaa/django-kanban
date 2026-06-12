@@ -91,23 +91,26 @@ class CardDetailView(View):
                 order = min(order, len(cards))
                 cards.insert(order, card)
                 for index, c in enumerate(cards):
-                    c.order = index
-                    c.save(update_fields=["order"])
+                    if c.order != index:
+                        c.order = index
+                        c.save(update_fields=["order"])
             else:
                 # Different column.
                 # Remove from origin and reorder.
                 cards = list(card.column.cards.exclude(pk=card.pk))
                 for index, c in enumerate(cards):
-                    c.order = index
-                    c.save(update_fields=["order"])
+                    if c.order != index:
+                        c.order = index
+                        c.save(update_fields=["order"])
 
                 # Add into target and reorder.
                 cards = list(target_column.cards.all())
                 order = min(order, len(cards))
                 cards.insert(order, card)
                 for index, c in enumerate(cards):
-                    c.order = index
-                    c.save(update_fields=["order"])
+                    if c.order != index:
+                        c.order = index
+                        c.save(update_fields=["order"])
 
                 card.column = target_column
                 card.order = order

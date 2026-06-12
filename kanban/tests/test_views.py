@@ -355,6 +355,64 @@ def test_card_move_different_column(client: Client, col_a: Column, col_b: Column
     assert card_1.order == 0
 
 
+def test_card_move_same_column_with_three_cards(client: Client, col_a: Column):
+    card_1 = Card.objects.create(column=col_a, title="Card 1", order=0)
+    card_2 = Card.objects.create(column=col_a, title="Card 2", order=1)
+    card_3 = Card.objects.create(column=col_a, title="Card 3", order=2)
+    response = client.patch(
+        reverse("card_detail", args=[card_3.pk]),
+        data=urlencode({"column_id": col_a.pk, "order": 1}),
+        content_type="application/x-www-form-urlencoded",
+    )
+    assert response.status_code == 204
+    card_1.refresh_from_db()
+    card_2.refresh_from_db()
+    card_3.refresh_from_db()
+    assert card_1.order == 0
+    assert card_3.order == 1
+    assert card_2.order == 2
+
+
+def test_card_move_different_column_with_unmoved_source(
+    client: Client, col_a: Column, col_b: Column
+):
+    card_1 = Card.objects.create(column=col_a, title="Card 1", order=0)
+    card_2 = Card.objects.create(column=col_a, title="Card 2", order=1)
+    card_3 = Card.objects.create(column=col_a, title="Card 3", order=2)
+    response = client.patch(
+        reverse("card_detail", args=[card_3.pk]),
+        data=urlencode({"column_id": col_b.pk, "order": 0}),
+        content_type="application/x-www-form-urlencoded",
+    )
+    assert response.status_code == 204
+    card_1.refresh_from_db()
+    card_2.refresh_from_db()
+    card_3.refresh_from_db()
+    assert card_1.order == 0
+    assert card_2.order == 1
+    assert card_3.column == col_b
+    assert card_3.order == 0
+
+
+def test_card_move_different_column_reorder_target(
+    client: Client, col_a: Column, col_b: Column
+):
+    card_a1 = Card.objects.create(column=col_a, title="Card A1", order=0)
+    card_b1 = Card.objects.create(column=col_b, title="Card B1", order=0)
+    response = client.patch(
+        reverse("card_detail", args=[card_a1.pk]),
+        data=urlencode({"column_id": col_b.pk, "order": 0}),
+        content_type="application/x-www-form-urlencoded",
+    )
+    assert response.status_code == 204
+    card_a1.refresh_from_db()
+    card_b1.refresh_from_db()
+    assert card_a1.column == col_b
+    assert card_a1.order == 0
+    assert card_b1.column == col_b
+    assert card_b1.order == 1
+
+
 def test_card_move_invalid(client: Client, col_b: Column):
     card = Card.objects.create(column=col_b, title="Test Card", order=0)
     response = client.patch(
@@ -456,3 +514,51 @@ def test_card_edit_invalid_field_errors(client: Client, col_a: Column):
     )
     assert response.status_code == 400
     assert "order" in response.content.decode("utf-8")
+
+
+def test_card_move_same_column_clamp_order(client: Client, col_a: Column):
+    card_1 = Card.objects.create(column=col_a, title="Card 1", order=0)
+    card_2 = Card.objects.create(column=col_a, title="Card 2", order=1)
+    response = client.patch(
+        reverse("card_detail", args=[card_1.pk]),
+        data=urlencode({"column_id": col_a.pk, "order": 99}),
+        content_type="application/x-www-form-urlencoded",
+    )
+    assert response.status_code == 204
+    card_1.refresh_from_db()
+    card_2.refresh_from_db()
+    assert card_2.order == 0
+    assert card_1.order == 1
+
+
+def test_card_move_different_column_clamp_order(
+    client: Client, col_a: Column, col_b: Column
+):
+    card_a1 = Card.objects.create(column=col_a, title="Card A1", order=0)
+    card_b1 = Card.objects.create(column=col_b, title="Card B1", order=0)
+    response = client.patch(
+        reverse("card_detail", args=[card_a1.pk]),
+        data=urlencode({"column_id": col_b.pk, "order": 99}),
+        content_type="application/x-www-form-urlencoded",
+    )
+    assert response.status_code == 204
+    card_a1.refresh_from_db()
+    card_b1.refresh_from_db()
+    assert card_b1.order == 0
+    assert card_a1.column == col_b
+    assert card_a1.order == 1
+
+
+def test_column_move_clamp_order(
+    client: Client, board: Board, col_a: Column, col_b: Column
+):
+    response = client.patch(
+        reverse("column_detail", args=[col_a.pk]),
+        data=urlencode({"order": 99}),
+        content_type="application/x-www-form-urlencoded",
+    )
+    assert response.status_code == 204
+    col_a.refresh_from_db()
+    col_b.refresh_from_db()
+    assert col_b.order == 0
+    assert col_a.order == 1
