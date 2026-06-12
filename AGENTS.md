@@ -22,15 +22,13 @@ This document serves as a quick reference for the architecture, commands, and co
     *   `fixtures/initial_data.json` - Initial database seed data for SQLite.
     *   `forms.py` - Django forms used to validate request data.
     *   `models.py` - Database models (`Board`, `Column`, `Card`).
-    *   `tests/` - Unit tests separated by scope (`test_models.py`, `test_templates.py`, `test_components.py`).
-    *   `views/` - Route handlers:
-        *   `templates.py` - Views for the traditional Django Templates approach (with Alpine and HTMX).
-        *   `components.py` - Views for the Web Components SPA approach (Lit).
+    *   `tests/` - Unit tests separated by scope (`test_models.py`, `test_views.py`).
+    *   `views.py` - Route handlers implemented as Class-Based Views (CBVs).
     *   `static/kanban/` - Compiled assets copied by Vite.
     *   `templates/kanban/` - Django HTML template files.
 *   `frontend/` - TypeScript source code for Web Components (Lit):
     *   `index.ts` - Entry point (registers all custom elements).
-    *   `components/` - Individual component implementations (`kanban-board.ts`, `kanban-column.ts`, `kanban-card.ts`).
+    *   `components/` - Individual component implementations (`kanban-board.ts`, `kanban-column.ts`, `kanban-card.ts`, `kanban-board-title.ts`).
 
 ---
 
@@ -81,7 +79,8 @@ npm run typecheck
     *   `title` (CharField, max 100)
     *   `order` (PositiveIntegerField)
     *   `color` (CharField, default `"#64748b"`)
-    *   Properties: `color_choices` (available colors), `fg_color` (returns contrasting text color for accessibility).
+    *   Properties: `fg_color` (returns contrasting text color for accessibility).
+    *   Constants: `COLOR_CHOICES` (available colors).
 3.  **`Card`**:
     *   ForeignKey to `Column` (`related_name="cards"`, Cascade Delete).
     *   `title` (CharField, max 200)
@@ -94,7 +93,7 @@ npm run typecheck
 ## Rules and Conventions
 
 ### 1. Models and Forms
-*   **Strict Validation:** Ensure all POST request inputs are validated through Django Forms defined in [forms.py](file:///Users/gabrieldamota/Code/django-kanban/kanban/forms.py) before updating or creating models.
+*   **Strict Validation:** Ensure all POST/PATCH request inputs are validated through Django Forms defined in [forms.py](file:///Users/gabrieldamota/Code/django-kanban/kanban/forms.py) before updating or creating models.
 
 ### 2. Django Admin
 *   All database models must be registered in [admin.py](file:///Users/gabrieldamota/Code/django-kanban/kanban/admin.py).
