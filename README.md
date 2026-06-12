@@ -28,39 +28,37 @@ O objetivo central é comparar e integrar essas duas estratégias num mesmo proj
 ```
 django-kanban/
 │
-├── core/                        # Configurações do projeto Django
+├── core/                          # Configurações do projeto Django
 │   ├── settings.py
-│   ├── urls.py                  # Rota raiz → inclui kanban.urls
+│   ├── urls.py
 │   ├── asgi.py
 │   └── wsgi.py
 │
-├── kanban/                      # App principal
-│   ├── views.py                 # Views CBV (index, Card, Column, Board views)
+├── kanban/ 
+│   ├── views.py
 │   ├── templates/
-│   │   ├── base.html            # Layout base (blocos: title, content, extra_js…)
+│   │   ├── base.html
 │   │   └── kanban/
-│   │       ├── templates/index.html   # Página: abordagem Django Templates
-│   │       └── components/index.html  # Página: abordagem Web Components (Lit)
+│   │       ├── templates/*.html   # Abordagem Django Templates
+│   │       └── components/*.html  # Abordagem Web Components (Lit)
 │   ├── static/
 │   │   └── kanban/
-│   │       └── js/              # ← bundle gerado pelo Vite
+│   │       ├── css/
+│   │       └── js/                # ← bundle gerado pelo Vite
 │   ├── urls.py
 │   ├── models.py
 │   ├── apps.py
 │   └── migrations/
 │
-├── frontend/                    # Código-fonte dos Web Components
-│   ├── index.ts                 # Entry point — registra todos os custom elements
+├── frontend/                      # Código-fonte dos Web Components
+│   ├── index.ts
 │   └── components/
-│       ├── kanban-board.ts      # Componente <kanban-board> (Lit + TypeScript)
-│       ├── kanban-column.ts     # Componente <kanban-column> (Lit + TypeScript)
-│       ├── kanban-card.ts       # Componente <kanban-card> (Lit + TypeScript)
-│       └── kanban-board-title.ts # Componente <kanban-board-title> (Lit + TypeScript)
+│       └── kanban-*.ts
 │
-├── package.json                 # Dependências Node (Lit, Vite, TypeScript)
-├── tsconfig.json                # Config TypeScript (ES2021, decorators)
-├── vite.config.ts               # Vite em library mode → output em kanban/static/
-├── pyproject.toml               # Metadados Python + dependências uv
+├── package.json
+├── tsconfig.json
+├── vite.config.ts
+├── pyproject.toml
 ├── .pre-commit-config.yaml
 └── manage.py
 ```
@@ -93,7 +91,7 @@ django-kanban/
 ```bash
 # 1. Clonar o repositório
 git clone <repo-url>
-git checkout master
+git checkout main
 cd django-kanban
 
 # 2. Criar o ambiente virtual e instalar dependências Python
