@@ -4,24 +4,47 @@
 {% block title %}Kanban Board - Web Components{% endblock %}
 
 {% block extra_head %}
+<script src="{% static 'kanban/js/alpine.min.js' %}" defer></script>
 <script type="module" src="{% static 'kanban/js/kanban-elements.js' %}"></script>
 {% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'kanban/css/templates_style.css' %}">
+{% endblock extra_css %}
+
 {% block content %}
-<div hx-headers='{"X-Web-Components": "true"}'>
-    <h1>Kanban Board - Web Components</h1>
+{% include 'kanban/components/_board_title.html' %}
 
-    <p>This page demonstrates the use of Web Components in a Django application.</p>
-    
-    <kanban-board id="board" move-card-url="{% url 'card_move' %}" move-column-url="{% url 'column_move' %}">
-        {% for column in board.columns.all %}
-        <kanban-column column-id="{{ column.id }}" title="{{ card.title }}">
-            {% for card in column.cards.all %}
-                <kanban-card card-id="{{ card.id }}" order="{{ card.order }}">{{ card.title }}</kanban-card>
-            {% endfor %}
-        </kanban-column>
-        {% endfor %}
-    </kanban-board>
-</div>
+<kanban-board id="board" board-id="{{ board.pk }}">
+    {% for column in board.columns.all %}
+        {% include 'kanban/components/_column.html' %}
+    {% endfor %}
+</kanban-board>
+{% endblock %}
 
+{% block extra_js %}
+<script id="app-data" type="application/json">
+{
+  "urls": {
+    "cardCreate": "{% url 'card_create' %}",
+    "cardDetail": "{% url 'card_detail' 0 %}",
+    "columnCreate": "{% url 'column_create' %}",
+    "columnDetail": "{% url 'column_detail' 0 %}",
+    "boardDetail": "{% url 'board_detail' board.pk %}"
+  },
+  "colorChoices": [
+    {% for hex, name in color_choices %}
+      ["{{ hex }}", "{{ name }}"]{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
+</script>
+<script>
+    const appData = JSON.parse(document.getElementById('app-data').textContent);
+    window.urls = appData.urls;
+    window.colorChoices = appData.colorChoices;
+    document.body.addEventListener('htmx:configRequest', (event) => {
+        event.detail.headers['X-Web-Components'] = 'true';
+    });
+</script>
 {% endblock %}

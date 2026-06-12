@@ -1,0 +1,5 @@
+<kanban-column column-id="{{ column.pk }}" title="{{ column.title }}" color="{{ column.color }}">
+    {% for card in column.cards.all %}
+        {% include 'kanban/components/_card.html' %}
+    {% endfor %}
+</kanban-column>
