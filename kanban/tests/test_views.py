@@ -52,14 +52,14 @@ def test_column_move(client: Client, col_a: Column, col_b: Column):
 
 def test_column_delete(client: Client, col_a: Column):
     response = client.delete(reverse("column_detail", args=[col_a.pk]))
-    assert response.status_code == 200
+    assert response.status_code == 204
     assert not Column.objects.filter(pk=col_a.pk).exists()
 
 
 def test_card_delete(client: Client, col_a: Column):
     card = Card.objects.create(column=col_a, title="Delete Me", order=0)
     response = client.delete(reverse("card_detail", args=[card.pk]))
-    assert response.status_code == 200
+    assert response.status_code == 204
     assert not Card.objects.filter(pk=card.pk).exists()
 
 

@@ -8,7 +8,8 @@
     <title>{% block title %}Django Kanban{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="preload" as="style"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="{% static 'kanban/css/reset.css' %}">
     <link rel="stylesheet" href="{% static 'kanban/css/theme.css' %}">
@@ -22,6 +23,11 @@
     <script>
         document.body.addEventListener('htmx:configRequest', (event) => {
             event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+        });
+        document.body.addEventListener('htmx:beforeSwap', (event) => {
+            if (event.detail.xhr.status === 204) {
+                event.detail.shouldSwap = true;
+            }
         });
     </script>
     {% block extra_js %}{% endblock %}

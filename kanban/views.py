@@ -118,7 +118,7 @@ class CardDetailView(View):
     def delete(self, request: HttpRequest, pk: int) -> HttpResponse:
         card = get_object_or_404(Card, pk=pk)
         card.delete()
-        return HttpResponse(status=HTTPStatus.OK)
+        return HttpResponse(status=HTTPStatus.NO_CONTENT)
 
 
 class ColumnCreateView(View):
@@ -190,7 +190,7 @@ class ColumnDetailView(View):
     def delete(self, request: HttpRequest, pk: int) -> HttpResponse:
         column = get_object_or_404(Column, pk=pk)
         column.delete()
-        return HttpResponse(status=HTTPStatus.OK)
+        return HttpResponse(status=HTTPStatus.NO_CONTENT)
 
 
 class BoardDetailView(View):
