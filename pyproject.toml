@@ -27,3 +27,10 @@ markers = [
     "integration: marks tests as integration/browser tests (run with -m integration)"
 ]
 addopts = "-m 'not integration'"
+
+[tool.coverage.run]
+branch = true
+omit = [
+    "kanban/tests/*",
+]
+

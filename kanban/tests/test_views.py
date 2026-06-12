@@ -25,6 +25,12 @@ def col_b(board) -> Column:
     return Column.objects.create(board=board, title="Col B", order=1)
 
 
+def test_home(client: Client):
+    response = client.get(reverse("home"))
+    assert response.status_code == 200
+    assertTemplateUsed(response, "kanban/home.html")
+
+
 def test_template_index(client: Client, board: Board):
     response = client.get(reverse("index", args=["templates"]))
     assert response.status_code == 200
@@ -48,6 +54,24 @@ def test_column_move(client: Client, col_a: Column, col_b: Column):
     col_b.refresh_from_db()
     assert col_b.order == 0
     assert col_a.order == 1
+
+
+def test_column_move_with_three_columns(
+    client: Client, board: Board, col_a: Column, col_b: Column
+):
+    col_c = Column.objects.create(board=board, title="Col C", order=2)
+    response = client.patch(
+        reverse("column_detail", args=[col_c.pk]),
+        data=urlencode({"order": 1}),
+        content_type="application/x-www-form-urlencoded",
+    )
+    assert response.status_code == 204
+    col_a.refresh_from_db()
+    col_b.refresh_from_db()
+    col_c.refresh_from_db()
+    assert col_a.order == 0
+    assert col_c.order == 1
+    assert col_b.order == 2
 
 
 def test_column_delete(client: Client, col_a: Column):
@@ -164,6 +188,27 @@ def test_column_edit_color(client: Client, col_a: Column, web_components: bool):
     response = client.patch(
         reverse("column_detail", args=[col_a.pk]),
         data=urlencode({"title": "Col A", "color": "#ec4899"}),
+        content_type="application/x-www-form-urlencoded",
+        headers=headers,
+    )
+    assert response.status_code == 200
+    assertTemplateUsed(response, template_name)
+    col_a.refresh_from_db()
+    assert col_a.color == "#ec4899"
+
+
+@pytest.mark.parametrize("web_components", [True, False])
+def test_column_edit_only_color(client: Client, col_a: Column, web_components: bool):
+    headers = {"X-Web-Components": "true"} if web_components else {}
+    template_name = (
+        "kanban/components/_column.html"
+        if web_components
+        else "kanban/templates/_column.html"
+    )
+
+    response = client.patch(
+        reverse("column_detail", args=[col_a.pk]),
+        data=urlencode({"color": "#ec4899"}),
         content_type="application/x-www-form-urlencoded",
         headers=headers,
     )
