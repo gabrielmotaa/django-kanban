@@ -124,18 +124,12 @@ class BoardPage:
         col = self.col_locator(col_id)
         target_col = self.col_locator(target_col_id)
 
-        # Explicitly set draggable="true" on the source column
-        col.evaluate("el => el.setAttribute('draggable', 'true')")
-
         # Drag from header center of source to header center of target
         col.drag_to(
             target_col,
             source_position={"x": 140, "y": 20},
             target_position={"x": 140, "y": 20},
         )
-
-        # Restore/remove draggable
-        col.evaluate("el => el.removeAttribute('draggable')")
         self.page.wait_for_timeout(500)
 
     def edit_column_title(self, col_id: int, new_title: str):
