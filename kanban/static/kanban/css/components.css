@@ -1,0 +1,15 @@
+html,
+body {
+    height: 100vh;
+    overflow: hidden;
+}
+
+body {
+    font-family: system-ui, sans-serif;
+    background: var(--color-bg-body);
+    margin: 0;
+    padding: 24px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
