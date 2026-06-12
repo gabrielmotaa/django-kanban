@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Build, Lint, and Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Run Biome Lint
+        run: npm run lint
+
+      - name: Run TypeScript Typecheck
+        run: npm run typecheck
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: true
+
+      - name: Install Python dependencies
+        run: uv sync
+
+      - name: Run Ruff Check
+        run: uv run ruff check
+
+      - name: Run Ruff Format Check
+        run: uv run ruff format --check
+
+      - name: Run pytest (Unit Tests)
+        run: uv run pytest --cov=kanban --cov-report=term-missing
+
+      - name: Install Playwright browsers
+        run: uv run playwright install --with-deps chromium
+
+      - name: Run pytest (Integration Tests)
+        run: uv run pytest -m integration
