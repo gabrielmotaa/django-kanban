@@ -21,3 +21,11 @@ node_modules/
 
 # Vite build output
 kanban/static/kanban/js/
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover

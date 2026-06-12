@@ -12,7 +12,7 @@ class CardEditForm(forms.Form):
         column_id = cleaned_data.get("column_id")
         order = cleaned_data.get("order")
 
-        if not title and column_id is None and order is None:
+        if not title and (column_id is None or order is None):
             raise forms.ValidationError(
                 "Either title or column_id and order must be provided."
             )

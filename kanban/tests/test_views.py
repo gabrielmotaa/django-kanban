@@ -318,3 +318,96 @@ def test_card_move_invalid(client: Client, col_b: Column):
         content_type="application/x-www-form-urlencoded",
     )
     assert response.status_code == 400
+
+
+def test_index_invalid_tech(client: Client, board: Board):
+    response = client.get(reverse("index", args=["invalid-tech"]))
+    assert response.status_code == 404
+
+
+def test_card_move_different_column_reorder_source(
+    client: Client, col_a: Column, col_b: Column
+):
+    card_1 = Card.objects.create(column=col_a, title="Card 1", order=0)
+    card_2 = Card.objects.create(column=col_a, title="Card 2", order=1)
+    response = client.patch(
+        reverse("card_detail", args=[card_1.pk]),
+        data=urlencode({"column_id": col_b.pk, "order": 0}),
+        content_type="application/x-www-form-urlencoded",
+    )
+    assert response.status_code == 204
+    card_1.refresh_from_db()
+    card_2.refresh_from_db()
+    assert card_1.column == col_b
+    assert card_1.order == 0
+    assert card_2.column == col_a
+    assert card_2.order == 0
+
+
+@pytest.mark.parametrize("web_components", [True, False])
+def test_column_detail_get(client: Client, col_a: Column, web_components: bool):
+    headers = {"X-Web-Components": "true"} if web_components else {}
+    template_name = (
+        "kanban/components/_column.html"
+        if web_components
+        else "kanban/templates/_column.html"
+    )
+    response = client.get(reverse("column_detail", args=[col_a.pk]), headers=headers)
+    assert response.status_code == 200
+    assertTemplateUsed(response, template_name)
+    assert col_a.title.encode("utf-8") in response.content
+
+
+def test_column_edit_invalid_field_errors(client: Client, col_a: Column):
+    response = client.patch(
+        reverse("column_detail", args=[col_a.pk]),
+        data=urlencode({"title": "Valid Title", "order": -5}),
+        content_type="application/x-www-form-urlencoded",
+    )
+    assert response.status_code == 400
+    assert "order" in response.content.decode("utf-8")
+
+
+@pytest.mark.parametrize("web_components", [True, False])
+def test_board_detail_get(client: Client, board: Board, web_components: bool):
+    headers = {"X-Web-Components": "true"} if web_components else {}
+    template_name = (
+        "kanban/components/_board_title.html"
+        if web_components
+        else "kanban/templates/_board_title.html"
+    )
+    response = client.get(reverse("board_detail", args=[board.pk]), headers=headers)
+    assert response.status_code == 200
+    assertTemplateUsed(response, template_name)
+    assert board.title.encode("utf-8") in response.content
+
+
+def test_card_move_missing_order(client: Client, col_a: Column, col_b: Column):
+    card = Card.objects.create(column=col_a, title="Card 1", order=0)
+    response = client.patch(
+        reverse("card_detail", args=[card.pk]),
+        data=urlencode({"column_id": col_b.pk}),
+        content_type="application/x-www-form-urlencoded",
+    )
+    assert response.status_code == 400
+
+
+def test_card_move_missing_column(client: Client, col_a: Column):
+    card = Card.objects.create(column=col_a, title="Card 1", order=0)
+    response = client.patch(
+        reverse("card_detail", args=[card.pk]),
+        data=urlencode({"order": 1}),
+        content_type="application/x-www-form-urlencoded",
+    )
+    assert response.status_code == 400
+
+
+def test_card_edit_invalid_field_errors(client: Client, col_a: Column):
+    card = Card.objects.create(column=col_a, title="Original Card", order=0)
+    response = client.patch(
+        reverse("card_detail", args=[card.pk]),
+        data=urlencode({"title": "Valid Title", "order": -5}),
+        content_type="application/x-www-form-urlencoded",
+    )
+    assert response.status_code == 400
+    assert "order" in response.content.decode("utf-8")

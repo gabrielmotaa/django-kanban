@@ -50,6 +50,12 @@ uv run manage.py runserver
 
 # Run all unit tests
 uv run pytest
+
+# Run unit tests with coverage report
+uv run pytest --cov=kanban
+
+# Run unit tests and show missing lines in coverage report
+uv run pytest --cov=kanban --cov-report=term-missing
 ```
 
 ### Frontend (Lit / Vite)
