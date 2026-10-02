@@ -19,6 +19,8 @@ export class KanbanCard extends LitElement {
 
   private isDragging = false;
 
+  private cleanupController?: AbortController;
+
   static styles = css`
     :host {
       display: block;
@@ -155,17 +157,17 @@ export class KanbanCard extends LitElement {
     super.connectedCallback();
 
     this.draggable = true;
-    this.addEventListener("dragstart", this.onDragStart);
-    this.addEventListener("dragend", this.onDragEnd);
-    this.addEventListener("click", this.onCardClick);
+    this.cleanupController = new AbortController();
+    const { signal } = this.cleanupController;
+
+    this.addEventListener("dragstart", this.onDragStart, { signal });
+    this.addEventListener("dragend", this.onDragEnd, { signal });
+    this.addEventListener("click", this.onCardClick, { signal });
   }
 
   override disconnectedCallback() {
     super.disconnectedCallback();
-
-    this.removeEventListener("dragstart", this.onDragStart);
-    this.removeEventListener("dragend", this.onDragEnd);
-    this.removeEventListener("click", this.onCardClick);
+    this.cleanupController?.abort();
   }
 
   private onDragStart = () => {

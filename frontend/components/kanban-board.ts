@@ -30,6 +30,8 @@ export class KanbanBoard extends LitElement {
 
   dragState: DragState = null;
 
+  private cleanupController?: AbortController;
+
   @state()
   private addingColumn = false;
 
@@ -198,24 +200,41 @@ export class KanbanBoard extends LitElement {
   override connectedCallback() {
     super.connectedCallback();
 
+    this.cleanupController = new AbortController();
+    const { signal } = this.cleanupController;
+
     this.addEventListener(
       "kanban-card-dragstart",
       this.onCardDragStart as EventListener,
+      { signal },
     );
     this.addEventListener(
       "kanban-card-dragend",
       this.onCardDragEnd as EventListener,
+      { signal },
     );
     this.addEventListener(
       "kanban-column-dragstart",
       this.onColumnDragStart as EventListener,
+      { signal },
     );
     this.addEventListener(
       "kanban-column-dragend",
       this.onColumnDragEnd as EventListener,
+      { signal },
     );
-    this.addEventListener("cardmove", this.onCardMove as EventListener);
-    this.addEventListener("columnmove", this.onColumnMove as EventListener);
+    this.addEventListener("cardmove", this.onCardMove as EventListener, {
+      signal,
+    });
+    this.addEventListener("columnmove", this.onColumnMove as EventListener, {
+      signal,
+    });
+  }
+
+  override disconnectedCallback() {
+    super.disconnectedCallback();
+
+    this.cleanupController?.abort();
   }
 
   override updated() {

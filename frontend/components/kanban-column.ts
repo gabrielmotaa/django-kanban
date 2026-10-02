@@ -346,6 +346,8 @@ export class KanbanColumn extends LitElement {
 	@state()
 	private addingCard = false;
 
+	private cleanupController?: AbortController;
+
 	colorChoices = window.colorChoices;
 
 	get fgColor(): string {
@@ -370,31 +372,25 @@ export class KanbanColumn extends LitElement {
 	override connectedCallback() {
 		super.connectedCallback();
 
-		this.addEventListener("dragenter", this.onDragEnter);
-		this.addEventListener("dragleave", this.onDragLeave);
-		this.addEventListener("dragover", this.onDragOver);
-		this.addEventListener("drop", this.onDrop);
+		this.cleanupController = new AbortController();
+		const { signal } = this.cleanupController;
+
+		this.addEventListener("dragenter", this.onDragEnter, { signal });
+		this.addEventListener("dragleave", this.onDragLeave, { signal });
+		this.addEventListener("dragover", this.onDragOver, { signal });
+		this.addEventListener("drop", this.onDrop, { signal });
 
 		// Column dragging listeners
-		this.addEventListener("dragstart", this.onColumnDragStart);
-		this.addEventListener("dragend", this.onColumnDragEnd);
+		this.addEventListener("dragstart", this.onColumnDragStart, { signal });
+		this.addEventListener("dragend", this.onColumnDragEnd, { signal });
 
 		// Document click to close menu on click away
-		document.addEventListener("click", this.onDocumentClick);
+		document.addEventListener("click", this.onDocumentClick, { signal });
 	}
 
 	override disconnectedCallback() {
 		super.disconnectedCallback();
-
-		this.removeEventListener("dragenter", this.onDragEnter);
-		this.removeEventListener("dragleave", this.onDragLeave);
-		this.removeEventListener("dragover", this.onDragOver);
-		this.removeEventListener("drop", this.onDrop);
-
-		this.removeEventListener("dragstart", this.onColumnDragStart);
-		this.removeEventListener("dragend", this.onColumnDragEnd);
-
-		document.removeEventListener("click", this.onDocumentClick);
+		this.cleanupController?.abort();
 	}
 
 	private get board(): KanbanBoard {
