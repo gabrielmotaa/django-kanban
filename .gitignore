@@ -29,3 +29,6 @@ kanban/static/kanban/js/
 htmlcov/
 coverage.xml
 *.cover
+
+# macOS
+.DS_Store
