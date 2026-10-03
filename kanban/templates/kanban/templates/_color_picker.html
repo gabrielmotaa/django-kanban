@@ -1,0 +1,19 @@
+{# Color swatches. Params: choices, prefix (css block), mode ("patch" | "select"); patch also needs url + current. #}
+{% for hex, name in choices %}
+<button type="button"
+        title="{{ name }}"
+        aria-label="{{ name }}"
+        {% if mode == "patch" %}
+        hx-patch="{{ url }}"
+        hx-vals='{"color": "{{ hex }}"}'
+        hx-target="closest .column"
+        hx-swap="outerHTML"
+        class="{{ prefix }}__color-dot{% if current == hex %} {{ prefix }}__color-dot--active{% endif %}"
+        {% else %}
+        @click="selectedColor = '{{ hex }}'"
+        :class="selectedColor === '{{ hex }}' ? '{{ prefix }}__color-dot--active' : ''"
+        class="{{ prefix }}__color-dot"
+        {% endif %}
+        style="--dot-color: {{ hex }};"
+></button>
+{% endfor %}

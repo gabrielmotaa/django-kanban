@@ -1,92 +1,5 @@
 <div class="column" role="group" aria-label="{{ column.title }}" data-column-id="{{ column.pk }}" x-data="{ editingTitle: false, menuOpen: false }" style="--column-color: {{ column.color|default:'#64748b' }}; --column-fg: {{ column.fg_color }};">
-    <div class="column__header-bg">
-        <div class="column__title">
-            {# View mode #}
-            <div x-show="!editingTitle" class="column__header">
-                <span class="column__title-text">{{ column.title }}</span>
-                
-                {# Dropdown Menu Trigger #}
-                <div class="column__menu-wrapper">
-                    <button type="button" 
-                            @click="menuOpen = !menuOpen" 
-                            aria-label="Opções da coluna"
-                            class="column__menu-trigger"
-                    >
-                        ⋮
-                    </button>
-                    
-                    {# Dropdown Menu Content #}
-                    <div x-show="menuOpen" 
-                         x-cloak 
-                         @click.away="menuOpen = false" 
-                         class="column__menu-dropdown"
-                    >
-                        <button type="button" 
-                                @click="editingTitle = true; menuOpen = false; $nextTick(() => $refs.titleInput.focus())" 
-                                class="column__menu-btn"
-                        >
-                            Editar nome
-                        </button>
-                        
-                        <div class="column__menu-divider"></div>
-                        
-                        {# Color Picker Section inside Menu #}
-                        <div>
-                            <div class="column__menu-section-title">Cor da Coluna</div>
-                            <div class="column__color-grid">
-                                {% for hex, name in column.COLOR_CHOICES %}
-                                <button type="button" 
-                                        hx-patch="{% url 'column_detail' column.pk %}"
-                                        hx-vals='{"color": "{{ hex }}"}'
-                                        hx-target="closest .column"
-                                        hx-swap="outerHTML"
-                                        title="{{ name }}"
-                                        class="column__color-dot{% if column.color == hex %} column__color-dot--active{% endif %}"
-                                        style="--dot-color: {{ hex }};"
-                                ></button>
-                                {% endfor %}
-                            </div>
-                        </div>
-                        
-                        <div class="column__menu-divider"></div>
-                        
-                        <button type="button" 
-                                hx-delete="{% url 'column_detail' column.pk %}"
-                                hx-target="closest .column"
-                                hx-swap="outerHTML"
-                                hx-confirm="Deseja realmente apagar a coluna '{{ column.title }}' e todos os seus cards?"
-                                class="column__menu-btn column__menu-btn--danger"
-                        >
-                            Apagar coluna
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {# Edit mode #}
-            <form x-show="editingTitle"
-                  x-cloak
-                  hx-patch="{% url 'column_detail' column.pk %}"
-                  hx-target="closest .column"
-                  hx-swap="outerHTML"
-                  @htmx:after-request="editingTitle = false"
-                  class="column__edit-form"
-            >
-                {% csrf_token %}
-                <input 
-                    x-ref="titleInput"
-                    type="text"
-                    name="title"
-                    value="{{ column.title }}"
-                    required
-                    aria-label="Nome da coluna"
-                    class="column__edit-input"
-                >
-                <button type="submit" aria-label="Salvar nome" class="column__edit-btn-save">✓</button>
-                <button type="button" @click="editingTitle = false" aria-label="Cancelar edição" class="column__edit-btn-cancel">✗</button>
-            </form>
-        </div>
-    </div>
+    {% include "kanban/templates/_column_header.html" %}
   
     <div class="column__body">
         <div class="column__cards" id="column-{{ column.pk }}-cards">
@@ -123,6 +36,7 @@
                     required 
                     class="column__add-card-input"
                     maxlength="200"
+                    @keydown.escape="adding = false"
                 >
                 <div class="column__add-card-actions">
                     <button type="button" @click="adding = false" class="column__add-card-cancel">Cancelar</button>

@@ -55,15 +55,7 @@
                 <label class="column-create__color-label">Cor da Coluna</label>
                 <div class="column-create__color-grid">
                     <input type="hidden" name="color" :value="selectedColor">
-                    {% for hex, name in color_choices %}
-                    <button type="button" 
-                            @click="selectedColor = '{{ hex }}'"
-                            aria-label="{{ name }}"
-                            class="column-create__color-dot"
-                            :class="selectedColor === '{{ hex }}' ? 'column-create__color-dot--active' : ''"
-                            style="--dot-color: {{ hex }};"
-                    ></button>
-                    {% endfor %}
+                    {% include "kanban/templates/_color_picker.html" with choices=color_choices prefix="column-create" mode="select" %}
                 </div>
             </div>
             
