@@ -11,6 +11,13 @@
     hx-swap="innerHTML"
     {% if oob %}hx-swap-oob="true"{% endif %}
 >
+    {% with labels=card.labels.all %}
+    {% if labels %}
+    <div class="card__labels">
+        {% for label in labels %}{% include "kanban/templates/_label_pill.html" %}{% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
     <div class="card__title-view">{{ card.title }}</div>
     {% if card.description %}
     <div class="card__badges">

@@ -1,0 +1,95 @@
+<div id="label-popover" class="label-popover" role="region" aria-label="Etiquetas" x-show="open" x-cloak x-init="view = 'list'">
+    {# List view #}
+    <div x-show="view === 'list'">
+        <input type="search"
+               x-model="query"
+               placeholder="Buscar etiquetas…"
+               aria-label="Buscar etiquetas…"
+               class="label-popover__search"
+        >
+        <ul class="label-popover__list">
+            {% for label in board_labels %}
+            <li class="label-popover__item"
+                data-search="{{ label.name }} {{ label.color_name }}"
+                x-show="!query || $el.dataset.search.toLowerCase().includes(query.toLowerCase())"
+            >
+                <label class="label-popover__toggle">
+                    <input type="checkbox"
+                           {% if label.pk in attached_ids %}
+                           checked
+                           hx-delete="{% url 'card_labels' card.pk %}?label_id={{ label.pk }}"
+                           {% else %}
+                           hx-post="{% url 'card_labels' card.pk %}"
+                           hx-vals='{"label_id": {{ label.pk }}}'
+                           {% endif %}
+                           hx-trigger="change"
+                           hx-target="#label-popover"
+                           hx-swap="outerHTML"
+                    >
+                    {% include "kanban/templates/_label_pill.html" %}
+                </label>
+                <button type="button"
+                        class="label-popover__edit"
+                        aria-label="Editar etiqueta {{ label }}"
+                        @click="view = 'edit-{{ label.pk }}'"
+                >✎</button>
+            </li>
+            {% endfor %}
+        </ul>
+        <button type="button" class="card-dialog__action" @click="view = 'create'">Criar uma nova etiqueta</button>
+    </div>
+
+    {# Edit views, one per label #}
+    {% for label in board_labels %}
+    <form x-show="view === 'edit-{{ label.pk }}'"
+          x-cloak
+          x-data="{ selectedColor: '{{ label.color }}' }"
+          hx-patch="{% url 'label_detail' label.pk %}"
+          hx-target="#label-popover"
+          hx-swap="outerHTML"
+          class="label-popover__form"
+    >
+        <p class="label-popover__title">Editar etiqueta</p>
+        <input type="hidden" name="card_id" value="{{ card.pk }}">
+        <input type="text" name="name" value="{{ label.name }}" maxlength="30" aria-label="Nome da etiqueta" class="label-popover__input">
+        <input type="hidden" name="color" :value="selectedColor">
+        <div class="label-popover__colors">
+            {% include "kanban/templates/_color_picker.html" with choices=color_choices prefix="label-popover" mode="select" %}
+        </div>
+        <div class="card-dialog__form-actions">
+            <button type="submit" class="card-dialog__btn card-dialog__btn--primary">Salvar</button>
+            <button type="button"
+                    class="card-dialog__btn card-dialog__btn--danger"
+                    hx-delete="{% url 'label_detail' label.pk %}?card_id={{ card.pk }}"
+                    hx-target="#label-popover"
+                    hx-swap="outerHTML"
+                    hx-confirm="Excluir a etiqueta '{{ label }}'? Ela será removida de todos os cards."
+            >Excluir</button>
+            <button type="button" @click="view = 'list'" class="card-dialog__btn card-dialog__btn--secondary">Cancelar</button>
+        </div>
+    </form>
+    {% endfor %}
+
+    {# Create view #}
+    <form x-show="view === 'create'"
+          x-cloak
+          x-data="{ selectedColor: '#64748b' }"
+          hx-post="{% url 'label_create' %}"
+          hx-target="#label-popover"
+          hx-swap="outerHTML"
+          class="label-popover__form"
+    >
+        <p class="label-popover__title">Criar etiqueta</p>
+        <input type="hidden" name="board_id" value="{{ card.column.board_id }}">
+        <input type="hidden" name="card_id" value="{{ card.pk }}">
+        <input type="text" name="name" maxlength="30" aria-label="Nome da etiqueta" class="label-popover__input">
+        <input type="hidden" name="color" :value="selectedColor">
+        <div class="label-popover__colors">
+            {% include "kanban/templates/_color_picker.html" with choices=color_choices prefix="label-popover" mode="select" %}
+        </div>
+        <div class="card-dialog__form-actions">
+            <button type="submit" class="card-dialog__btn card-dialog__btn--primary">Salvar</button>
+            <button type="button" @click="view = 'list'" class="card-dialog__btn card-dialog__btn--secondary">Cancelar</button>
+        </div>
+    </form>
+</div>

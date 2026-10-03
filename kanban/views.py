@@ -9,6 +9,7 @@ from django.http import (
     QueryDict,
 )
 from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
 from django.views import View
 
 from kanban.forms import (
@@ -16,10 +17,14 @@ from kanban.forms import (
     CardCreateForm,
     CardDescriptionForm,
     CardEditForm,
+    CardLabelForm,
     ColumnCreateForm,
     ColumnEditForm,
+    LabelContextForm,
+    LabelCreateForm,
+    LabelEditForm,
 )
-from kanban.models import Board, Card, Column
+from kanban.models import Board, Card, Column, Label
 from kanban.utils import (
     ApiError,
     error_response,
@@ -33,8 +38,25 @@ def home(request: HttpRequest) -> HttpResponse:
     return render(request, "kanban/home.html")
 
 
+def label_registry(board: Board) -> list[dict]:
+    """The board's labels as the components' registry (served as JSON)."""
+    return [
+        {
+            "id": label.pk,
+            "name": label.name,
+            "color": label.color,
+            "fg": label.fg_color,
+            "colorName": label.color_name,
+            "href": reverse("label_detail", args=[label.pk]),
+        }
+        for label in board.labels.all()
+    ]
+
+
 def index(request: HttpRequest, tech: str) -> HttpResponse:
-    board = get_object_or_404(Board.objects.prefetch_related("columns__cards"), pk=1)
+    board = get_object_or_404(
+        Board.objects.prefetch_related("columns__cards__labels"), pk=1
+    )
     match tech:
         case "templates":
             template_name = "kanban/templates/index.html"
@@ -49,6 +71,7 @@ def index(request: HttpRequest, tech: str) -> HttpResponse:
             "board": board,
             "color_choices": Column.COLOR_CHOICES,
             "color_choices_json": json.dumps(Column.COLOR_CHOICES, ensure_ascii=False),
+            "labels_json": json.dumps(label_registry(board), ensure_ascii=False),
         },
     )
 
@@ -144,13 +167,29 @@ class CardDetailView(ApiView):
         return HttpResponse(status=HTTPStatus.NO_CONTENT)
 
 
+def fetch_card(pk: int) -> Card:
+    """A card with what the dialog needs (column, board, labels)."""
+    return fetch_or_error(
+        Card.objects.select_related("column__board").prefetch_related("labels"),
+        "Card não encontrado.",
+        pk=pk,
+    )
+
+
+def card_context(card: Card) -> dict:
+    return {
+        "card": card,
+        "board_labels": card.column.board.labels.all(),
+        "attached_ids": {label.pk for label in card.labels.all()},
+        "color_choices": Column.COLOR_CHOICES,
+    }
+
+
 class CardDialogView(ApiView):
     def get(self, request: HttpRequest, pk: int) -> HttpResponse:
-        card = fetch_or_error(
-            Card.objects.select_related("column"), "Card não encontrado.", pk=pk
-        )
+        card = fetch_card(pk)
         template_path = template_for_request(request, "_card_dialog.html")
-        return render(request, template_path, {"card": card})
+        return render(request, template_path, card_context(card))
 
 
 class CardDescriptionView(ApiView):
@@ -164,6 +203,113 @@ class CardDescriptionView(ApiView):
         card.save(update_fields=["description", "updated_at"])
         template_path = template_for_request(request, "_card_description_updated.html")
         return render(request, template_path, {"card": card})
+
+
+class CardLabelsView(ApiView):
+    """Attach (POST) or detach (DELETE ?label_id=) a label of the card's board."""
+
+    def post(self, request: HttpRequest, pk: int) -> HttpResponse:
+        return self._toggle(request, pk, request.POST, attach=True)
+
+    def delete(self, request: HttpRequest, pk: int) -> HttpResponse:
+        return self._toggle(request, pk, request.GET, attach=False)
+
+    def _toggle(self, request, pk: int, data, *, attach: bool) -> HttpResponse:
+        card = fetch_card(pk)
+        form = CardLabelForm(data)
+        if not form.is_valid():
+            raise ApiError(form_error_message(form))
+        label = fetch_or_error(
+            Label, "Etiqueta não encontrada.", pk=form.cleaned_data["label_id"]
+        )
+        if label.board_id != card.column.board_id:
+            raise ApiError("Etiqueta de outro quadro.")
+
+        if attach:
+            card.labels.add(label)
+        else:
+            card.labels.remove(label)
+
+        card = fetch_card(pk)
+        template_path = template_for_request(request, "_card_labels_updated.html")
+        return render(request, template_path, card_context(card))
+
+
+def labels_response(request, card: Card, affected: list[Card]) -> HttpResponse:
+    """Reply to a label create/edit/delete sent from `card`'s dialog.
+
+    Templates: the popover plus every affected card front, out-of-band.
+    Components: the updated label registry (cards react to it).
+    """
+    context = card_context(card)
+    context["affected_cards"] = affected
+    context["board"] = card.column.board
+    context["labels_json"] = json.dumps(
+        label_registry(card.column.board), ensure_ascii=False
+    )
+    template_path = template_for_request(request, "_label_changes.html")
+    return render(request, template_path, context)
+
+
+def refetch(cards: list[int]) -> list[Card]:
+    return list(
+        Card.objects.filter(pk__in=cards)
+        .select_related("column__board")
+        .prefetch_related("labels")
+    )
+
+
+class LabelCreateView(ApiView):
+    def post(self, request: HttpRequest) -> HttpResponse:
+        form = LabelCreateForm(request.POST)
+        if not form.is_valid():
+            raise ApiError(form_error_message(form))
+        board = fetch_or_error(
+            Board, "Quadro não encontrado.", pk=form.cleaned_data["board_id"]
+        )
+        card = fetch_card(form.cleaned_data["card_id"])
+        if card.column.board_id != board.pk:
+            raise ApiError("Card de outro quadro.")
+
+        Label.objects.create(
+            board=board,
+            name=form.cleaned_data["name"],
+            color=form.cleaned_data["color"],
+        )
+        return labels_response(request, fetch_card(card.pk), [])
+
+
+class LabelDetailView(ApiView):
+    def patch(self, request: HttpRequest, pk: int) -> HttpResponse:
+        label = fetch_or_error(Label, "Etiqueta não encontrada.", pk=pk)
+        form = LabelEditForm(QueryDict(request.body))
+        if not form.is_valid():
+            raise ApiError(form_error_message(form))
+        card = self._context_card(form.cleaned_data["card_id"], label)
+
+        affected_ids = list(label.cards.values_list("pk", flat=True))
+        label.name = form.cleaned_data["name"]
+        label.color = form.cleaned_data["color"]
+        label.save(update_fields=["name", "color"])
+        return labels_response(request, fetch_card(card.pk), refetch(affected_ids))
+
+    def delete(self, request: HttpRequest, pk: int) -> HttpResponse:
+        label = fetch_or_error(Label, "Etiqueta não encontrada.", pk=pk)
+        form = LabelContextForm(request.GET)
+        if not form.is_valid():
+            raise ApiError(form_error_message(form))
+        card = self._context_card(form.cleaned_data["card_id"], label)
+
+        affected_ids = list(label.cards.values_list("pk", flat=True))
+        label.delete()
+        return labels_response(request, fetch_card(card.pk), refetch(affected_ids))
+
+    @staticmethod
+    def _context_card(card_id: int, label: Label) -> Card:
+        card = fetch_card(card_id)
+        if card.column.board_id != label.board_id:
+            raise ApiError("Etiqueta de outro quadro.")
+        return card
 
 
 class ColumnCreateView(ApiView):

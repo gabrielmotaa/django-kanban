@@ -869,3 +869,197 @@ body {
     font-weight: var(--font-weight-medium);
     box-shadow: var(--shadow-lg);
 }
+
+/* Labels */
+.label-pill {
+    display: inline-block;
+    max-width: 100%;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    background: var(--label-color);
+    color: var(--label-fg);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+
+.label-pill--bar {
+    width: 40px;
+    height: 8px;
+    padding: 0;
+    vertical-align: middle;
+}
+
+.card__labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.card-labels__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.card-labels__pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.card-labels__add {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-md);
+    background: var(--color-bg-column);
+    color: var(--color-text-secondary);
+    font: inherit;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.card-labels__add:hover {
+    background: var(--color-border-hover);
+}
+
+.label-popover {
+    margin-top: 8px;
+    padding: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-card);
+    box-shadow: var(--shadow-dropdown);
+    box-sizing: border-box;
+}
+
+.label-popover__search,
+.label-popover__input {
+    display: block;
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid var(--color-input-border);
+    border-radius: var(--radius-md);
+    font: inherit;
+    font-size: var(--font-size-base);
+    outline: none;
+    box-sizing: border-box;
+}
+
+.label-popover__search:focus,
+.label-popover__input:focus {
+    border-color: var(--color-primary);
+}
+
+.label-popover__search {
+    margin-bottom: 8px;
+}
+
+.label-popover__list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 200px;
+    margin: 0 0 8px;
+    padding: 0;
+    list-style: none;
+    overflow-y: auto;
+}
+
+.label-popover__item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.label-popover__toggle {
+    display: flex;
+    flex-grow: 1;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    cursor: pointer;
+}
+
+.label-popover__toggle .label-pill {
+    flex-grow: 1;
+    padding: 6px 10px;
+}
+
+.label-popover__toggle .label-pill--bar {
+    height: 28px;
+    width: auto;
+}
+
+.label-popover__edit {
+    padding: 4px 6px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--color-text-muted);
+    font: inherit;
+    font-size: var(--font-size-base);
+    cursor: pointer;
+}
+
+.label-popover__edit:hover {
+    background: var(--color-bg-column);
+}
+
+.label-popover__form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.label-popover__title {
+    margin: 0;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-light);
+}
+
+.label-popover__colors {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.label-popover__color-dot {
+    width: 100%;
+    aspect-ratio: 1;
+    padding: 0;
+    border: 3px solid transparent;
+    border-radius: 50%;
+    background-color: var(--dot-color);
+    outline: none;
+    cursor: pointer;
+    transition: transform var(--transition-fast);
+}
+
+.label-popover__color-dot:hover {
+    transform: scale(1.1);
+}
+
+.label-popover__color-dot--active {
+    outline: 3px solid #000;
+    outline-offset: -3px;
+}
+
+.card-dialog__btn--danger {
+    background: none;
+    color: var(--color-danger);
+}
+
+.card-dialog__btn--danger:hover {
+    background: #fef2f2;
+}

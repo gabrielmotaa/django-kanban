@@ -1,5 +1,7 @@
 from django import forms
 
+from kanban.models import Column
+
 TITLE_MESSAGES = {"required": "O título é obrigatório."}
 INVALID_REQUEST = "Requisição inválida."
 ID_MESSAGES = {
@@ -81,3 +83,34 @@ class ColumnEditForm(forms.Form):
 
 class BoardEditForm(forms.Form):
     title = title_field(100)
+
+
+class LabelForm(forms.Form):
+    name = forms.CharField(
+        max_length=30,
+        required=False,
+        error_messages={"max_length": "O nome deve ter no máximo 30 caracteres."},
+    )
+    color = forms.ChoiceField(
+        choices=Column.COLOR_CHOICES,
+        error_messages={"required": "Cor inválida.", "invalid_choice": "Cor inválida."},
+    )
+
+
+class LabelCreateForm(LabelForm):
+    board_id = forms.IntegerField(min_value=1, error_messages=ID_MESSAGES)
+    card_id = forms.IntegerField(min_value=1, error_messages=ID_MESSAGES)
+
+
+class LabelEditForm(LabelForm):
+    card_id = forms.IntegerField(min_value=1, error_messages=ID_MESSAGES)
+
+
+class LabelContextForm(forms.Form):
+    """The card whose dialog sent a label request (used to render the reply)."""
+
+    card_id = forms.IntegerField(min_value=1, error_messages=ID_MESSAGES)
+
+
+class CardLabelForm(forms.Form):
+    label_id = forms.IntegerField(min_value=1, error_messages=ID_MESSAGES)
