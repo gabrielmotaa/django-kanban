@@ -676,7 +676,7 @@ export class KanbanColumn extends LitElement {
                                       class="color-dot ${this.color === hex ? "color-dot--active" : ""}"
                                       style="--dot-color: ${hex};"
                                       hx-patch=${this.editUrl}
-                                      hx-vals='{"color": "${hex}", "title": "${this.title}"}'
+                                      hx-vals=${JSON.stringify({ color: hex })}
                                       hx-target="host"
                                       hx-swap="outerHTML"
                                     ></button>
