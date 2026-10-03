@@ -123,3 +123,42 @@ def test_components_drag_requests_carry_web_components_header(live_server, page:
     board_page.navigate()
     board_page.drag_card_to_column("Card 1", "Column B")
     assert seen == ["true"]
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_rename_column_keeps_cards_draggable(live_server, page: Page, tech):
+    Card.objects.create(id=3, column_id=1, title="Card 3", order=1)
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+
+    board_page.open_column_rename("Column A")
+    column = board_page.column("Column A")
+    column.get_by_role("textbox", name="Nome da coluna").fill("Renamed A")
+    column.get_by_role("button", name="Salvar nome").click()
+    board_page.column("Renamed A").get_by_role(
+        "button", name="Opções da coluna"
+    ).wait_for()
+
+    assert board_page.card("Card 1").is_visible()
+    assert board_page.card("Card 3").is_visible()
+    board_page.drag_card_to_column("Card 3", "Column B")
+    assert Card.objects.get(pk=3).column_id == 2
+    assert Column.objects.get(pk=1).title == "Renamed A"
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_recolor_column_keeps_cards_editable(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+
+    board_page.open_column_menu("Column A")
+    board_page.column("Column A").get_by_role("button", name="Azul").click()
+    page.wait_for_timeout(500)
+    assert Column.objects.get(pk=1).color == "#3b82f6"
+    assert board_page.card("Card 1").is_visible()
+
+    board_page.open_card_editor("Card 1")
+    page.get_by_role("textbox", name="Título do card").fill("Edited 1")
+    page.get_by_role("button", name="Salvar").click()
+    board_page.card("Edited 1").wait_for()
+    assert Card.objects.get(pk=1).title == "Edited 1"
