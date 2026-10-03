@@ -1,1 +1,1 @@
-<kanban-card card-id="{{ card.pk }}" order="{{ card.order }}">{{ card.title }}</kanban-card>
+<kanban-card card-id="{{ card.pk }}" order="{{ card.order }}" href="{% url 'card_detail' card.pk %}">{{ card.title }}</kanban-card>

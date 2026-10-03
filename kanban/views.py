@@ -1,3 +1,4 @@
+import json
 from http import HTTPStatus
 
 from django.db import transaction
@@ -41,6 +42,7 @@ def index(request: HttpRequest, tech: str) -> HttpResponse:
         {
             "board": board,
             "color_choices": Column.COLOR_CHOICES,
+            "color_choices_json": json.dumps(Column.COLOR_CHOICES, ensure_ascii=False),
         },
     )
 

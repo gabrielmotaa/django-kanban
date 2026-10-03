@@ -1,5 +1,6 @@
 import { css, html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { sendWebComponentsHeader } from "../lib/web-components-header";
 
 @customElement("kanban-board-title")
 export class KanbanBoardTitle extends LitElement {
@@ -115,8 +116,24 @@ export class KanbanBoardTitle extends LitElement {
     }
   `;
 
+	@property()
+	href = "";
+
+	private cleanupController?: AbortController;
+
+	override connectedCallback() {
+		super.connectedCallback();
+		this.cleanupController = new AbortController();
+		sendWebComponentsHeader(this, this.cleanupController.signal);
+	}
+
+	override disconnectedCallback() {
+		super.disconnectedCallback();
+		this.cleanupController?.abort();
+	}
+
 	get patchUrl(): string {
-		return window.urls.boardDetail;
+		return this.href;
 	}
 
 	override updated() {

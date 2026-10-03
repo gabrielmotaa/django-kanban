@@ -1,4 +1,4 @@
-<kanban-column column-id="{{ column.pk }}" title="{{ column.title }}" color="{{ column.color }}">
+<kanban-column column-id="{{ column.pk }}" title="{{ column.title }}" color="{{ column.color }}" fg-color="{{ column.fg_color }}" href="{% url 'column_detail' column.pk %}" create-card-url="{% url 'card_create' %}">
     {% for card in column.cards.all %}
         {% include 'kanban/components/_card.html' %}
     {% endfor %}

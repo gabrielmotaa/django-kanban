@@ -1,3 +1,6 @@
+import json
+import re
+from html import unescape
 from urllib.parse import urlencode
 
 import pytest
@@ -577,5 +580,55 @@ def test_template_index_accessible_names(client: Client, board: Board, col_a: Co
 
 def test_components_index_exposes_color_names(client: Client, board: Board):
     html = client.get(reverse("index", args=["components"])).content.decode()
-    for _hex, name in Column.COLOR_CHOICES:
-        assert f'"{name}"' in html
+    names = [name for _hex, name in _palette_from(html)]
+    assert names == [name for _hex, name in Column.COLOR_CHOICES]
+
+
+# --- Issue 003: components are self-contained (URLs, palette, fg-color) ---
+
+WC = {"HTTP_X_WEB_COMPONENTS": "true"}
+
+
+def _palette_from(html: str) -> list:
+    match = re.search(r'<kanban-board [^>]*colors="([^"]*)"', html)
+    assert match, "kanban-board has no colors attribute"
+    return json.loads(unescape(match.group(1)))
+
+
+def test_components_card_fragment_has_href(client: Client, col_a: Column):
+    card = Card.objects.create(column=col_a, title="C", order=0)
+    html = client.get(reverse("card_detail", args=[card.pk]), **WC).content.decode()
+    assert f'href="{reverse("card_detail", args=[card.pk])}"' in html
+
+
+def test_components_column_fragment_has_urls_and_fg_color(client: Client, board: Board):
+    column = Column.objects.create(board=board, title="Amber", order=0, color="#f59e0b")
+    html = client.get(reverse("column_detail", args=[column.pk]), **WC).content.decode()
+    assert f'href="{reverse("column_detail", args=[column.pk])}"' in html
+    assert f'create-card-url="{reverse("card_create")}"' in html
+    assert f'fg-color="{column.fg_color}"' in html
+    assert 'fg-color="#1e293b"' in html
+
+
+def test_components_board_title_fragment_has_href(client: Client, board: Board):
+    html = client.get(reverse("board_detail", args=[board.pk]), **WC).content.decode()
+    assert f'href="{reverse("board_detail", args=[board.pk])}"' in html
+
+
+def test_components_index_is_self_contained(client: Client, board: Board, col_a):
+    html = client.get(reverse("index", args=["components"])).content.decode()
+    assert f'create-column-url="{reverse("column_create")}"' in html
+    assert _palette_from(html) == [list(c) for c in Column.COLOR_CHOICES]
+    assert "app-data" not in html
+    assert "window.urls" not in html
+    assert "window.colorChoices" not in html
+    assert "X-Web-Components" not in html
+
+
+def test_components_column_create_response_has_urls(client: Client, board: Board):
+    response = client.post(
+        reverse("column_create"), {"board_id": board.pk, "title": "N"}, **WC
+    )
+    html = response.content.decode()
+    assert 'create-card-url="' in html
+    assert 'fg-color="#ffffff"' in html

@@ -1,5 +1,7 @@
 import { css, html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { type Palette, readPalette } from "../lib/palette";
+import { sendWebComponentsHeader } from "../lib/web-components-header";
 import type { KanbanBoard } from "./kanban-board";
 import type { KanbanCard } from "./kanban-card";
 
@@ -337,6 +339,15 @@ export class KanbanColumn extends LitElement {
 	@property({ type: Number, reflect: true })
 	order = 0;
 
+	@property({ attribute: "fg-color" })
+	fgColor = "#ffffff";
+
+	@property()
+	href = "";
+
+	@property({ attribute: "create-card-url" })
+	createCardUrl = "";
+
 	@state()
 	private editingTitle = false;
 
@@ -348,25 +359,14 @@ export class KanbanColumn extends LitElement {
 
 	private cleanupController?: AbortController;
 
-	colorChoices = window.colorChoices;
-
-	get fgColor(): string {
-		const map: Record<string, string> = {
-			"#f59e0b": "#1e293b",
-		};
-		return map[this.color] || "#ffffff";
-	}
+	colorChoices: Palette = [];
 
 	get editUrl(): string {
-		return window.urls.columnDetail.replace("/0/", `/${this.columnId}/`);
+		return this.href;
 	}
 
 	get deleteUrl(): string {
-		return window.urls.columnDetail.replace("/0/", `/${this.columnId}/`);
-	}
-
-	get createCardUrl(): string {
-		return window.urls.cardCreate;
+		return this.href;
 	}
 
 	override connectedCallback() {
@@ -374,6 +374,9 @@ export class KanbanColumn extends LitElement {
 
 		this.cleanupController = new AbortController();
 		const { signal } = this.cleanupController;
+
+		this.colorChoices = readPalette(this);
+		sendWebComponentsHeader(this, signal);
 
 		this.addEventListener("dragenter", this.onDragEnter, { signal });
 		this.addEventListener("dragleave", this.onDragLeave, { signal });
@@ -478,6 +481,7 @@ export class KanbanColumn extends LitElement {
 					composed: true,
 					detail: {
 						card_id: state.card.cardId,
+						href: state.card.href,
 						column_id: this.columnId,
 						order: toIndex,
 					},
@@ -494,6 +498,7 @@ export class KanbanColumn extends LitElement {
 					composed: true,
 					detail: {
 						column_id: column.columnId,
+						href: column.href,
 						order: toIndex,
 						fromIndex: state.fromIndex,
 					},
