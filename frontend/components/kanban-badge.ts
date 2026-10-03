@@ -4,7 +4,7 @@ import { customElement, property } from "lit/decorators.js";
 /**
  * Small status chip on the card front. `icon` is the visible glyph/text,
  * `label` its accessible name, `variant` the color scheme
- * (`neutral` by default; later issues add `complete`, `overdue`, ...).
+ * (`neutral` by default; `complete`, `overdue`, `soon`).
  */
 @customElement("kanban-badge")
 export class KanbanBadge extends LitElement {
@@ -24,10 +24,29 @@ export class KanbanBadge extends LitElement {
       color: var(--color-text-light);
       line-height: 1.4;
     }
+
+    :host([variant="complete"]) .badge {
+      background: var(--color-success);
+      color: white;
+    }
+
+    :host([variant="overdue"]) .badge {
+      background: var(--color-danger);
+      color: white;
+    }
+
+    :host([variant="soon"]) .badge {
+      background: #f59e0b;
+      color: #1e293b;
+    }
   `;
 
 	@property()
 	icon = "";
+
+	/** Optional text after the icon (e.g. the due date). */
+	@property()
+	text = "";
 
 	@property()
 	label = "";
@@ -36,7 +55,7 @@ export class KanbanBadge extends LitElement {
 	variant = "neutral";
 
 	override render() {
-		return html`<span class="badge" role="img" aria-label=${this.label}>${this.icon}</span>`;
+		return html`<span class="badge" role="img" aria-label=${this.label}>${this.icon}${this.text ? ` ${this.text}` : ""}</span>`;
 	}
 }
 

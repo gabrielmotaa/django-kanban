@@ -12,6 +12,7 @@ urlpatterns = [
         views.CardDescriptionView.as_view(),
         name="card_description",
     ),
+    path("card/<int:pk>/due/", views.CardDueView.as_view(), name="card_due"),
     path("card/<int:pk>/labels/", views.CardLabelsView.as_view(), name="card_labels"),
     path("label/", views.LabelCreateView.as_view(), name="label_create"),
     path("label/<int:pk>/", views.LabelDetailView.as_view(), name="label_detail"),

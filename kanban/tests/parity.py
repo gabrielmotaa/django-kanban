@@ -153,6 +153,36 @@ class ParityBoardPage:
     def card_label_count(self, column_title: str, label_name: str) -> int:
         return self.column(column_title).get_by_text(label_name, exact=True).count()
 
+    # -- due date (page-level locators: see edit_description) -----------------
+
+    def open_due_popover(self) -> None:
+        # The trigger is "Adicionar data" or the formatted date; both live in
+        # the "Data de entrega" section, the only button there that is not
+        # the completion checkbox.
+        self.page.get_by_role(
+            "button", name=re.compile(r"^(Adicionar data|\d{2}\/\d{2}\/\d{4})$")
+        ).click()
+        self.page.get_by_role("region", name="Alterar data de entrega").wait_for()
+
+    def set_due_date(self, iso: str) -> None:
+        self.open_due_popover()
+        self.page.get_by_label("Data", exact=True).fill(iso)
+        self.page.get_by_role("button", name="Salvar", exact=True).click()
+        self.page.get_by_role("region", name="Alterar data de entrega").wait_for(
+            state="hidden"
+        )
+
+    def remove_due_date(self) -> None:
+        self.open_due_popover()
+        self.page.get_by_role("button", name="Remover", exact=True).click()
+        self.page.get_by_role("button", name="Adicionar data").wait_for()
+
+    def completed_checkbox(self) -> Locator:
+        return self.page.get_by_role("checkbox", name="Concluído", exact=True)
+
+    def due_badge(self, column_title: str, label: str) -> Locator:
+        return self.column(column_title).get_by_role("img", name=label)
+
     def delete_card_from_dialog(self) -> None:
         self.page.once("dialog", lambda d: d.accept())
         self.dialog().get_by_role("button", name="Excluir card").click()

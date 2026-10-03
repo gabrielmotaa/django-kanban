@@ -16,6 +16,7 @@ from kanban.forms import (
     BoardEditForm,
     CardCreateForm,
     CardDescriptionForm,
+    CardDueDateForm,
     CardEditForm,
     CardLabelForm,
     ColumnCreateForm,
@@ -202,6 +203,21 @@ class CardDescriptionView(ApiView):
         card.description = form.cleaned_data["description"]
         card.save(update_fields=["description", "updated_at"])
         template_path = template_for_request(request, "_card_description_updated.html")
+        return render(request, template_path, {"card": card})
+
+
+class CardDueView(ApiView):
+    def patch(self, request: HttpRequest, pk: int) -> HttpResponse:
+        card = fetch_or_error(Card, "Card não encontrado.", pk=pk)
+        form = CardDueDateForm(QueryDict(request.body))
+        if not form.is_valid():
+            raise ApiError(form_error_message(form))
+
+        card.due_date = form.cleaned_data["due_date"]
+        # A card without a date cannot be completed.
+        card.completed = form.cleaned_data["completed"] and card.due_date is not None
+        card.save(update_fields=["due_date", "completed", "updated_at"])
+        template_path = template_for_request(request, "_card_due_updated.html")
         return render(request, template_path, {"card": card})
 
 

@@ -1,0 +1,1 @@
+<kanban-card-due href="{% url 'card_due' card.pk %}" value="{{ card.due_date|date:"Y-m-d" }}" display="{{ card.due_date|date:"d/m/Y" }}" status="{{ card.due_status|default:"" }}" chip="{{ card.due_chip }}" completed="{% if card.completed %}true{% else %}false{% endif %}"></kanban-card-due>

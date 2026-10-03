@@ -114,3 +114,10 @@ class LabelContextForm(forms.Form):
 
 class CardLabelForm(forms.Form):
     label_id = forms.IntegerField(min_value=1, error_messages=ID_MESSAGES)
+
+
+class CardDueDateForm(forms.Form):
+    due_date = forms.DateField(
+        required=False, error_messages={"invalid": "Data inválida."}
+    )
+    completed = forms.BooleanField(required=False)

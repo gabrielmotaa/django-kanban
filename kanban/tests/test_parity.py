@@ -1,8 +1,10 @@
+import datetime as dt
 import os
 
 os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 
 import pytest
+from django.utils import timezone
 from playwright.sync_api import Page, expect
 
 from kanban.models import Board, Card, Column, Label
@@ -32,6 +34,10 @@ def snapshot_for(page: Page, live_server, tech: str, expand: str | None = None) 
         Label.objects.get_or_create(board_id=1, name="Melhoria", color="#3b82f6")
         Label.objects.get_or_create(board_id=1, name="", color="#10b981")
         Card.objects.get(pk=1).labels.add(bug)
+    if expand and expand.startswith("due"):
+        Card.objects.filter(pk=1).update(
+            due_date=timezone.localdate() - dt.timedelta(days=3)
+        )
     if expand == "card-dialog-described":
         Card.objects.filter(pk=1).update(description="First line\nSecond line")
     board_page = ParityBoardPage(page, live_server.url, tech)
@@ -44,6 +50,10 @@ def snapshot_for(page: Page, live_server, tech: str, expand: str | None = None) 
         board_page.open_column_rename("Column A")
     elif expand in ("card-dialog", "card-dialog-described"):
         board_page.open_card_dialog("Card 1")
+    elif expand in ("due-dialog", "due-popover"):
+        board_page.open_card_dialog("Card 1")
+        if expand == "due-popover":
+            board_page.open_due_popover()
     elif expand in ("label-popover", "label-edit", "label-create"):
         board_page.open_card_dialog("Card 1")
         board_page.open_label_popover()
@@ -66,6 +76,8 @@ def snapshot_for(page: Page, live_server, tech: str, expand: str | None = None) 
         "rename-column",
         "card-dialog",
         "card-dialog-described",
+        "due-dialog",
+        "due-popover",
         "label-popover",
         "label-edit",
         "label-create",
@@ -568,3 +580,80 @@ def test_escape_closes_popover_but_not_dialog(live_server, page: Page, tech):
     page.get_by_role("searchbox", name="Buscar etiquetas…").press("Escape")
     expect(page.get_by_role("searchbox", name="Buscar etiquetas…")).to_have_count(0)
     expect(board_page.dialog()).to_be_visible()
+
+
+def days_from_today(days: int) -> str:
+    return (timezone.localdate() + dt.timedelta(days=days)).isoformat()
+
+
+@pytest.mark.parametrize("tech", TECHS)
+@pytest.mark.parametrize(
+    ("days", "label"),
+    [(-3, "Atrasado"), (1, "Vence em breve"), (20, "Data de entrega")],
+)
+def test_due_date_badge_states(live_server, page: Page, tech, days, label):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+    assert board_page.due_badge("Column A", label).count() == 0
+
+    board_page.open_card_dialog("Card 1")
+    board_page.set_due_date(days_from_today(days))
+
+    badge = board_page.due_badge("Column A", label)
+    expect(badge).to_have_count(1)
+    short = (timezone.localdate() + dt.timedelta(days=days)).strftime("%d/%m")
+    expect(badge).to_have_text(f"◷ {short}")
+    card = Card.objects.get(pk=1)
+    assert card.due_date == timezone.localdate() + dt.timedelta(days=days)
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_completing_and_removing_the_date(live_server, page: Page, tech):
+    Card.objects.filter(pk=1).update(
+        due_date=timezone.localdate() - dt.timedelta(days=3)
+    )
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+    expect(board_page.due_badge("Column A", "Atrasado")).to_have_count(1)
+
+    board_page.open_card_dialog("Card 1")
+    expect(page.get_by_text("Atrasado", exact=True).first).to_be_visible()
+    board_page.completed_checkbox().check()
+    expect(board_page.due_badge("Column A", "Concluído")).to_have_count(1)
+    expect(board_page.due_badge("Column A", "Atrasado")).to_have_count(0)
+    assert Card.objects.get(pk=1).completed is True
+
+    board_page.completed_checkbox().uncheck()
+    expect(board_page.due_badge("Column A", "Atrasado")).to_have_count(1)
+    assert Card.objects.get(pk=1).completed is False
+
+    board_page.completed_checkbox().check()
+    board_page.remove_due_date()
+    expect(board_page.column("Column A").get_by_role("img")).to_have_count(0)
+    card = Card.objects.get(pk=1)
+    assert (card.due_date, card.completed) == (None, False)
+    expect(board_page.completed_checkbox()).to_have_count(0)
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_escape_closes_due_popover_but_not_dialog(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+    board_page.open_card_dialog("Card 1")
+    board_page.open_due_popover()
+
+    page.keyboard.press("Escape")
+    expect(page.get_by_role("region", name="Alterar data de entrega")).to_have_count(0)
+    expect(board_page.dialog()).to_be_visible()
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_invalid_due_date_is_rejected_without_changes(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+    board_page.open_card_dialog("Card 1")
+    board_page.open_due_popover()
+    # Saving the popover without choosing a date removes nothing and keeps it empty.
+    page.get_by_role("button", name="Salvar", exact=True).click()
+    page.wait_for_timeout(300)
+    assert Card.objects.get(pk=1).due_date is None

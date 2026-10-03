@@ -84,6 +84,18 @@ export class KanbanCard extends HtmxElement {
 	@property({ attribute: "has-description", type: Boolean })
 	hasDescription = false;
 
+	@property()
+	due = "";
+
+	@property({ attribute: "due-status" })
+	dueStatus = "";
+
+	@property({ attribute: "due-label" })
+	dueLabel = "";
+
+	@property({ type: Boolean })
+	completed = false;
+
 	/** Ids of the attached labels ("3,5"); definitions come from the board. */
 	@property()
 	labels = "";
@@ -182,9 +194,10 @@ export class KanbanCard extends HtmxElement {
 				}
         <div class="title-view">${this.title}</div>
         ${
-					this.hasDescription
+					this.hasDescription || this.due
 						? html`<div class="badges">
-              <kanban-badge icon="≡" label="Este card tem descrição"></kanban-badge>
+              ${this.hasDescription ? html`<kanban-badge icon="≡" label="Este card tem descrição"></kanban-badge>` : ""}
+              ${this.due ? html`<kanban-due-badge due=${this.due} status=${this.dueStatus} label=${this.dueLabel}></kanban-due-badge>` : ""}
             </div>`
 						: ""
 				}
