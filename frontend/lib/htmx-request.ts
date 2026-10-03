@@ -11,7 +11,7 @@ export type HtmxResult = { successful: boolean; html: string };
  */
 export function htmxRequest(
 	source: Element,
-	verb: "patch" | "delete" | "post",
+	verb: "get" | "patch" | "delete" | "post",
 	url: string,
 	values: Record<string, string> = {},
 ): Promise<HtmxResult> {

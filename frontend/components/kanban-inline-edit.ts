@@ -80,7 +80,12 @@ export class KanbanInlineEdit extends HtmxElement {
 	}
 
 	private onKeyDown = (e: KeyboardEvent) => {
-		if (e.key === "Escape") this.cancel();
+		if (e.key === "Escape") {
+			// Cancel the edit only: don't let an enclosing <dialog> close too.
+			e.preventDefault();
+			e.stopPropagation();
+			this.cancel();
+		}
 	};
 
 	private onAfterRequest = (e: CustomEvent) => {

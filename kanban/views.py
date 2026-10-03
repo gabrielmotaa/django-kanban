@@ -14,6 +14,7 @@ from django.views import View
 from kanban.forms import (
     BoardEditForm,
     CardCreateForm,
+    CardDescriptionForm,
     CardEditForm,
     ColumnCreateForm,
     ColumnEditForm,
@@ -95,7 +96,7 @@ class CardDetailView(ApiView):
         if form.cleaned_data["title"]:
             card.title = form.cleaned_data["title"]
             card.save(update_fields=["title"])
-            template_path = template_for_request(request, "_card.html")
+            template_path = template_for_request(request, "_card_title_updated.html")
             return render(request, template_path, {"card": card})
 
         target_column = fetch_or_error(
@@ -141,6 +142,28 @@ class CardDetailView(ApiView):
         card = fetch_or_error(Card, "Card não encontrado.", pk=pk)
         card.delete()
         return HttpResponse(status=HTTPStatus.NO_CONTENT)
+
+
+class CardDialogView(ApiView):
+    def get(self, request: HttpRequest, pk: int) -> HttpResponse:
+        card = fetch_or_error(
+            Card.objects.select_related("column"), "Card não encontrado.", pk=pk
+        )
+        template_path = template_for_request(request, "_card_dialog.html")
+        return render(request, template_path, {"card": card})
+
+
+class CardDescriptionView(ApiView):
+    def patch(self, request: HttpRequest, pk: int) -> HttpResponse:
+        card = fetch_or_error(Card, "Card não encontrado.", pk=pk)
+        form = CardDescriptionForm(QueryDict(request.body))
+        if not form.is_valid():
+            raise ApiError(form_error_message(form))
+
+        card.description = form.cleaned_data["description"]
+        card.save(update_fields=["description", "updated_at"])
+        template_path = template_for_request(request, "_card_description_updated.html")
+        return render(request, template_path, {"card": card})
 
 
 class ColumnCreateView(ApiView):

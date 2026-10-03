@@ -1,19 +1,15 @@
 import { css, html } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { HtmxElement } from "../lib/htmx-element";
-import { buttons } from "../styles/buttons";
-import { forms } from "../styles/forms";
 import { reset } from "../styles/reset";
 import type { DragState } from "./kanban-board";
 import type { KanbanColumn } from "./kanban-column";
 
-/** A card on the board; draggable, edited inline until the dialog (007). */
+/** The front of a card: title and badges. Draggable; opens the dialog on click. */
 @customElement("kanban-card")
 export class KanbanCard extends HtmxElement {
 	static styles = [
 		reset,
-		buttons,
-		forms,
 		css`
       :host {
         display: block;
@@ -48,37 +44,16 @@ export class KanbanCard extends HtmxElement {
         word-break: break-word;
       }
 
-      .edit-form {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        --field-padding: 8px 12px;
-        --btn-font-size: var(--font-size-sm);
+      :host(:focus-visible) .card {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
       }
 
-      .edit-input {
-        color: var(--color-text-primary);
-      }
-
-      .edit-actions {
+      .badges {
         display: flex;
-        justify-content: flex-end;
-        align-items: center;
+        flex-wrap: wrap;
         gap: 6px;
-      }
-
-      .btn-delete {
-        background: none;
-        color: var(--color-danger);
-        margin-right: auto;
-        padding-left: 0;
-        padding-right: 0;
-        font-weight: var(--font-weight-medium);
-        border: none;
-      }
-
-      .btn-delete:hover {
-        text-decoration: underline;
+        margin-top: 8px;
       }
     `,
 	];
@@ -95,8 +70,11 @@ export class KanbanCard extends HtmxElement {
 	@property()
 	href = "";
 
-	@state()
-	private editing = false;
+	@property({ attribute: "dialog-href" })
+	dialogHref = "";
+
+	@property({ attribute: "has-description", type: Boolean })
+	hasDescription = false;
 
 	private isDragging = false;
 
@@ -110,10 +88,12 @@ export class KanbanCard extends HtmxElement {
 		super.connectedCallback();
 
 		this.draggable = true;
+		this.tabIndex = 0;
 		const { signal } = this;
 		this.addEventListener("dragstart", this.onDragStart, { signal });
 		this.addEventListener("dragend", this.onDragEnd, { signal });
 		this.addEventListener("click", this.onCardClick, { signal });
+		this.addEventListener("keydown", this.onKeyDown, { signal });
 	}
 
 	private onDragStart = () => {
@@ -152,60 +132,35 @@ export class KanbanCard extends HtmxElement {
 		);
 	};
 
-	private onCardClick = () => {
-		if (this.editing) return;
-		if (this.isDragging) return;
-		this.editing = true;
-		this.focusAfterRender(".edit-input");
-	};
+	private openDialog() {
+		this.dispatchEvent(
+			new CustomEvent("kanban-card-open", {
+				bubbles: true,
+				composed: true,
+				detail: { card: this },
+			}),
+		);
+	}
 
-	private onCancel = (e: Event) => {
-		e.preventDefault();
-		e.stopPropagation();
-		this.editing = false;
+	private onCardClick = () => {
+		if (this.isDragging) return;
+		this.openDialog();
 	};
 
 	private onKeyDown = (e: KeyboardEvent) => {
-		if (e.key === "Escape") {
-			this.editing = false;
-		}
+		if (e.key === "Enter" && e.target === this) this.openDialog();
 	};
 
 	override render() {
 		return html`
       <div class="card">
+        <div class="title-view">${this.title}</div>
         ${
-					this.editing
-						? html`
-              <form class="edit-form" hx-patch=${this.href} hx-target="host" hx-swap="outerHTML" @click=${(e: Event) => e.stopPropagation()}>
-                <input
-                  type="text"
-                  name="title"
-                  .value=${this.title}
-                  aria-label="Título do card"
-                  class="field edit-input"
-                  maxlength="200"
-                  @keydown=${this.onKeyDown}
-                />
-                <div class="edit-actions">
-                  <button
-                    type="button"
-                    class="btn btn-delete"
-                    hx-delete=${this.href}
-                    hx-target="host"
-                    hx-swap="outerHTML"
-                    hx-confirm="Deletar este card?"
-                  >
-                    Deletar
-                  </button>
-                  <button type="button" class="btn btn-secondary btn-cancel" @click=${this.onCancel}>
-                    Cancelar
-                  </button>
-                  <button type="submit" class="btn btn-primary btn-save">Salvar</button>
-                </div>
-              </form>
-            `
-						: html`<div class="title-view">${this.title}</div>`
+					this.hasDescription
+						? html`<div class="badges">
+              <kanban-badge icon="≡" label="Este card tem descrição"></kanban-badge>
+            </div>`
+						: ""
 				}
       </div>
     `;

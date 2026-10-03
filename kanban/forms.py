@@ -38,6 +38,19 @@ class CardEditForm(forms.Form):
             raise forms.ValidationError("Informe um título ou a nova posição do card.")
 
 
+DESCRIPTION_MAX_LENGTH = 5000
+
+
+class CardDescriptionForm(forms.Form):
+    description = forms.CharField(
+        required=False,
+        max_length=DESCRIPTION_MAX_LENGTH,
+        error_messages={
+            "max_length": f"A descrição deve ter no máximo {DESCRIPTION_MAX_LENGTH} caracteres."
+        },
+    )
+
+
 class CardCreateForm(forms.Form):
     column_id = forms.IntegerField(min_value=1, error_messages=ID_MESSAGES)
     title = title_field(200)

@@ -473,76 +473,255 @@ body {
     word-break: break-word;
 }
 
-.card__edit-form {
+.card:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.card__badges {
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-light);
+    line-height: 1.4;
+}
+
+/* Card dialog */
+.card-dialog {
+    border: none;
+    padding: 0;
+    width: min(768px, calc(100vw - 32px));
+    max-height: calc(100vh - 64px);
+    overflow-y: auto;
+    border-radius: var(--radius-xl);
+    background: var(--color-bg-card);
+    color: var(--color-text-primary);
+    box-shadow: var(--shadow-lg);
+    font-family: var(--font-family);
+}
+
+.card-dialog::backdrop {
+    background: rgba(15, 23, 42, 0.5);
+}
+
+.card-dialog__body {
+    position: relative;
+    padding: 24px;
+}
+
+.card-dialog__close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    background: none;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 24px;
+    line-height: 1;
+    color: var(--color-text-muted);
+    cursor: pointer;
+}
+
+.card-dialog__close:hover {
+    background: var(--color-bg-column);
+}
+
+.card-dialog__header {
+    margin-bottom: 20px;
+    padding-right: 40px;
+}
+
+.card-dialog__heading {
+    margin: 0;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+}
+
+.card-dialog__title-btn {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 4px 8px;
+    background: none;
+    border: none;
+    border-radius: var(--radius-md);
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: text;
+    word-break: break-word;
+}
+
+.card-dialog__title-btn:hover {
+    background: var(--color-bg-column);
+}
+
+.card-dialog__title-form {
+    display: flex;
+    align-items: center;
     gap: 8px;
 }
 
-.card__edit-input {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid var(--color-input-border);
+.card-dialog__title-input {
+    flex-grow: 1;
+    min-width: 0;
+    padding: 6px 12px;
+    border: 2px solid var(--color-input-border);
     border-radius: var(--radius-md);
-    font-size: var(--font-size-lg);
+    font: inherit;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
     outline: none;
-    box-sizing: border-box;
     color: var(--color-text-primary);
+    background: var(--color-bg-column);
 }
 
-.card__edit-input:focus {
+.card-dialog__title-input:focus {
     border-color: var(--color-primary);
 }
 
-.card__edit-actions {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 6px;
-}
-
-.card__btn-save,
-.card__btn-cancel,
-.card__btn-delete {
-    padding: 6px 10px;
+.card-dialog__column {
+    margin: 4px 0 0;
+    padding: 0 8px;
     font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
-    border-radius: var(--radius-sm);
-    border: none;
-    cursor: pointer;
-    transition: background var(--transition-normal), color var(--transition-normal);
+    color: var(--color-text-muted);
 }
 
-.card__btn-save {
+.card-dialog__layout {
+    display: grid;
+    grid-template-columns: 1fr 168px;
+    gap: 24px;
+}
+
+@media (max-width: 720px) {
+    .card-dialog__layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.card-dialog__section + .card-dialog__section {
+    margin-top: 24px;
+}
+
+.card-dialog__section-title {
+    margin: 0 0 8px;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-light);
+}
+
+.card-dialog__btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: var(--radius-md);
+    font: inherit;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: background var(--transition-normal);
+}
+
+.card-dialog__btn--primary {
     background: var(--color-primary);
     color: white;
 }
 
-.card__btn-save:hover {
+.card-dialog__btn--primary:hover {
     background: var(--color-primary-hover);
 }
 
-.card__btn-cancel {
+.card-dialog__btn--secondary {
     background: var(--color-border);
     color: var(--color-text-light);
 }
 
-.card__btn-cancel:hover {
+.card-dialog__btn--secondary:hover {
     background: var(--color-border-hover);
 }
 
-.card__btn-delete {
-    background: none;
-    color: var(--color-danger);
-    margin-right: auto;
-    padding-left: 0;
-    padding-right: 0;
-    font-weight: var(--font-weight-medium);
-    border: none;
+.card-dialog__form-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
 }
 
-.card__btn-delete:hover {
-    text-decoration: underline;
+.card-description__view {
+    display: block;
+    width: 100%;
+    min-height: 56px;
+    padding: 8px 12px;
+    background: var(--color-bg-column);
+    border: none;
+    border-radius: var(--radius-md);
+    font: inherit;
+    font-size: var(--font-size-base);
+    color: var(--color-text-primary);
+    text-align: left;
+    white-space: pre-wrap;
+    word-break: break-word;
+    cursor: pointer;
+}
+
+.card-description__view:hover {
+    background: var(--color-border-hover);
+}
+
+.card-description__view--empty {
+    color: var(--color-text-muted);
+}
+
+.card-description__input {
+    display: block;
+    width: 100%;
+    min-height: 96px;
+    padding: 8px 12px;
+    border: 1px solid var(--color-input-border);
+    border-radius: var(--radius-md);
+    font: inherit;
+    font-size: var(--font-size-base);
+    outline: none;
+    box-sizing: border-box;
+    resize: vertical;
+}
+
+.card-description__input:focus {
+    border-color: var(--color-primary);
+}
+
+.card-dialog__action {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--color-bg-column);
+    border: none;
+    border-radius: var(--radius-md);
+    font: inherit;
+    font-size: var(--font-size-base);
+    color: var(--color-text-secondary);
+    text-align: left;
+    cursor: pointer;
+    transition: background var(--transition-normal);
+}
+
+.card-dialog__action:hover {
+    background: var(--color-border-hover);
+}
+
+.card-dialog__action--danger {
+    color: var(--color-danger);
 }
 
 /* Column Create Button & Form (index.html) */
