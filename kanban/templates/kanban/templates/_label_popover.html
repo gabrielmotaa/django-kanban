@@ -23,6 +23,7 @@
                            hx-vals='{"label_id": {{ label.pk }}}'
                            {% endif %}
                            hx-trigger="change"
+                           hx-sync="closest section:queue all"
                            hx-target="#label-popover"
                            hx-swap="outerHTML"
                     >

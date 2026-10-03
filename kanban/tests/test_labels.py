@@ -288,6 +288,48 @@ class TestLabelCrud:
             assert f'id="card-{second.pk}"' in html
             assert "Defect" in html
 
+    def test_create_with_card_of_another_board_rejected(
+        self, client: Client, board, other_board, tech
+    ):
+        other_column = Column.objects.create(board=other_board, title="C", order=0)
+        stranger = Card.objects.create(column=other_column, title="S", order=0)
+        data = {
+            "board_id": board.pk,
+            "card_id": stranger.pk,
+            "name": "x",
+            "color": "#ef4444",
+        }
+        response = send(client, tech, "post", reverse("label_create"), data)
+        assert response.status_code == 400
+        assert "Card de outro quadro." in response.content.decode()
+        assert not Label.objects.exists()
+
+    def test_whitespace_only_name_becomes_blank(
+        self, client: Client, board, card, tech
+    ):
+        data = {
+            "board_id": board.pk,
+            "card_id": card.pk,
+            "name": "   ",
+            "color": "#ef4444",
+        }
+        assert (
+            send(client, tech, "post", reverse("label_create"), data).status_code == 200
+        )
+        assert Label.objects.get().name == ""
+
+    def test_names_are_escaped(self, client: Client, board, card, tech):
+        data = {
+            "board_id": board.pk,
+            "card_id": card.pk,
+            "name": "<script>x</script> 'q' \"d\"",
+            "color": "#ef4444",
+        }
+        response = send(client, tech, "post", reverse("label_create"), data)
+        html = response.content.decode()
+        assert "<script>x" not in html
+        assert response.status_code == 200
+
     def test_edit_missing(self, client: Client, card, tech):
         data = {"card_id": card.pk, "name": "x", "color": "#ef4444"}
         response = send(

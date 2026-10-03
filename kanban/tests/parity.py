@@ -163,6 +163,17 @@ class ParityBoardPage:
             "img", name="Este card tem descrição"
         )
 
+    def wait_for_focused_card(self, text: str) -> None:
+        """Focus is restored right after the dialog's close event: poll for it."""
+        self.page.wait_for_function(
+            """(text) => {
+                const el = document.activeElement;
+                const card = el && el.closest('.card, kanban-card');
+                return !!card && card.textContent.trim().startsWith(text);
+            }""",
+            arg=text,
+        )
+
     def focused_card_text(self) -> str:
         return self.page.evaluate(
             """() => {

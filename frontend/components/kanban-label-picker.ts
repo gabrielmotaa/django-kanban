@@ -207,7 +207,20 @@ export class KanbanLabelPicker extends LitElement {
 		);
 	}
 
-	private async toggle(label: LabelDef, checked: boolean) {
+	private toggling: Promise<unknown> = Promise.resolve();
+
+	// Requests are chained so out-of-order replies cannot leave stale state.
+	private toggle(label: LabelDef, input: HTMLInputElement) {
+		this.toggling = this.toggling.then(() =>
+			this.sendToggle(label, input.checked, input),
+		);
+	}
+
+	private async sendToggle(
+		label: LabelDef,
+		checked: boolean,
+		input: HTMLInputElement,
+	) {
 		const { successful, html } = checked
 			? await htmxRequest(this, "post", this.href, {
 					label_id: String(label.id),
@@ -216,7 +229,7 @@ export class KanbanLabelPicker extends LitElement {
 					label_id: String(label.id),
 				});
 		if (successful) this.emit("kanban-saved", { html });
-		else this.requestUpdate();
+		else input.checked = !checked;
 	}
 
 	private async applyRegistry(
@@ -301,7 +314,7 @@ export class KanbanLabelPicker extends LitElement {
                   type="checkbox"
                   .checked=${this.attached.has(label.id)}
                   @change=${(e: Event) =>
-										this.toggle(label, (e.target as HTMLInputElement).checked)}
+										this.toggle(label, e.target as HTMLInputElement)}
                 />
                 <kanban-label
                   block

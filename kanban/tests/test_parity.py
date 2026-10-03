@@ -367,7 +367,7 @@ def test_escape_closes_dialog_and_returns_focus(live_server, page: Page, tech):
     board_page.open_card_dialog("Card 1")
     page.keyboard.press("Escape")
     board_page.dialog().wait_for(state="hidden")
-    assert board_page.focused_card_text() == "Card 1"
+    board_page.wait_for_focused_card("Card 1")
 
 
 @pytest.mark.parametrize("tech", TECHS)
@@ -411,7 +411,7 @@ def test_focus_returns_to_card_after_saving_in_dialog(live_server, page: Page, t
     page.keyboard.press("Escape")
     board_page.dialog().wait_for(state="hidden")
 
-    assert board_page.focused_card_text().startswith("Renamed")
+    board_page.wait_for_focused_card("Renamed")
 
 
 @pytest.mark.parametrize("tech", TECHS)
