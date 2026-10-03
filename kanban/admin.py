@@ -42,10 +42,12 @@ class CardAdmin(admin.ModelAdmin):
         "board_link",
         "title",
         "order",
+        "due_date",
+        "completed",
         "created_at",
         "updated_at",
     )
-    list_filter = ("column__board", "column")
+    list_filter = ("column__board", "column", "due_date", "completed")
     search_fields = ("title", "description")
     filter_horizontal = ("labels",)
 

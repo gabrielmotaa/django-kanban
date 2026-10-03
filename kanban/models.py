@@ -1,4 +1,7 @@
+from datetime import timedelta
+
 from django.db import models
+from django.utils import timezone
 
 FG_OVERRIDES = {
     "#f59e0b": "#1e293b",  # Âmbar
@@ -81,12 +84,50 @@ class Card(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True, default="")
     labels = models.ManyToManyField("Label", blank=True, related_name="cards")
+    due_date = models.DateField(null=True, blank=True)
+    completed = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["order", "created_at"]
+
+    DUE_LABELS = {
+        "complete": "Concluído",
+        "overdue": "Atrasado",
+        "soon": "Vence em breve",
+        "ok": "Data de entrega",
+    }
+    DUE_CHIPS = {"overdue": "Atrasado", "soon": "Vence em breve"}
+
+    @property
+    def due_status(self):
+        """`complete`, `overdue`, `soon` (today or tomorrow), `ok` or None.
+
+        Computed on the server for both UI versions, in the local time zone, so
+        Python and the browser never disagree around midnight.
+        """
+        if self.due_date is None:
+            return None
+        if self.completed:
+            return "complete"
+        today = timezone.localdate()
+        if self.due_date < today:
+            return "overdue"
+        if self.due_date <= today + timedelta(days=1):
+            return "soon"
+        return "ok"
+
+    @property
+    def due_label(self):
+        """Accessible name of the due badge."""
+        return self.DUE_LABELS.get(self.due_status, "")
+
+    @property
+    def due_chip(self):
+        """Short status text shown in the dialog (empty when not noteworthy)."""
+        return self.DUE_CHIPS.get(self.due_status, "")
 
     def __str__(self):
         return self.title

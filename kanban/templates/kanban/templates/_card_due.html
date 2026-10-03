@@ -1,0 +1,55 @@
+<section id="card-due"
+         class="card-dialog__section card-due"
+         x-data="{ open: false }"
+         @keydown.escape="if (open) { $event.preventDefault(); $event.stopPropagation(); open = false }"
+>
+    <h3 class="card-dialog__section-title">Data de entrega</h3>
+    <div class="card-due__row">
+        {% if card.due_date %}
+        <label class="card-due__done">
+            <input type="checkbox"
+                   id="card-due-done"
+                   {% if card.completed %}checked{% endif %}
+                   hx-sync="this:replace"
+                   @htmx:response-error="$el.checked = !$el.checked"
+                   @htmx:send-error="$el.checked = !$el.checked"
+                   @htmx:timeout="$el.checked = !$el.checked"
+                   hx-patch="{% url 'card_due' card.pk %}"
+                   hx-vals='{"due_date": "{{ card.due_date|date:"Y-m-d" }}", "completed": "{% if card.completed %}false{% else %}true{% endif %}"}'
+                   hx-trigger="change"
+                   hx-target="#card-due"
+                   hx-swap="outerHTML"
+            >
+            Concluído
+        </label>
+        <button type="button" class="card-due__date" :aria-expanded="open" @click="open = !open">{{ card.due_date|date:"d/m/Y" }}</button>
+        {% if card.due_chip %}<span class="card-due__chip card-due__chip--{{ card.due_status }}">{{ card.due_chip }}</span>{% endif %}
+        {% else %}
+        <button type="button" class="card-due__date card-due__date--empty" :aria-expanded="open" @click="open = !open">Adicionar data</button>
+        {% endif %}
+    </div>
+    <form x-show="open"
+          x-cloak
+          role="region"
+          aria-label="Alterar data de entrega"
+          hx-patch="{% url 'card_due' card.pk %}"
+          hx-target="#card-due"
+          hx-swap="outerHTML"
+          class="card-due__popover"
+    >
+        <input type="hidden" name="completed" value="{% if card.completed %}true{% else %}false{% endif %}">
+        <input type="date" name="due_date" value="{{ card.due_date|date:"Y-m-d" }}" aria-label="Data" class="card-due__input">
+        <div class="card-dialog__form-actions">
+            <button type="submit" class="card-dialog__btn card-dialog__btn--primary">Salvar</button>
+            {% if card.due_date %}
+            <button type="button"
+                    class="card-dialog__btn card-dialog__btn--danger"
+                    hx-patch="{% url 'card_due' card.pk %}"
+                    hx-vals='{"due_date": "", "completed": "false"}'
+                    hx-target="#card-due"
+                    hx-swap="outerHTML"
+            >Remover</button>
+            {% endif %}
+        </div>
+    </form>
+</section>

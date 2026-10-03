@@ -19,9 +19,10 @@
     {% endif %}
     {% endwith %}
     <div class="card__title-view">{{ card.title }}</div>
-    {% if card.description %}
+    {% if card.description or card.due_date %}
     <div class="card__badges">
-        <span class="badge" role="img" aria-label="Este card tem descrição">≡</span>
+        {% if card.description %}<span class="badge" role="img" aria-label="Este card tem descrição">≡</span>{% endif %}
+        {% include "kanban/templates/_due_badge.html" %}
     </div>
     {% endif %}
 </div>
