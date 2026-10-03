@@ -169,3 +169,52 @@ def test_recolor_column_keeps_cards_editable(live_server, page: Page, tech):
     page.get_by_role("button", name="Salvar").click()
     board_page.card("Edited 1").wait_for()
     assert Card.objects.get(pk=1).title == "Edited 1"
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_escape_cancels_column_rename(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+
+    board_page.open_column_rename("Column A")
+    column = board_page.column("Column A")
+    column.get_by_role("textbox", name="Nome da coluna").fill("Never saved")
+    page.keyboard.press("Escape")
+
+    column.get_by_role("button", name="Opções da coluna").wait_for()
+    assert column.get_by_role("textbox", name="Nome da coluna").count() == 0
+    assert Column.objects.get(pk=1).title == "Column A"
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_click_away_and_escape_close_column_menu(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+    column = board_page.column("Column A")
+    edit = column.get_by_role("button", name="Editar nome")
+
+    board_page.open_column_menu("Column A")
+    assert edit.is_visible()
+    page.get_by_role("heading", level=1).click()
+    edit.wait_for(state="hidden")
+
+    board_page.open_column_menu("Column A")
+    page.keyboard.press("Escape")
+    edit.wait_for(state="hidden")
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_create_column_persists_chosen_color(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+
+    board_page.open_create_column_form()
+    page.get_by_role("textbox", name="Nome da coluna").fill("Colorful")
+    page.get_by_role("button", name="Roxo").click()
+    page.get_by_role("button", name="Adicionar", exact=True).click()
+
+    for _ in range(30):
+        if Column.objects.filter(title="Colorful").exists():
+            break
+        page.wait_for_timeout(100)
+    assert Column.objects.get(title="Colorful").color == "#8b5cf6"
