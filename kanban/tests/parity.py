@@ -60,6 +60,28 @@ class ParityBoardPage:
         self.page.mouse.up()
         self.page.wait_for_timeout(500)
 
+    def drag_column_to_column(self, source_title: str, target_title: str) -> None:
+        self.column(source_title).drag_to(
+            self.column(target_title),
+            source_position={"x": 140, "y": 20},
+            target_position={"x": 140, "y": 20},
+        )
+        self.page.wait_for_timeout(500)
+
+    def column_titles(self) -> list[str]:
+        return self.page.get_by_role("group").evaluate_all(
+            "els => els.map(e => e.getAttribute('aria-label'))"
+        )
+
+    def column_card_titles(self, column_title: str) -> list[str]:
+        return self.column(column_title).evaluate(
+            """el => [...el.querySelectorAll('kanban-card, .card')]
+                .map(c => c.textContent.trim())"""
+        )
+
+    def toast(self) -> Locator:
+        return self.page.get_by_role("alert")
+
     def open_column_menu(self, column_title: str) -> None:
         self.column(column_title).get_by_role("button", name="Opções da coluna").click()
 

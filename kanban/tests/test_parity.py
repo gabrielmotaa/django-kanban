@@ -218,3 +218,61 @@ def test_create_column_persists_chosen_color(live_server, page: Page, tech):
             break
         page.wait_for_timeout(100)
     assert Column.objects.get(title="Colorful").color == "#8b5cf6"
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_invalid_card_title_shows_toast_and_keeps_form_open(
+    live_server, page: Page, tech
+):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+
+    column = board_page.column("Column A")
+    column.get_by_role("button", name="+ Adicionar card").click()
+    column.get_by_role("textbox", name="Título do card").fill("   ")
+    column.get_by_role("button", name="Adicionar", exact=True).click()
+
+    expect(board_page.toast()).to_have_text("O título é obrigatório.")
+    expect(column.get_by_role("textbox", name="Título do card")).to_be_visible()
+    assert Card.objects.filter(column_id=1).count() == 1
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_toast_auto_dismisses(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+
+    column = board_page.column("Column A")
+    column.get_by_role("button", name="+ Adicionar card").click()
+    column.get_by_role("textbox", name="Título do card").fill("   ")
+    column.get_by_role("button", name="Adicionar", exact=True).click()
+
+    expect(board_page.toast()).to_be_visible()
+    expect(board_page.toast()).to_have_count(0, timeout=7000)
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_failed_card_move_rolls_back(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+    Column.objects.filter(pk=2).delete()  # behind the UI's back
+
+    board_page.drag_card_to_column("Card 1", "Column B")
+
+    expect(board_page.toast()).to_have_text("Coluna não encontrada.")
+    assert board_page.column_card_titles("Column A") == ["Card 1"]
+    assert board_page.column_card_titles("Column B") == []
+    assert Card.objects.get(pk=1).column_id == 1
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_failed_column_move_rolls_back(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+    Column.objects.filter(pk=1).delete()  # behind the UI's back
+
+    board_page.drag_column_to_column("Column A", "Column B")
+
+    expect(board_page.toast()).to_have_text("Coluna não encontrada.")
+    assert board_page.column_titles() == ["Column A", "Column B"]
+    assert Column.objects.get(pk=2).order == 1
