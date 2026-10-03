@@ -12,6 +12,7 @@ from kanban.tests.parity import ParityBoardPage
 
 pytestmark = [pytest.mark.django_db(transaction=True), pytest.mark.integration]
 
+BADGE_BACKGROUND = "el => getComputedStyle(el.shadowRoot?.querySelector('.badge') ?? el).backgroundColor"
 TECHS = ["templates", "components"]
 
 
@@ -757,14 +758,32 @@ def test_complete_checklist_badge_state(live_server, page: Page, tech):
     board_page.open_card_dialog("Card 1")
     board_page.add_checklist()
     board_page.add_item("Only")
-    board_page.item_checkbox("Only").check()
+    page.get_by_role("img", name="Checklist 0 de 1").wait_for()
+    pending = board_page.column("Column A").get_by_role("img", name="Checklist 0 de 1")
+    neutral = pending.evaluate(BADGE_BACKGROUND)
 
+    board_page.item_checkbox("Only").check()
     badge = board_page.column("Column A").get_by_role("img", name="Checklist 1 de 1")
     expect(badge).to_have_text("☑ 1/1")
-    color = badge.evaluate(
-        "el => getComputedStyle(el.querySelector?.('.badge') ?? el).backgroundColor"
-    )
-    assert color != "rgba(0, 0, 0, 0)"
+    # Complete is green (--color-success), unlike the neutral state.
+    assert badge.evaluate(BADGE_BACKGROUND) == "rgb(16, 185, 129)"
+    assert neutral != "rgb(16, 185, 129)"
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_items_added_after_deletions_keep_the_end_of_the_list(
+    live_server, page: Page, tech
+):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+    board_page.open_card_dialog("Card 1")
+    board_page.add_checklist()
+    for text in ("A", "B", "C"):
+        board_page.add_item(text)
+    board_page.remove_item("A")
+    board_page.remove_item("B")
+    board_page.add_item("D")
+    assert [i.text for i in ChecklistItem.objects.all()] == ["C", "D"]
 
 
 @pytest.mark.parametrize("tech", TECHS)

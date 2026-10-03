@@ -133,13 +133,19 @@ export class KanbanChecklistItem extends LitElement {
 		announceCardUpdate(this, responseHtml);
 	}
 
-	private toggle = async (e: Event) => {
+	private pending: Promise<unknown> = Promise.resolve();
+
+	// Requests of one item run one after the other so replies cannot overtake
+	// each other (the templates version uses hx-sync for the same reason).
+	private toggle = (e: Event) => {
 		const input = e.target as HTMLInputElement;
-		const { successful, html } = await htmxRequest(this, "patch", this.href, {
-			done: String(input.checked),
+		this.pending = this.pending.then(async () => {
+			const { successful, html } = await htmxRequest(this, "patch", this.href, {
+				done: String(input.checked),
+			});
+			if (successful) this.apply(html);
+			else input.checked = !input.checked;
 		});
-		if (successful) this.apply(html);
-		else input.checked = !input.checked;
 	};
 
 	private edit = () => {

@@ -2,6 +2,7 @@ import json
 from http import HTTPStatus
 
 from django.db import transaction
+from django.db.models import Max
 from django.http import (
     Http404,
     HttpRequest,
@@ -113,12 +114,12 @@ class CardCreateView(ApiView):
 
 class CardDetailView(ApiView):
     def get(self, request: HttpRequest, pk: int) -> HttpResponse:
-        card = fetch_or_error(Card, "Card não encontrado.", pk=pk)
+        card = fetch_card(pk)
         template_path = template_for_request(request, "_card.html")
         return render(request, template_path, {"card": card})
 
     def patch(self, request: HttpRequest, pk: int) -> HttpResponse:
-        card = fetch_or_error(Card, "Card não encontrado.", pk=pk)
+        card = fetch_card(pk)
         data = QueryDict(request.body)
         form = CardEditForm(data)
         if not form.is_valid():
@@ -170,9 +171,14 @@ class CardDetailView(ApiView):
         return HttpResponse(status=HTTPStatus.NO_CONTENT)
 
     def delete(self, request: HttpRequest, pk: int) -> HttpResponse:
-        card = fetch_or_error(Card, "Card não encontrado.", pk=pk)
+        card = fetch_card(pk)
         card.delete()
         return HttpResponse(status=HTTPStatus.NO_CONTENT)
+
+
+def next_order(queryset) -> int:
+    """Position after the last row, also after earlier rows were deleted."""
+    return (queryset.aggregate(last=Max("order"))["last"] or -1) + 1
 
 
 def fetch_card(pk: int) -> Card:
@@ -204,7 +210,7 @@ class CardDialogView(ApiView):
 
 class CardDescriptionView(ApiView):
     def patch(self, request: HttpRequest, pk: int) -> HttpResponse:
-        card = fetch_or_error(Card, "Card não encontrado.", pk=pk)
+        card = fetch_card(pk)
         form = CardDescriptionForm(QueryDict(request.body))
         if not form.is_valid():
             raise ApiError(form_error_message(form))
@@ -217,7 +223,7 @@ class CardDescriptionView(ApiView):
 
 class CardDueView(ApiView):
     def patch(self, request: HttpRequest, pk: int) -> HttpResponse:
-        card = fetch_or_error(Card, "Card não encontrado.", pk=pk)
+        card = fetch_card(pk)
         form = CardDueDateForm(QueryDict(request.body))
         if not form.is_valid():
             raise ApiError(form_error_message(form))
@@ -250,7 +256,7 @@ class CardChecklistsView(ApiView):
         checklist = Checklist.objects.create(
             card=card,
             title=form.cleaned_data["title"] or "Checklist",
-            order=card.checklists.count(),
+            order=next_order(card.checklists.all()),
         )
         return checklist_response(request, "_checklist_created.html", pk, checklist.pk)
 
@@ -283,7 +289,7 @@ class ChecklistItemsView(ApiView):
         item = ChecklistItem.objects.create(
             checklist=checklist,
             text=form.cleaned_data["text"],
-            order=checklist.items.count(),
+            order=next_order(checklist.items.all()),
         )
         return checklist_response(
             request, "_checklist_item_created.html", checklist.card_id, pk, item.pk
@@ -376,7 +382,7 @@ def refetch(cards: list[int]) -> list[Card]:
     return list(
         Card.objects.filter(pk__in=cards)
         .select_related("column__board")
-        .prefetch_related("labels")
+        .prefetch_related("labels", "checklists__items")
     )
 
 

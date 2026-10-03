@@ -256,6 +256,27 @@ class TestItemViews:
         send(client, tech, "post", url, {"text": "Second"})
         assert [i.text for i in checklist.items.all()] == ["First", "Second"]
 
+    def test_add_item_after_deletions_goes_last(self, client: Client, checklist, tech):
+        for position, text in enumerate("ABC"):
+            ChecklistItem.objects.create(checklist=checklist, text=text, order=position)
+        checklist.items.filter(text__in=["A", "B"]).delete()
+        url = reverse("checklist_items", args=[checklist.pk])
+        send(client, tech, "post", url, {"text": "D"})
+        assert [i.text for i in checklist.items.all()] == ["C", "D"]
+
+    def test_checklist_after_deletions_goes_last(self, client: Client, card, tech):
+        first = Checklist.objects.create(card=card, title="A", order=0)
+        Checklist.objects.create(card=card, title="B", order=1)
+        first.delete()
+        send(
+            client,
+            tech,
+            "post",
+            reverse("card_checklists", args=[card.pk]),
+            {"title": "C"},
+        )
+        assert [c.title for c in card.checklists.all()] == ["B", "C"]
+
     @pytest.mark.parametrize("text", ["", "   "])
     def test_add_item_empty(self, client: Client, checklist, text, tech):
         url = reverse("checklist_items", args=[checklist.pk])

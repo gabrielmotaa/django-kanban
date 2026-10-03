@@ -351,7 +351,7 @@ export class KanbanCardDialog extends HtmxElement {
             <div class="main"><slot></slot></div>
             <aside>
               <h3 class="section-title">Ações</h3>
-              <div class="checklist-create">
+              <div class="checklist-create" @keydown=${this.onChecklistKeyDown}>
                 <button
                   type="button"
                   class="action"
@@ -366,7 +366,6 @@ export class KanbanCardDialog extends HtmxElement {
                         role="region"
                         aria-label="Adicionar checklist"
                         @submit=${this.addChecklist}
-                        @keydown=${this.onChecklistKeyDown}
                       >
                         <input
                           type="text"

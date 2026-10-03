@@ -8,6 +8,7 @@ export function appendToast(html: string) {
 	const area = document.getElementById("toast-area");
 	if (!area) return;
 	area.insertAdjacentHTML("beforeend", html);
+	if (!area.showPopover) return;
 	if (area.matches(":popover-open")) area.hidePopover();
 	area.showPopover();
 }

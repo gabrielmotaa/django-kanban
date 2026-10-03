@@ -212,22 +212,27 @@ export class KanbanChecklist extends LitElement {
 	private onAddItem = async (e: Event) => {
 		e.preventDefault();
 		const input = this.newItemInput;
+		if (!input || input.disabled) return;
+		const text = input.value;
+		input.disabled = true;
 		const { successful, html } = await htmxRequest(
 			this,
 			"post",
 			this.itemsUrl,
-			{ text: input?.value ?? "" },
+			{ text },
 		);
-		if (!successful) return;
+		input.disabled = false;
+		if (!successful) {
+			input.focus();
+			return;
+		}
 		const template = document.createElement("template");
 		template.innerHTML = html.trim();
 		const item = template.content.querySelector("kanban-checklist-item");
 		if (item) this.append(item);
 		announceCardUpdate(this, html);
-		if (input) {
-			input.value = "";
-			input.focus();
-		}
+		input.value = "";
+		input.focus();
 	};
 
 	override render() {
