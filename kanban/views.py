@@ -2,6 +2,7 @@ import json
 from http import HTTPStatus
 
 from django.db import transaction
+from django.db.models import Max
 from django.http import (
     Http404,
     HttpRequest,
@@ -19,13 +20,17 @@ from kanban.forms import (
     CardDueDateForm,
     CardEditForm,
     CardLabelForm,
+    ChecklistCreateForm,
+    ChecklistItemCreateForm,
+    ChecklistItemEditForm,
+    ChecklistRenameForm,
     ColumnCreateForm,
     ColumnEditForm,
     LabelContextForm,
     LabelCreateForm,
     LabelEditForm,
 )
-from kanban.models import Board, Card, Column, Label
+from kanban.models import Board, Card, Checklist, ChecklistItem, Column, Label
 from kanban.utils import (
     ApiError,
     error_response,
@@ -56,7 +61,10 @@ def label_registry(board: Board) -> list[dict]:
 
 def index(request: HttpRequest, tech: str) -> HttpResponse:
     board = get_object_or_404(
-        Board.objects.prefetch_related("columns__cards__labels"), pk=1
+        Board.objects.prefetch_related(
+            "columns__cards__labels", "columns__cards__checklists__items"
+        ),
+        pk=1,
     )
     match tech:
         case "templates":
@@ -106,12 +114,12 @@ class CardCreateView(ApiView):
 
 class CardDetailView(ApiView):
     def get(self, request: HttpRequest, pk: int) -> HttpResponse:
-        card = fetch_or_error(Card, "Card não encontrado.", pk=pk)
+        card = fetch_card(pk)
         template_path = template_for_request(request, "_card.html")
         return render(request, template_path, {"card": card})
 
     def patch(self, request: HttpRequest, pk: int) -> HttpResponse:
-        card = fetch_or_error(Card, "Card não encontrado.", pk=pk)
+        card = fetch_card(pk)
         data = QueryDict(request.body)
         form = CardEditForm(data)
         if not form.is_valid():
@@ -163,15 +171,22 @@ class CardDetailView(ApiView):
         return HttpResponse(status=HTTPStatus.NO_CONTENT)
 
     def delete(self, request: HttpRequest, pk: int) -> HttpResponse:
-        card = fetch_or_error(Card, "Card não encontrado.", pk=pk)
+        card = fetch_card(pk)
         card.delete()
         return HttpResponse(status=HTTPStatus.NO_CONTENT)
+
+
+def next_order(queryset) -> int:
+    """Position after the last row, also after earlier rows were deleted."""
+    return (queryset.aggregate(last=Max("order"))["last"] or -1) + 1
 
 
 def fetch_card(pk: int) -> Card:
     """A card with what the dialog needs (column, board, labels)."""
     return fetch_or_error(
-        Card.objects.select_related("column__board").prefetch_related("labels"),
+        Card.objects.select_related("column__board").prefetch_related(
+            "labels", "checklists__items"
+        ),
         "Card não encontrado.",
         pk=pk,
     )
@@ -195,7 +210,7 @@ class CardDialogView(ApiView):
 
 class CardDescriptionView(ApiView):
     def patch(self, request: HttpRequest, pk: int) -> HttpResponse:
-        card = fetch_or_error(Card, "Card não encontrado.", pk=pk)
+        card = fetch_card(pk)
         form = CardDescriptionForm(QueryDict(request.body))
         if not form.is_valid():
             raise ApiError(form_error_message(form))
@@ -208,7 +223,7 @@ class CardDescriptionView(ApiView):
 
 class CardDueView(ApiView):
     def patch(self, request: HttpRequest, pk: int) -> HttpResponse:
-        card = fetch_or_error(Card, "Card não encontrado.", pk=pk)
+        card = fetch_card(pk)
         form = CardDueDateForm(QueryDict(request.body))
         if not form.is_valid():
             raise ApiError(form_error_message(form))
@@ -219,6 +234,102 @@ class CardDueView(ApiView):
         card.save(update_fields=["due_date", "completed", "updated_at"])
         template_path = template_for_request(request, "_card_due_updated.html")
         return render(request, template_path, {"card": card})
+
+
+def checklist_response(request, template, card_pk, checklist_pk=None, item_pk=None):
+    """Render a checklist reply from a freshly fetched card (counts included)."""
+    card = fetch_card(card_pk)
+    checklist = next((c for c in card.checklists.all() if c.pk == checklist_pk), None)
+    item = None
+    if checklist is not None:
+        item = next((i for i in checklist.items.all() if i.pk == item_pk), None)
+    context = {"card": card, "checklist": checklist, "item": item}
+    return render(request, template_for_request(request, template), context)
+
+
+class CardChecklistsView(ApiView):
+    def post(self, request: HttpRequest, pk: int) -> HttpResponse:
+        card = fetch_card(pk)
+        form = ChecklistCreateForm(request.POST)
+        if not form.is_valid():
+            raise ApiError(form_error_message(form))
+        checklist = Checklist.objects.create(
+            card=card,
+            title=form.cleaned_data["title"] or "Checklist",
+            order=next_order(card.checklists.all()),
+        )
+        return checklist_response(request, "_checklist_created.html", pk, checklist.pk)
+
+
+class ChecklistDetailView(ApiView):
+    def patch(self, request: HttpRequest, pk: int) -> HttpResponse:
+        checklist = fetch_or_error(Checklist, "Checklist não encontrado.", pk=pk)
+        form = ChecklistRenameForm(QueryDict(request.body))
+        if not form.is_valid():
+            raise ApiError(form_error_message(form))
+        checklist.title = form.cleaned_data["title"]
+        checklist.save(update_fields=["title"])
+        return checklist_response(
+            request, "_checklist_updated.html", checklist.card_id, checklist.pk
+        )
+
+    def delete(self, request: HttpRequest, pk: int) -> HttpResponse:
+        checklist = fetch_or_error(Checklist, "Checklist não encontrado.", pk=pk)
+        card_id = checklist.card_id
+        checklist.delete()
+        return checklist_response(request, "_checklist_deleted.html", card_id)
+
+
+class ChecklistItemsView(ApiView):
+    def post(self, request: HttpRequest, pk: int) -> HttpResponse:
+        checklist = fetch_or_error(Checklist, "Checklist não encontrado.", pk=pk)
+        form = ChecklistItemCreateForm(request.POST)
+        if not form.is_valid():
+            raise ApiError(form_error_message(form))
+        item = ChecklistItem.objects.create(
+            checklist=checklist,
+            text=form.cleaned_data["text"],
+            order=next_order(checklist.items.all()),
+        )
+        return checklist_response(
+            request, "_checklist_item_created.html", checklist.card_id, pk, item.pk
+        )
+
+
+class ChecklistItemDetailView(ApiView):
+    def patch(self, request: HttpRequest, pk: int) -> HttpResponse:
+        item = fetch_or_error(
+            ChecklistItem.objects.select_related("checklist"),
+            "Item não encontrado.",
+            pk=pk,
+        )
+        form = ChecklistItemEditForm(QueryDict(request.body))
+        if not form.is_valid():
+            raise ApiError(form_error_message(form))
+        if form.cleaned_data["text"]:
+            item.text = form.cleaned_data["text"]
+        if form.cleaned_data["done"] is not None:
+            item.done = form.cleaned_data["done"]
+        item.save(update_fields=["text", "done"])
+        return checklist_response(
+            request,
+            "_checklist_item_updated.html",
+            item.checklist.card_id,
+            item.checklist_id,
+            item.pk,
+        )
+
+    def delete(self, request: HttpRequest, pk: int) -> HttpResponse:
+        item = fetch_or_error(
+            ChecklistItem.objects.select_related("checklist"),
+            "Item não encontrado.",
+            pk=pk,
+        )
+        card_id, checklist_id = item.checklist.card_id, item.checklist_id
+        item.delete()
+        return checklist_response(
+            request, "_checklist_item_deleted.html", card_id, checklist_id
+        )
 
 
 class CardLabelsView(ApiView):
@@ -271,7 +382,7 @@ def refetch(cards: list[int]) -> list[Card]:
     return list(
         Card.objects.filter(pk__in=cards)
         .select_related("column__board")
-        .prefetch_related("labels")
+        .prefetch_related("labels", "checklists__items")
     )
 
 

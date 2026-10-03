@@ -121,3 +121,45 @@ class CardDueDateForm(forms.Form):
         required=False, error_messages={"invalid": "Data inválida."}
     )
     completed = forms.BooleanField(required=False)
+
+
+class ChecklistCreateForm(forms.Form):
+    title = forms.CharField(
+        max_length=100,
+        required=False,
+        error_messages={"max_length": "O título deve ter no máximo 100 caracteres."},
+    )
+
+
+class ChecklistRenameForm(forms.Form):
+    title = title_field(100)
+
+
+class ChecklistItemCreateForm(forms.Form):
+    text = forms.CharField(
+        max_length=200,
+        error_messages={
+            "required": "O texto do item é obrigatório.",
+            "max_length": "O texto deve ter no máximo 200 caracteres.",
+        },
+    )
+
+
+class ChecklistItemEditForm(forms.Form):
+    """Edit the text and/or the done state; an absent field means "unchanged"."""
+
+    text = forms.CharField(
+        max_length=200,
+        required=False,
+        error_messages={"max_length": "O texto deve ter no máximo 200 caracteres."},
+    )
+    done = forms.NullBooleanField(required=False)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if "text" in self.data and not cleaned_data.get("text"):
+            if "text" not in self.errors:
+                raise forms.ValidationError("O texto do item é obrigatório.")
+        elif "text" not in self.data and cleaned_data.get("done") is None:
+            raise forms.ValidationError("Informe o texto ou o estado do item.")
+        return cleaned_data

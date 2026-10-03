@@ -13,6 +13,26 @@ urlpatterns = [
         name="card_description",
     ),
     path("card/<int:pk>/due/", views.CardDueView.as_view(), name="card_due"),
+    path(
+        "card/<int:pk>/checklists/",
+        views.CardChecklistsView.as_view(),
+        name="card_checklists",
+    ),
+    path(
+        "checklist/<int:pk>/",
+        views.ChecklistDetailView.as_view(),
+        name="checklist_detail",
+    ),
+    path(
+        "checklist/<int:pk>/items/",
+        views.ChecklistItemsView.as_view(),
+        name="checklist_items",
+    ),
+    path(
+        "checklist-item/<int:pk>/",
+        views.ChecklistItemDetailView.as_view(),
+        name="checklist_item_detail",
+    ),
     path("card/<int:pk>/labels/", views.CardLabelsView.as_view(), name="card_labels"),
     path("label/", views.LabelCreateView.as_view(), name="label_create"),
     path("label/<int:pk>/", views.LabelDetailView.as_view(), name="label_detail"),

@@ -1,0 +1,10 @@
+<div id="checklist-progress-{{ checklist.pk }}" class="card-checklist__progress"{% if oob %} hx-swap-oob="true"{% endif %}>
+    <span class="card-checklist__percent">{{ checklist.percent }}%</span>
+    <div class="card-checklist__bar"
+         role="progressbar"
+         aria-label="Progresso de {{ checklist.title }}"
+         aria-valuemin="0"
+         aria-valuemax="100"
+         aria-valuenow="{{ checklist.percent }}"
+    ><div class="card-checklist__fill" style="width: {{ checklist.percent }}%;"></div></div>
+</div>

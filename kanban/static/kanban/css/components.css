@@ -17,8 +17,12 @@ body {
 /* Toast area (the toasts themselves are <kanban-toast>) */
 .toast-area {
     position: fixed;
-    right: 24px;
-    bottom: 24px;
+    inset: auto 24px 24px auto;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    overflow: visible;
     display: flex;
     flex-direction: column;
     gap: 8px;

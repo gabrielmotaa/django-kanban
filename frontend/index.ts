@@ -7,6 +7,8 @@ export * from "./components/kanban-card-description";
 export * from "./components/kanban-card-dialog";
 export * from "./components/kanban-card-due";
 export * from "./components/kanban-card-labels";
+export * from "./components/kanban-checklist";
+export * from "./components/kanban-checklist-item";
 export * from "./components/kanban-color-picker";
 export * from "./components/kanban-column";
 export * from "./components/kanban-column-header";
