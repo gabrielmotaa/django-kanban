@@ -39,9 +39,14 @@ def patch(client, url, data, tech):
 
 
 def has_oob_card(html: str, card: Card, tech: str) -> bool:
-    marker = "<kanban-card " if tech == "components" else "<div"
-    start = html.find(f'id="card-{card.pk}"')
-    return start != -1 and 'hx-swap-oob="true"' in html and marker in html
+    # Templates: htmx swaps it out-of-band. Components: htmx cannot resolve OOB
+    # targets from inside a shadow root, so the card element travels in the
+    # response and the board applies it (see kanban-card-updated).
+    if f'id="card-{card.pk}"' not in html:
+        return False
+    if tech == "components":
+        return "<kanban-card " in html
+    return 'hx-swap-oob="true"' in html
 
 
 def test_description_defaults_to_empty(card):

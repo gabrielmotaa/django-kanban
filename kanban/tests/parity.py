@@ -110,12 +110,18 @@ class ParityBoardPage:
         dialog.get_by_role("heading", level=2, name=new_title).wait_for()
 
     def edit_description(self, text: str, current: str | None = None) -> None:
-        dialog = self.dialog()
+        # Page-level locators: in the components version the description is a
+        # slotted light-DOM child of the dialog host, not a DOM descendant of
+        # the <dialog> element, so a dialog-scoped locator would miss it.
+        page = self.page
         label = current or "Adicione uma descrição mais detalhada…"
-        dialog.get_by_role("button", name=label).click()
-        dialog.get_by_role("textbox", name="Descrição").fill(text)
-        dialog.get_by_role("button", name="Salvar").click()
-        dialog.get_by_role("textbox", name="Descrição").wait_for(state="hidden")
+        page.get_by_role("button", name=label, exact=True).click()
+        page.get_by_role("textbox", name="Descrição").fill(text)
+        page.get_by_role("button", name="Salvar", exact=True).click()
+        page.get_by_role("textbox", name="Descrição").wait_for(state="hidden")
+
+    def description_button(self, text: str) -> Locator:
+        return self.page.get_by_role("button", name=text)
 
     def delete_card_from_dialog(self) -> None:
         self.page.once("dialog", lambda d: d.accept())

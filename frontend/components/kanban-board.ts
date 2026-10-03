@@ -1,5 +1,6 @@
 import { css, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { applyCardUpdate } from "../lib/card-update";
 import { HtmxElement } from "../lib/htmx-element";
 import { htmxRequest } from "../lib/htmx-request";
 import { buttons } from "../styles/buttons";
@@ -166,6 +167,16 @@ export class KanbanBoard extends HtmxElement {
 			this.onDragEnd as EventListener,
 			{ signal },
 		);
+		this.addEventListener(
+			"kanban-card-updated",
+			this.onCardUpdated as EventListener,
+			{ signal },
+		);
+		this.addEventListener(
+			"kanban-card-open",
+			this.onCardOpen as EventListener,
+			{ signal },
+		);
 		this.addEventListener("cardmove", this.onCardMove as EventListener, {
 			signal,
 		});
@@ -181,6 +192,28 @@ export class KanbanBoard extends HtmxElement {
 	private onDragEnd = () => {
 		this.dragState = null;
 	};
+
+	// The dialog is loaded on demand into a host inside the board's shadow root.
+	private onCardOpen = (e: CustomEvent<{ card: KanbanCard }>) => {
+		void this.openDialog(e.detail.card);
+	};
+
+	private onCardUpdated = (e: CustomEvent<{ html: string }>) => {
+		e.stopPropagation();
+		applyCardUpdate(this, e.detail.html);
+	};
+
+	private async openDialog(card: KanbanCard) {
+		const { successful, html } = await htmxRequest(
+			card,
+			"get",
+			card.dialogHref,
+		);
+		const host = this.renderRoot.querySelector(".dialog-host");
+		if (!successful || !host) return;
+		host.innerHTML = html;
+		host.querySelector("kanban-card-dialog")?.open(card);
+	}
 
 	private onCardMove = (e: CustomEvent<CardMoveDetail>) => {
 		void this.moveCard(e.detail);
@@ -297,6 +330,7 @@ export class KanbanBoard extends HtmxElement {
           </kanban-add-form>
         </div>
       </div>
+      <div class="dialog-host"></div>
     `;
 	}
 }

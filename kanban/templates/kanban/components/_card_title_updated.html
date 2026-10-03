@@ -1,0 +1,2 @@
+{% include "kanban/components/_card.html" %}
+<kanban-card-dialog card-id="{{ card.pk }}" title="{{ card.title }}" column-title="{{ card.column.title }}" href="{% url 'card_detail' card.pk %}"></kanban-card-dialog>

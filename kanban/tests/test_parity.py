@@ -295,9 +295,7 @@ def test_description_roundtrip_updates_card_front(live_server, page: Page, tech)
     # The saved text is what the dialog shows when it is opened again.
     board_page.close_card_dialog()
     board_page.open_card_dialog("Card 1")
-    expect(
-        board_page.dialog().get_by_role("button", name="Some details second line")
-    ).to_be_visible()
+    expect(board_page.description_button("Some details second line")).to_be_visible()
 
     page.reload()
     board_page.navigate()
