@@ -136,6 +136,11 @@ export class KanbanCardDialog extends HtmxElement {
         }
       }
 
+      /* Sections are slotted custom elements: space them like the templates' siblings. */
+      ::slotted(:not(:first-child)) {
+        margin-top: 24px;
+      }
+
       .section-title {
         margin: 0 0 8px;
         font-size: var(--font-size-base);

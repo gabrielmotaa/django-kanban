@@ -1,3 +1,4 @@
 <kanban-card-dialog card-id="{{ card.pk }}" title="{{ card.title }}" column-title="{{ card.column.title }}" href="{% url 'card_detail' card.pk %}">
+    {% include "kanban/components/_card_labels_section.html" %}
     <kanban-card-description href="{% url 'card_description' card.pk %}">{{ card.description }}</kanban-card-description>
 </kanban-card-dialog>

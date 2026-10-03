@@ -1,0 +1,1 @@
+<kanban-card-labels href="{% url 'card_labels' card.pk %}" create-url="{% url 'label_create' %}" board-id="{{ card.column.board_id }}" card-id="{{ card.pk }}" card-labels="{% for label in card.labels.all %}{{ label.pk }}{% if not forloop.last %},{% endif %}{% endfor %}"></kanban-card-labels>

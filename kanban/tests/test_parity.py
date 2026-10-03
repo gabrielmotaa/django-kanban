@@ -5,7 +5,7 @@ os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 import pytest
 from playwright.sync_api import Page, expect
 
-from kanban.models import Board, Card, Column
+from kanban.models import Board, Card, Column, Label
 from kanban.tests.parity import ParityBoardPage
 
 pytestmark = [pytest.mark.django_db(transaction=True), pytest.mark.integration]
@@ -27,6 +27,11 @@ def board_data():
 
 
 def snapshot_for(page: Page, live_server, tech: str, expand: str | None = None) -> str:
+    if expand and expand.startswith("label"):
+        bug, _ = Label.objects.get_or_create(board_id=1, name="Bug", color="#ef4444")
+        Label.objects.get_or_create(board_id=1, name="Melhoria", color="#3b82f6")
+        Label.objects.get_or_create(board_id=1, name="", color="#10b981")
+        Card.objects.get(pk=1).labels.add(bug)
     if expand == "card-dialog-described":
         Card.objects.filter(pk=1).update(description="First line\nSecond line")
     board_page = ParityBoardPage(page, live_server.url, tech)
@@ -39,6 +44,14 @@ def snapshot_for(page: Page, live_server, tech: str, expand: str | None = None) 
         board_page.open_column_rename("Column A")
     elif expand in ("card-dialog", "card-dialog-described"):
         board_page.open_card_dialog("Card 1")
+    elif expand in ("label-popover", "label-edit", "label-create"):
+        board_page.open_card_dialog("Card 1")
+        board_page.open_label_popover()
+        if expand == "label-edit":
+            board_page.start_editing_label("Bug")
+        elif expand == "label-create":
+            page.get_by_role("button", name="Criar uma nova etiqueta").click()
+            page.get_by_role("textbox", name="Nome da etiqueta").wait_for()
     elif expand == "edit-board-title":
         board_page.open_board_title_editor()
     return board_page.aria_snapshot()
@@ -53,6 +66,9 @@ def snapshot_for(page: Page, live_server, tech: str, expand: str | None = None) 
         "rename-column",
         "card-dialog",
         "card-dialog-described",
+        "label-popover",
+        "label-edit",
+        "label-create",
         "edit-board-title",
     ],
 )
@@ -428,4 +444,127 @@ def test_enter_on_focused_card_opens_dialog(live_server, page: Page, tech):
 
     page.evaluate("document.querySelector('.card, kanban-card').focus()")
     page.keyboard.press("Enter")
+    expect(board_page.dialog()).to_be_visible()
+
+
+def three_cards_with_label() -> Label:
+    """A label shared by 3 cards living in 2 columns (Column A x2, Column B x1)."""
+    bug = Label.objects.create(board_id=1, name="Bug", color="#ef4444")
+    third = Card.objects.create(id=3, column_id=1, title="Card 3", order=1)
+    for card in (Card.objects.get(pk=1), Card.objects.get(pk=2), third):
+        card.labels.add(bug)
+    return bug
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_renaming_a_label_updates_every_card_front(live_server, page: Page, tech):
+    bug = three_cards_with_label()
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+    assert board_page.card_label_count("Column A", "Bug") == 2
+    assert board_page.card_label_count("Column B", "Bug") == 1
+
+    board_page.open_card_dialog("Card 1")
+    board_page.open_label_popover()
+    board_page.start_editing_label("Bug")
+    board_page.save_label_form(name="Defeito")
+    expect(board_page.label_checkbox("Defeito")).to_be_visible()
+
+    board_page.close_card_dialog()
+    expect(
+        board_page.column("Column A").get_by_text("Defeito", exact=True)
+    ).to_have_count(2)
+    expect(
+        board_page.column("Column B").get_by_text("Defeito", exact=True)
+    ).to_have_count(1)
+    assert board_page.card_label_count("Column A", "Bug") == 0
+    bug.refresh_from_db()
+    assert bug.name == "Defeito"
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_deleting_a_label_removes_it_everywhere(live_server, page: Page, tech):
+    three_cards_with_label()
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+
+    board_page.open_card_dialog("Card 1")
+    board_page.open_label_popover()
+    board_page.start_editing_label("Bug")
+    board_page.delete_label_in_form()
+    expect(board_page.label_checkbox("Bug")).to_have_count(0)
+    # The dialog's own pills row is cleared too.
+    expect(board_page.dialog().get_by_text("Bug", exact=True)).to_have_count(0)
+    expect(page.get_by_text("Bug", exact=True)).to_have_count(0)
+
+    board_page.close_card_dialog()
+    assert board_page.card_label_count("Column A", "Bug") == 0
+    assert board_page.card_label_count("Column B", "Bug") == 0
+    assert not Label.objects.exists()
+    assert Card.objects.get(pk=1).labels.count() == 0
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_toggling_a_label_attaches_and_detaches(live_server, page: Page, tech):
+    Label.objects.create(board_id=1, name="Bug", color="#ef4444")
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+    assert board_page.card_label_count("Column A", "Bug") == 0
+
+    board_page.open_card_dialog("Card 1")
+    board_page.open_label_popover()
+    board_page.toggle_label("Bug", True)
+    expect(board_page.column("Column A").get_by_text("Bug", exact=True)).to_have_count(
+        1
+    )
+    assert Card.objects.get(pk=1).labels.count() == 1
+    expect(board_page.label_checkbox("Bug")).to_be_checked()
+
+    board_page.toggle_label("Bug", False)
+    expect(board_page.column("Column A").get_by_text("Bug", exact=True)).to_have_count(
+        0
+    )
+    assert Card.objects.get(pk=1).labels.count() == 0
+    expect(board_page.label_checkbox("Bug")).not_to_be_checked()
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_creating_a_label_from_the_popover(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+
+    board_page.open_card_dialog("Card 1")
+    board_page.open_label_popover()
+    page.get_by_role("button", name="Criar uma nova etiqueta").click()
+    board_page.save_label_form(name="Design", color="Roxo")
+
+    expect(board_page.label_checkbox("Design")).to_be_visible()
+    label = Label.objects.get(name="Design")
+    assert (label.board_id, label.color) == (1, "#8b5cf6")
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_popover_search_filters_labels(live_server, page: Page, tech):
+    Label.objects.create(board_id=1, name="Bug", color="#ef4444")
+    Label.objects.create(board_id=1, name="Melhoria", color="#3b82f6")
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+
+    board_page.open_card_dialog("Card 1")
+    board_page.open_label_popover()
+    page.get_by_role("searchbox", name="Buscar etiquetas…").fill("melhoria")
+    expect(board_page.label_checkbox("Melhoria")).to_be_visible()
+    expect(board_page.label_checkbox("Bug")).to_have_count(0)
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_escape_closes_popover_but_not_dialog(live_server, page: Page, tech):
+    Label.objects.create(board_id=1, name="Bug", color="#ef4444")
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+
+    board_page.open_card_dialog("Card 1")
+    board_page.open_label_popover()
+    page.get_by_role("searchbox", name="Buscar etiquetas…").press("Escape")
+    expect(page.get_by_role("searchbox", name="Buscar etiquetas…")).to_have_count(0)
     expect(board_page.dialog()).to_be_visible()

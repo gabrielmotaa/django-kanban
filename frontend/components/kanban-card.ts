@@ -1,6 +1,7 @@
 import { css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { HtmxElement } from "../lib/htmx-element";
+import { resolveLabels, watchLabels } from "../lib/labels";
 import { reset } from "../styles/reset";
 import type { DragState } from "./kanban-board";
 import type { KanbanColumn } from "./kanban-column";
@@ -49,6 +50,13 @@ export class KanbanCard extends HtmxElement {
         outline-offset: 2px;
       }
 
+      .labels {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-bottom: 8px;
+      }
+
       .badges {
         display: flex;
         flex-wrap: wrap;
@@ -76,6 +84,10 @@ export class KanbanCard extends HtmxElement {
 	@property({ attribute: "has-description", type: Boolean })
 	hasDescription = false;
 
+	/** Ids of the attached labels ("3,5"); definitions come from the board. */
+	@property()
+	labels = "";
+
 	private isDragging = false;
 
 	override firstUpdated() {
@@ -90,6 +102,7 @@ export class KanbanCard extends HtmxElement {
 		this.draggable = true;
 		this.tabIndex = 0;
 		const { signal } = this;
+		watchLabels(this, signal);
 		this.addEventListener("dragstart", this.onDragStart, { signal });
 		this.addEventListener("dragend", this.onDragEnd, { signal });
 		this.addEventListener("click", this.onCardClick, { signal });
@@ -152,8 +165,21 @@ export class KanbanCard extends HtmxElement {
 	};
 
 	override render() {
+		const labels = resolveLabels(this, this.labels);
 		return html`
       <div class="card">
+        ${
+					labels.length
+						? html`<div class="labels">${labels.map(
+								(label) => html`<kanban-label
+                    name=${label.name}
+                    color=${label.color}
+                    fg=${label.fg}
+                    color-name=${label.colorName}
+                  ></kanban-label>`,
+							)}</div>`
+						: ""
+				}
         <div class="title-view">${this.title}</div>
         ${
 					this.hasDescription
