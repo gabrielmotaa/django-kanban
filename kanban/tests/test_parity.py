@@ -648,12 +648,33 @@ def test_escape_closes_due_popover_but_not_dialog(live_server, page: Page, tech)
 
 
 @pytest.mark.parametrize("tech", TECHS)
-def test_invalid_due_date_is_rejected_without_changes(live_server, page: Page, tech):
+def test_saving_an_empty_date_keeps_the_card_without_date(
+    live_server, page: Page, tech
+):
     board_page = ParityBoardPage(page, live_server.url, tech)
     board_page.navigate()
     board_page.open_card_dialog("Card 1")
     board_page.open_due_popover()
     # Saving the popover without choosing a date removes nothing and keeps it empty.
     page.get_by_role("button", name="Salvar", exact=True).click()
-    page.wait_for_timeout(300)
+    expect(page.get_by_role("region", name="Alterar data de entrega")).to_have_count(0)
     assert Card.objects.get(pk=1).due_date is None
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_checkbox_keeps_focus_and_reverts_when_the_request_fails(
+    live_server, page: Page, tech
+):
+    Card.objects.filter(pk=1).update(due_date=timezone.localdate())
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+    board_page.open_card_dialog("Card 1")
+
+    board_page.completed_checkbox().check()
+    expect(board_page.due_badge("Column A", "Concluído")).to_have_count(1)
+    expect(board_page.completed_checkbox()).to_be_focused()
+
+    page.route("**/due/", lambda route: route.fulfill(status=500, body="boom"))
+    board_page.completed_checkbox().uncheck()
+    expect(board_page.completed_checkbox()).to_be_checked()
+    assert Card.objects.get(pk=1).completed is True

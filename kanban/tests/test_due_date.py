@@ -165,7 +165,13 @@ class TestDuePatch:
         card.refresh_from_db()
         assert card.due_date is None
         assert card.completed is False
-        assert "due=" not in response.content.decode() or tech == "templates"
+        html = response.content.decode()
+        if tech == "components":
+            assert "due-status" not in html
+            assert "due=" not in html
+            assert " completed>" not in html
+        else:
+            assert "badge--" not in html
 
     def test_completed_without_date_is_not_stored(self, client: Client, card, tech):
         patch(client, card, {"due_date": "", "completed": "true"}, tech)

@@ -8,7 +8,12 @@
         {% if card.due_date %}
         <label class="card-due__done">
             <input type="checkbox"
+                   id="card-due-done"
                    {% if card.completed %}checked{% endif %}
+                   hx-sync="this:replace"
+                   @htmx:response-error="$el.checked = !$el.checked"
+                   @htmx:send-error="$el.checked = !$el.checked"
+                   @htmx:timeout="$el.checked = !$el.checked"
                    hx-patch="{% url 'card_due' card.pk %}"
                    hx-vals='{"due_date": "{{ card.due_date|date:"Y-m-d" }}", "completed": "{% if card.completed %}false{% else %}true{% endif %}"}'
                    hx-trigger="change"
