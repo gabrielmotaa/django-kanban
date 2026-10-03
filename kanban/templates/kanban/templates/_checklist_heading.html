@@ -1,0 +1,35 @@
+<div id="checklist-heading-{{ checklist.pk }}" class="card-checklist__header" x-init="editing = false">
+    <h3 id="checklist-title-{{ checklist.pk }}" class="card-checklist__title" x-show="!editing">
+        <button type="button"
+                class="card-checklist__title-btn"
+                @click="editing = true; $nextTick(() => $refs.titleInput.focus())"
+        >{{ checklist.title }}</button>
+    </h3>
+    <form x-show="editing"
+          x-cloak
+          hx-patch="{% url 'checklist_detail' checklist.pk %}"
+          hx-target="#checklist-heading-{{ checklist.pk }}"
+          hx-swap="outerHTML"
+          class="card-checklist__title-form"
+          @keydown.escape.prevent.stop="editing = false"
+    >
+        <input x-ref="titleInput"
+               type="text"
+               name="title"
+               value="{{ checklist.title }}"
+               maxlength="100"
+               required
+               aria-label="Título do checklist"
+               class="card-checklist__input"
+        >
+        <button type="submit" class="card-dialog__btn card-dialog__btn--primary">Salvar</button>
+        <button type="button" @click="editing = false" class="card-dialog__btn card-dialog__btn--secondary">Cancelar</button>
+    </form>
+    <button type="button"
+            class="card-checklist__delete"
+            hx-delete="{% url 'checklist_detail' checklist.pk %}"
+            hx-target="#checklist-{{ checklist.pk }}"
+            hx-swap="outerHTML"
+            hx-confirm="Excluir a checklist '{{ checklist.title }}'?"
+    >Excluir</button>
+</div>

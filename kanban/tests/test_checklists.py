@@ -295,7 +295,10 @@ class TestItemViews:
         else:
             assert 'done="true"' in html
         assert f'id="card-{card.pk}"' in html
-        assert "1/2" in html
+        if tech == "templates":
+            assert "1/2" in html
+        else:
+            assert 'checklist-done="1" checklist-total="2"' in html
 
     def test_untoggle(self, client: Client, item, tech):
         item.done = True
@@ -371,12 +374,16 @@ def test_card_front_badge(client: Client, card, tech):
         reverse("card_detail", args=[card.pk]), **headers(tech)
     ).content.decode()
     assert "2/3" not in html
+    assert "checklist-total" not in html
     filled(card)
     html = client.get(
         reverse("card_detail", args=[card.pk]), **headers(tech)
     ).content.decode()
     assert "Checklist 2 de 3" in html
-    assert "2/3" in html
+    if tech == "templates":
+        assert "2/3" in html
+    else:
+        assert 'checklist-done="2" checklist-total="3"' in html
 
 
 @pytest.mark.parametrize("tech", VARIANTS)

@@ -2,7 +2,14 @@ from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html
 
-from kanban.models import Board, Card, Column, Label
+from kanban.models import (
+    Board,
+    Card,
+    Checklist,
+    ChecklistItem,
+    Column,
+    Label,
+)
 
 
 @admin.register(Board)
@@ -34,8 +41,28 @@ class ColumnAdmin(admin.ModelAdmin):
         )
 
 
+class ChecklistInline(admin.TabularInline):
+    model = Checklist
+    extra = 0
+    show_change_link = True
+
+
+class ChecklistItemInline(admin.TabularInline):
+    model = ChecklistItem
+    extra = 0
+
+
+@admin.register(Checklist)
+class ChecklistAdmin(admin.ModelAdmin):
+    list_display = ("id", "card", "title", "order")
+    list_filter = ("card__column__board",)
+    search_fields = ("title", "card__title")
+    inlines = [ChecklistItemInline]
+
+
 @admin.register(Card)
 class CardAdmin(admin.ModelAdmin):
+    inlines = [ChecklistInline]
     list_display = (
         "id",
         "column_link",

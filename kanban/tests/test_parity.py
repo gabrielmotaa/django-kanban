@@ -7,7 +7,7 @@ import pytest
 from django.utils import timezone
 from playwright.sync_api import Page, expect
 
-from kanban.models import Board, Card, Column, Label
+from kanban.models import Board, Card, Checklist, ChecklistItem, Column, Label
 from kanban.tests.parity import ParityBoardPage
 
 pytestmark = [pytest.mark.django_db(transaction=True), pytest.mark.integration]
@@ -34,6 +34,16 @@ def snapshot_for(page: Page, live_server, tech: str, expand: str | None = None) 
         Label.objects.get_or_create(board_id=1, name="Melhoria", color="#3b82f6")
         Label.objects.get_or_create(board_id=1, name="", color="#10b981")
         Card.objects.get(pk=1).labels.add(bug)
+    if expand and expand.startswith("checklist"):
+        checklist, _ = Checklist.objects.get_or_create(
+            card_id=1, title="Steps", defaults={"order": 0}
+        )
+        for position, (text, done) in enumerate([("Write", True), ("Test", False)]):
+            ChecklistItem.objects.get_or_create(
+                checklist=checklist,
+                text=text,
+                defaults={"done": done, "order": position},
+            )
     if expand and expand.startswith("due"):
         Card.objects.filter(pk=1).update(
             due_date=timezone.localdate() - dt.timedelta(days=3)
@@ -50,6 +60,11 @@ def snapshot_for(page: Page, live_server, tech: str, expand: str | None = None) 
         board_page.open_column_rename("Column A")
     elif expand in ("card-dialog", "card-dialog-described"):
         board_page.open_card_dialog("Card 1")
+    elif expand in ("checklist-dialog", "checklist-popover"):
+        board_page.open_card_dialog("Card 1")
+        if expand == "checklist-popover":
+            page.get_by_role("button", name="Checklist", exact=True).click()
+            page.get_by_role("region", name="Adicionar checklist").wait_for()
     elif expand in ("due-dialog", "due-popover"):
         board_page.open_card_dialog("Card 1")
         if expand == "due-popover":
@@ -76,6 +91,8 @@ def snapshot_for(page: Page, live_server, tech: str, expand: str | None = None) 
         "rename-column",
         "card-dialog",
         "card-dialog-described",
+        "checklist-dialog",
+        "checklist-popover",
         "due-dialog",
         "due-popover",
         "label-popover",
@@ -678,3 +695,125 @@ def test_checkbox_keeps_focus_and_reverts_when_the_request_fails(
     board_page.completed_checkbox().uncheck()
     expect(board_page.completed_checkbox()).to_be_checked()
     assert Card.objects.get(pk=1).completed is True
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_checklist_progress_and_card_badge(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+
+    board_page.open_card_dialog("Card 1")
+    board_page.add_checklist()
+    expect(board_page.progress()).to_have_attribute("aria-valuenow", "0")
+
+    # Enter adds an item and keeps the focus on the input for the next one.
+    for text in ("Write", "Test", "Ship"):
+        board_page.add_item(text)
+    box = page.get_by_role("textbox", name="Adicionar um item")
+    expect(box).to_be_focused()
+    assert box.input_value() == ""
+    assert board_page.checklist_badge("Column A").count() == 1
+    expect(board_page.checklist_badge("Column A")).to_have_text("☑ 0/3")
+
+    board_page.item_checkbox("Write").check()
+    board_page.item_checkbox("Test").check()
+    expect(board_page.progress()).to_have_attribute("aria-valuenow", "67")
+    expect(page.get_by_text("67%", exact=True)).to_be_visible()
+    expect(board_page.checklist_badge("Column A")).to_have_text("☑ 2/3")
+    assert ChecklistItem.objects.filter(done=True).count() == 2
+
+    # Deleting a checked item shrinks both numbers.
+    board_page.remove_item("Write")
+    expect(board_page.checklist_badge("Column A")).to_have_text("☑ 1/2")
+    expect(board_page.progress()).to_have_attribute("aria-valuenow", "50")
+
+    # Reload shows the same values.
+    board_page.close_card_dialog()
+    page.reload()
+    board_page.navigate()
+    expect(board_page.checklist_badge("Column A")).to_have_text("☑ 1/2")
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_deleting_the_checklist_removes_the_badge(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+    board_page.open_card_dialog("Card 1")
+    board_page.add_checklist("Steps")
+    board_page.add_item("One")
+    expect(board_page.checklist_badge("Column A")).to_have_count(1)
+
+    page.once("dialog", lambda d: d.accept())
+    page.get_by_role("button", name="Excluir", exact=True).click()
+    expect(board_page.checklist_region("Steps")).to_have_count(0)
+    expect(board_page.checklist_badge("Column A")).to_have_count(0)
+    assert not Checklist.objects.exists()
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_complete_checklist_badge_state(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+    board_page.open_card_dialog("Card 1")
+    board_page.add_checklist()
+    board_page.add_item("Only")
+    board_page.item_checkbox("Only").check()
+
+    badge = board_page.column("Column A").get_by_role("img", name="Checklist 1 de 1")
+    expect(badge).to_have_text("☑ 1/1")
+    color = badge.evaluate(
+        "el => getComputedStyle(el.querySelector?.('.badge') ?? el).backgroundColor"
+    )
+    assert color != "rgba(0, 0, 0, 0)"
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_rename_checklist_and_edit_item(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+    board_page.open_card_dialog("Card 1")
+    board_page.add_checklist("Old")
+    board_page.add_item("First")
+
+    page.get_by_role("heading", level=3, name="Old").get_by_role("button").click()
+    page.get_by_role("textbox", name="Título do checklist").fill("New")
+    page.get_by_role("button", name="Salvar", exact=True).click()
+    expect(board_page.checklist_region("New")).to_be_visible()
+    expect(board_page.progress("New")).to_be_visible()
+    assert Checklist.objects.get().title == "New"
+
+    board_page.item_row("First").get_by_role("button", name="First").click()
+    page.get_by_role("textbox", name="Texto do item").fill("Edited")
+    page.get_by_role("button", name="Salvar", exact=True).click()
+    expect(board_page.item_checkbox("Edited")).to_be_visible()
+    assert ChecklistItem.objects.get().text == "Edited"
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_escape_cancels_item_edit_but_keeps_dialog(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+    board_page.open_card_dialog("Card 1")
+    board_page.add_checklist()
+    board_page.add_item("First")
+
+    board_page.item_row("First").get_by_role("button", name="First").click()
+    page.get_by_role("textbox", name="Texto do item").fill("draft")
+    page.keyboard.press("Escape")
+    expect(page.get_by_role("textbox", name="Texto do item")).to_have_count(0)
+    expect(board_page.dialog()).to_be_visible()
+    assert ChecklistItem.objects.get().text == "First"
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_whitespace_item_is_rejected_with_a_toast(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+    board_page.open_card_dialog("Card 1")
+    board_page.add_checklist()
+
+    box = page.get_by_role("textbox", name="Adicionar um item")
+    box.fill("   ")
+    box.press("Enter")
+    expect(board_page.toast()).to_have_text("O texto do item é obrigatório.")
+    assert not ChecklistItem.objects.exists()

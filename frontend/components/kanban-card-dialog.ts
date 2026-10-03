@@ -1,9 +1,10 @@
 import { css, html } from "lit";
-import { customElement, property, query } from "lit/decorators.js";
+import { customElement, property, query, state } from "lit/decorators.js";
 import { applyServerElement } from "../lib/apply-server-element";
 import { announceCardUpdate } from "../lib/card-update";
 import { HtmxElement } from "../lib/htmx-element";
 import { htmxRequest } from "../lib/htmx-request";
+import { buttons } from "../styles/buttons";
 import { reset } from "../styles/reset";
 import type { KanbanInlineEdit } from "./kanban-inline-edit";
 
@@ -17,6 +18,7 @@ import type { KanbanInlineEdit } from "./kanban-inline-edit";
 export class KanbanCardDialog extends HtmxElement {
 	static styles = [
 		reset,
+		buttons,
 		css`
       :host {
         display: contents;
@@ -148,6 +150,39 @@ export class KanbanCardDialog extends HtmxElement {
         color: var(--color-text-light);
       }
 
+      .checklist-form {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 8px;
+        padding: 12px;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        background: var(--color-bg-card);
+        box-shadow: var(--shadow-dropdown);
+        box-sizing: border-box;
+        --btn-padding: 6px 12px;
+        --btn-font-size: var(--font-size-base);
+        --btn-radius: var(--radius-md);
+      }
+
+      .checklist-form input {
+        display: block;
+        flex-grow: 1;
+        min-width: 0;
+        width: 100%;
+        padding: 6px 10px;
+        border: 1px solid var(--color-input-border);
+        border-radius: var(--radius-md);
+        font-size: var(--font-size-base);
+        outline: none;
+        box-sizing: border-box;
+      }
+
+      .checklist-form input:focus {
+        border-color: var(--color-primary);
+      }
+
       .action {
         display: block;
         width: 100%;
@@ -183,6 +218,12 @@ export class KanbanCardDialog extends HtmxElement {
 
 	@property()
 	href = "";
+
+	@property({ attribute: "checklists-url" })
+	checklistsUrl = "";
+
+	@state()
+	private checklistOpen = false;
 
 	@query("dialog")
 	private dialog?: HTMLDialogElement;
@@ -224,6 +265,54 @@ export class KanbanCardDialog extends HtmxElement {
 		announceCardUpdate(this, e.detail.html);
 	};
 
+	private openChecklistForm = () => {
+		this.checklistOpen = !this.checklistOpen;
+		if (this.checklistOpen) {
+			this.updateComplete.then(() =>
+				this.renderRoot
+					.querySelector<HTMLInputElement>(".checklist-form input")
+					?.focus(),
+			);
+		}
+	};
+
+	private onChecklistKeyDown = (e: KeyboardEvent) => {
+		if (e.key === "Escape") {
+			// Close the popover only: don't let the <dialog> close too.
+			e.preventDefault();
+			e.stopPropagation();
+			this.checklistOpen = false;
+		}
+	};
+
+	private addChecklist = async (e: Event) => {
+		e.preventDefault();
+		const input = this.renderRoot.querySelector<HTMLInputElement>(
+			".checklist-form input",
+		);
+		const { successful, html } = await htmxRequest(
+			this,
+			"post",
+			this.checklistsUrl,
+			{ title: input?.value ?? "" },
+		);
+		if (!successful) return;
+		const template = document.createElement("template");
+		template.innerHTML = html.trim();
+		const checklist = template.content.querySelector("kanban-checklist");
+		if (checklist) {
+			// Keep the section order: after the last checklist, else the description.
+			const existing = [...this.querySelectorAll(":scope > kanban-checklist")];
+			const anchor =
+				existing[existing.length - 1] ??
+				this.querySelector(":scope > kanban-card-description");
+			if (anchor) anchor.after(checklist);
+			else this.append(checklist);
+		}
+		announceCardUpdate(this, html);
+		this.checklistOpen = false;
+	};
+
 	private onDelete = async () => {
 		if (!confirm("Deletar este card?")) return;
 		const { successful } = await htmxRequest(this, "delete", this.href);
@@ -262,6 +351,35 @@ export class KanbanCardDialog extends HtmxElement {
             <div class="main"><slot></slot></div>
             <aside>
               <h3 class="section-title">Ações</h3>
+              <div class="checklist-create">
+                <button
+                  type="button"
+                  class="action"
+                  aria-expanded=${this.checklistOpen ? "true" : "false"}
+                  @click=${this.openChecklistForm}
+                >Checklist</button>
+                ${
+									this.checklistOpen
+										? html`
+                      <form
+                        class="checklist-form"
+                        role="region"
+                        aria-label="Adicionar checklist"
+                        @submit=${this.addChecklist}
+                        @keydown=${this.onChecklistKeyDown}
+                      >
+                        <input
+                          type="text"
+                          maxlength="100"
+                          aria-label="Título do novo checklist"
+                          .value=${"Checklist"}
+                        />
+                        <button type="submit" class="btn btn-primary">Adicionar</button>
+                      </form>
+                    `
+										: ""
+								}
+              </div>
               <button type="button" class="action action--danger" @click=${this.onDelete}>
                 Excluir card
               </button>

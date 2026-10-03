@@ -15,11 +15,44 @@
             {% include "kanban/templates/_card_labels.html" %}
             {% include "kanban/templates/_card_due.html" %}
             {% include "kanban/templates/_card_description.html" %}
-            {# Checklists (010) and activity (011) go here. #}
+            <div id="card-checklists" class="card-checklists">
+                {% for checklist in card.checklists.all %}{% include "kanban/templates/_checklist.html" %}{% endfor %}
+            </div>
+            {# Activity (011) goes here. #}
         </div>
 
         <aside class="card-dialog__side">
             <h3 class="card-dialog__section-title">Ações</h3>
+            <div x-data="{ open: false }"
+                 class="card-checklist__create"
+                 @keydown.escape="if (open) { $event.preventDefault(); $event.stopPropagation(); open = false }"
+            >
+                <button type="button"
+                        class="card-dialog__action"
+                        :aria-expanded="open"
+                        @click="open = !open; $nextTick(() => open && $refs.title.focus())"
+                >Checklist</button>
+                <form x-show="open"
+                      x-cloak
+                      role="region"
+                      aria-label="Adicionar checklist"
+                      class="card-checklist__popover"
+                      hx-post="{% url 'card_checklists' card.pk %}"
+                      hx-target="#card-checklists"
+                      hx-swap="beforeend"
+                      @htmx:after-request="if ($event.detail.successful) { open = false; $refs.title.value = 'Checklist' }"
+                >
+                    <input x-ref="title"
+                           type="text"
+                           name="title"
+                           value="Checklist"
+                           maxlength="100"
+                           aria-label="Título do novo checklist"
+                           class="card-checklist__input"
+                    >
+                    <button type="submit" class="card-dialog__btn card-dialog__btn--primary">Adicionar</button>
+                </form>
+            </div>
             <button type="button"
                     class="card-dialog__action card-dialog__action--danger"
                     hx-delete="{% url 'card_detail' card.pk %}"

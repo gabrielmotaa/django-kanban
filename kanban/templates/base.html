@@ -21,6 +21,19 @@
 <body>
     {% block content %}{% endblock %}
     <script>
+        // The toast area is a manual popover so it sits in the top layer, above
+        // an open <dialog>; re-showing it after a toast moves it on top again.
+        const toastArea = () => document.getElementById('toast-area');
+        const raiseToasts = () => {
+            const area = toastArea();
+            if (!area || !area.showPopover) return;
+            if (area.matches(':popover-open')) area.hidePopover();
+            area.showPopover();
+        };
+        raiseToasts();
+        document.body.addEventListener('htmx:afterSwap', (event) => {
+            if (event.detail.target === toastArea()) raiseToasts();
+        });
         document.body.addEventListener('htmx:configRequest', (event) => {
             event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
         });

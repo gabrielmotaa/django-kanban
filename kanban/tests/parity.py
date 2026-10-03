@@ -183,6 +183,45 @@ class ParityBoardPage:
     def due_badge(self, column_title: str, label: str) -> Locator:
         return self.column(column_title).get_by_role("img", name=label)
 
+    # -- checklists (page-level locators: see edit_description) ---------------
+
+    def add_checklist(self, title: str | None = None) -> None:
+        self.page.get_by_role("button", name="Checklist", exact=True).click()
+        popover = self.page.get_by_role("region", name="Adicionar checklist")
+        popover.wait_for()
+        if title is not None:
+            popover.get_by_role("textbox", name="Título do novo checklist").fill(title)
+        popover.get_by_role("button", name="Adicionar", exact=True).click()
+        popover.wait_for(state="hidden")
+
+    def checklist_region(self, title: str) -> Locator:
+        return self.page.get_by_role("region", name=title, exact=True)
+
+    def add_item(self, text: str) -> None:
+        box = self.page.get_by_role("textbox", name="Adicionar um item")
+        box.fill(text)
+        box.press("Enter")
+        self.item_checkbox(text).wait_for()
+
+    def item_checkbox(self, text: str) -> Locator:
+        return self.page.get_by_role("checkbox", name=text, exact=True)
+
+    def item_row(self, text: str) -> Locator:
+        return self.page.get_by_role("listitem").filter(has=self.item_checkbox(text))
+
+    def remove_item(self, text: str) -> None:
+        row = self.item_row(text)
+        row.get_by_role("button", name="Remover item").click()
+        row.wait_for(state="detached")
+
+    def progress(self, title: str = "Checklist") -> Locator:
+        return self.page.get_by_role("progressbar", name=f"Progresso de {title}")
+
+    def checklist_badge(self, column_title: str) -> Locator:
+        return self.column(column_title).get_by_role(
+            "img", name=re.compile(r"^Checklist \d+ de \d+$")
+        )
+
     def delete_card_from_dialog(self) -> None:
         self.page.once("dialog", lambda d: d.accept())
         self.dialog().get_by_role("button", name="Excluir card").click()

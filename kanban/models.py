@@ -102,6 +102,27 @@ class Card(models.Model):
     DUE_CHIPS = {"overdue": "Atrasado", "soon": "Vence em breve"}
 
     @property
+    def checklist_done(self):
+        return sum(c.done_count for c in self.checklists.all())
+
+    @property
+    def checklist_total(self):
+        return sum(c.total_count for c in self.checklists.all())
+
+    @property
+    def checklist_status(self):
+        total = self.checklist_total
+        if not total:
+            return ""
+        return "complete" if self.checklist_done == total else "ok"
+
+    @property
+    def checklist_label(self):
+        """Accessible name of the checklist badge (empty without items)."""
+        total = self.checklist_total
+        return f"Checklist {self.checklist_done} de {total}" if total else ""
+
+    @property
     def due_status(self):
         """`complete`, `overdue`, `soon` (today or tomorrow), `ok` or None.
 
@@ -131,3 +152,48 @@ class Card(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Checklist(models.Model):
+    """A named checklist inside a card."""
+
+    card = models.ForeignKey(Card, on_delete=models.CASCADE, related_name="checklists")
+    title = models.CharField(max_length=100, default="Checklist")
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "pk"]
+
+    @property
+    def done_count(self):
+        return sum(1 for item in self.items.all() if item.done)
+
+    @property
+    def total_count(self):
+        return len(self.items.all())
+
+    @property
+    def percent(self):
+        """Completion as an integer, rounded half up (same rule in the browser)."""
+        total = self.total_count
+        return int(100 * self.done_count / total + 0.5) if total else 0
+
+    def __str__(self):
+        return self.title
+
+
+class ChecklistItem(models.Model):
+    """One entry of a checklist."""
+
+    checklist = models.ForeignKey(
+        Checklist, on_delete=models.CASCADE, related_name="items"
+    )
+    text = models.CharField(max_length=200)
+    done = models.BooleanField(default=False)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "pk"]
+
+    def __str__(self):
+        return self.text

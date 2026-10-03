@@ -851,8 +851,12 @@ body {
 /* Toasts (error feedback) */
 .toast-area {
     position: fixed;
-    right: 24px;
-    bottom: 24px;
+    inset: auto 24px 24px auto;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    overflow: visible;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -1158,4 +1162,195 @@ body {
 
 .card-due__input:focus {
     border-color: var(--color-primary);
+}
+
+/* Checklists */
+.card-checklists > .card-dialog__section {
+    margin-top: 24px;
+}
+
+.card-checklist__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.card-checklist__title {
+    flex-grow: 1;
+    margin: 0;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-light);
+}
+
+.card-checklist__title-btn {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 4px 8px;
+    background: none;
+    border: none;
+    border-radius: var(--radius-md);
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: text;
+    word-break: break-word;
+}
+
+.card-checklist__title-btn:hover {
+    background: var(--color-bg-column);
+}
+
+.card-checklist__title-form {
+    display: flex;
+    flex-grow: 1;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-checklist__delete {
+    padding: 4px 8px;
+    background: var(--color-bg-column);
+    border: none;
+    border-radius: var(--radius-md);
+    font: inherit;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+}
+
+.card-checklist__delete:hover {
+    background: var(--color-border-hover);
+}
+
+.card-checklist__input {
+    display: block;
+    flex-grow: 1;
+    min-width: 0;
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid var(--color-input-border);
+    border-radius: var(--radius-md);
+    font: inherit;
+    font-size: var(--font-size-base);
+    outline: none;
+    box-sizing: border-box;
+}
+
+.card-checklist__input:focus {
+    border-color: var(--color-primary);
+}
+
+.card-checklist__progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.card-checklist__percent {
+    min-width: 36px;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+
+.card-checklist__bar {
+    flex-grow: 1;
+    height: 8px;
+    border-radius: 4px;
+    background: var(--color-border);
+    overflow: hidden;
+}
+
+.card-checklist__fill {
+    height: 100%;
+    background: var(--color-primary);
+    transition: width var(--transition-normal);
+}
+
+.card-checklist__items {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0 0 8px;
+    padding: 0;
+    list-style: none;
+}
+
+.card-checklist__item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-checklist__item input[type="checkbox"] {
+    margin: 0;
+}
+
+.card-checklist__text {
+    flex-grow: 1;
+    padding: 4px 8px;
+    background: none;
+    border: none;
+    border-radius: var(--radius-md);
+    font: inherit;
+    font-size: var(--font-size-base);
+    color: var(--color-text-primary);
+    text-align: left;
+    cursor: text;
+    word-break: break-word;
+}
+
+.card-checklist__text:hover {
+    background: var(--color-bg-column);
+}
+
+.card-checklist__item--done .card-checklist__text {
+    color: var(--color-text-muted);
+    text-decoration: line-through;
+}
+
+.card-checklist__item-form {
+    display: flex;
+    flex-grow: 1;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-checklist__remove {
+    padding: 2px 8px;
+    background: none;
+    border: none;
+    border-radius: var(--radius-sm);
+    font: inherit;
+    font-size: 18px;
+    line-height: 1;
+    color: var(--color-text-muted);
+    cursor: pointer;
+}
+
+.card-checklist__remove:hover {
+    background: var(--color-bg-column);
+    color: var(--color-danger);
+}
+
+.card-checklist__add {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-checklist__popover {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-card);
+    box-shadow: var(--shadow-dropdown);
+    box-sizing: border-box;
 }

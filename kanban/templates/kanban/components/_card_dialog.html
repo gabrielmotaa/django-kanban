@@ -1,5 +1,6 @@
-<kanban-card-dialog card-id="{{ card.pk }}" title="{{ card.title }}" column-title="{{ card.column.title }}" href="{% url 'card_detail' card.pk %}">
+<kanban-card-dialog card-id="{{ card.pk }}" title="{{ card.title }}" column-title="{{ card.column.title }}" href="{% url 'card_detail' card.pk %}" checklists-url="{% url 'card_checklists' card.pk %}">
     {% include "kanban/components/_card_labels_section.html" %}
     {% include "kanban/components/_card_due_section.html" %}
     <kanban-card-description href="{% url 'card_description' card.pk %}">{{ card.description }}</kanban-card-description>
+    {% for checklist in card.checklists.all %}{% include "kanban/components/_checklist.html" %}{% endfor %}
 </kanban-card-dialog>

@@ -1,0 +1,1 @@
+<kanban-checklist title="{{ checklist.title }}" href="{% url 'checklist_detail' checklist.pk %}" items-url="{% url 'checklist_items' checklist.pk %}">{% if not bare %}{% for item in checklist.items.all %}{% include "kanban/components/_checklist_item.html" %}{% endfor %}{% endif %}</kanban-checklist>

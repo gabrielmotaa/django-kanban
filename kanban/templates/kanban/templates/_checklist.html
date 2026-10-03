@@ -1,0 +1,28 @@
+<section id="checklist-{{ checklist.pk }}"
+         class="card-dialog__section card-checklist"
+         aria-labelledby="checklist-title-{{ checklist.pk }}"
+         x-data="{ editing: false }"
+>
+    {% include "kanban/templates/_checklist_heading.html" %}
+    {% include "kanban/templates/_checklist_progress.html" %}
+    <ul id="checklist-items-{{ checklist.pk }}" class="card-checklist__items">
+        {% for item in checklist.items.all %}{% include "kanban/templates/_checklist_item.html" %}{% endfor %}
+    </ul>
+    <form class="card-checklist__add"
+          hx-post="{% url 'checklist_items' checklist.pk %}"
+          hx-target="#checklist-items-{{ checklist.pk }}"
+          hx-swap="beforeend"
+          @htmx:after-request="if ($event.detail.successful) { $el.reset(); $refs.newItem.focus() }"
+    >
+        <input x-ref="newItem"
+               type="text"
+               name="text"
+               maxlength="200"
+               required
+               placeholder="Adicionar um item"
+               aria-label="Adicionar um item"
+               class="card-checklist__input"
+        >
+        <button type="submit" class="card-dialog__btn card-dialog__btn--primary">Adicionar</button>
+    </form>
+</section>
