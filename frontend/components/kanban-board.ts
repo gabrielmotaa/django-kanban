@@ -1,5 +1,7 @@
 import { css, html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { type Palette, readPalette } from "../lib/palette";
+import { sendWebComponentsHeader } from "../lib/web-components-header";
 import type { KanbanCard } from "./kanban-card";
 import type { KanbanColumn } from "./kanban-column";
 
@@ -19,9 +21,12 @@ export type DragState =
 
 export type CardMoveDetail = {
 	card_id: number;
+	href: string;
 	column_id: number;
 	order: number;
 };
+
+const WEB_COMPONENTS_HEADERS = { "X-Web-Components": "true" };
 
 @customElement("kanban-board")
 export class KanbanBoard extends LitElement {
@@ -41,7 +46,10 @@ export class KanbanBoard extends LitElement {
 	@state()
 	private newColumnColor = "#64748b";
 
-	colorChoices = window.colorChoices;
+	@property({ attribute: "create-column-url" })
+	createColumnUrl = "";
+
+	colorChoices: Palette = [];
 
 	static styles = css`
     input, button, select, textarea {
@@ -203,6 +211,9 @@ export class KanbanBoard extends LitElement {
 		this.cleanupController = new AbortController();
 		const { signal } = this.cleanupController;
 
+		this.colorChoices = readPalette(this);
+		sendWebComponentsHeader(this, signal);
+
 		this.addEventListener(
 			"kanban-card-dragstart",
 			this.onCardDragStart as EventListener,
@@ -261,10 +272,10 @@ export class KanbanBoard extends LitElement {
 	};
 
 	private onCardMove = (e: CustomEvent<CardMoveDetail>) => {
-		const { card_id, column_id, order } = e.detail;
-		const url = window.urls.cardDetail.replace("/0/", `/${card_id}/`);
-		window.htmx.ajax("patch", url, {
+		const { href, column_id, order } = e.detail;
+		window.htmx.ajax("patch", href, {
 			values: { column_id, order },
+			headers: WEB_COMPONENTS_HEADERS,
 			swap: "none",
 		});
 
@@ -272,13 +283,13 @@ export class KanbanBoard extends LitElement {
 	};
 
 	private onColumnMove = (e: CustomEvent) => {
-		const { column_id, order, fromIndex } = e.detail;
+		const { href, order, fromIndex } = e.detail;
 		this.updateColumnOrders();
 
 		if (fromIndex !== order) {
-			const url = window.urls.columnDetail.replace("/0/", `/${column_id}/`);
-			window.htmx.ajax("patch", url, {
+			window.htmx.ajax("patch", href, {
 				values: { order },
+				headers: WEB_COMPONENTS_HEADERS,
 				swap: "none",
 			});
 		}
@@ -335,7 +346,7 @@ export class KanbanBoard extends LitElement {
 							? html`
                 <form
                   class="form"
-                  hx-post=${window.urls.columnCreate}
+                  hx-post=${this.createColumnUrl}
                   hx-target="host"
                   hx-swap="beforeend"
                   @htmx:after-request=${this.onAddColumnSuccess}

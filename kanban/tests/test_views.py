@@ -578,7 +578,7 @@ def test_template_index_accessible_names(client: Client, board: Board, col_a: Co
 def test_components_index_exposes_color_names(client: Client, board: Board):
     html = client.get(reverse("index", args=["components"])).content.decode()
     for _hex, name in Column.COLOR_CHOICES:
-        assert f'"{name}"' in html
+        assert name in html
 
 
 # --- Issue 003: components are self-contained (URLs, palette, fg-color) ---

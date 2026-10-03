@@ -14,36 +14,9 @@
 {% block content %}
 {% include 'kanban/components/_board_title.html' %}
 
-<kanban-board id="board" board-id="{{ board.pk }}">
+<kanban-board id="board" board-id="{{ board.pk }}" create-column-url="{% url 'column_create' %}" colors="{{ color_choices_json }}">
     {% for column in board.columns.all %}
         {% include 'kanban/components/_column.html' %}
     {% endfor %}
 </kanban-board>
-{% endblock %}
-
-{% block extra_js %}
-<script id="app-data" type="application/json">
-{
-  "urls": {
-    "cardCreate": "{% url 'card_create' %}",
-    "cardDetail": "{% url 'card_detail' 0 %}",
-    "columnCreate": "{% url 'column_create' %}",
-    "columnDetail": "{% url 'column_detail' 0 %}",
-    "boardDetail": "{% url 'board_detail' board.pk %}"
-  },
-  "colorChoices": [
-    {% for hex, name in color_choices %}
-      ["{{ hex }}", "{{ name }}"]{% if not forloop.last %},{% endif %}
-    {% endfor %}
-  ]
-}
-</script>
-<script>
-    const appData = JSON.parse(document.getElementById('app-data').textContent);
-    window.urls = appData.urls;
-    window.colorChoices = appData.colorChoices;
-    document.body.addEventListener('htmx:configRequest', (event) => {
-        event.detail.headers['X-Web-Components'] = 'true';
-    });
-</script>
 {% endblock %}

@@ -1,5 +1,6 @@
 import { css, html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { sendWebComponentsHeader } from "../lib/web-components-header";
 import type { DragState } from "./kanban-board";
 import type { KanbanColumn } from "./kanban-column";
 
@@ -13,6 +14,9 @@ export class KanbanCard extends LitElement {
 
 	@property()
 	title = "";
+
+	@property()
+	href = "";
 
 	@state()
 	private editing = false;
@@ -133,11 +137,11 @@ export class KanbanCard extends LitElement {
   `;
 
 	get editUrl(): string {
-		return window.urls.cardDetail.replace("/0/", `/${this.cardId}/`);
+		return this.href;
 	}
 
 	get deleteUrl(): string {
-		return window.urls.cardDetail.replace("/0/", `/${this.cardId}/`);
+		return this.href;
 	}
 
 	override updated() {
@@ -159,6 +163,8 @@ export class KanbanCard extends LitElement {
 		this.draggable = true;
 		this.cleanupController = new AbortController();
 		const { signal } = this.cleanupController;
+
+		sendWebComponentsHeader(this, signal);
 
 		this.addEventListener("dragstart", this.onDragStart, { signal });
 		this.addEventListener("dragend", this.onDragEnd, { signal });
