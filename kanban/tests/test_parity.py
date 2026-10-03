@@ -107,3 +107,19 @@ def test_components_requests_carry_web_components_header(live_server, page: Page
     board_page.navigate()
     board_page.create_card("Column A", "Header card")
     assert seen == ["true"]
+
+
+def test_components_drag_requests_carry_web_components_header(live_server, page: Page):
+    seen: list[str | None] = []
+    page.on(
+        "request",
+        lambda r: (
+            seen.append(r.headers.get("x-web-components"))
+            if r.method == "PATCH"
+            else None
+        ),
+    )
+    board_page = ParityBoardPage(page, live_server.url, "components")
+    board_page.navigate()
+    board_page.drag_card_to_column("Card 1", "Column B")
+    assert seen == ["true"]

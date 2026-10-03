@@ -1,3 +1,6 @@
+import json
+import re
+from html import unescape
 from urllib.parse import urlencode
 
 import pytest
@@ -577,13 +580,19 @@ def test_template_index_accessible_names(client: Client, board: Board, col_a: Co
 
 def test_components_index_exposes_color_names(client: Client, board: Board):
     html = client.get(reverse("index", args=["components"])).content.decode()
-    for _hex, name in Column.COLOR_CHOICES:
-        assert name in html
+    names = [name for _hex, name in _palette_from(html)]
+    assert names == [name for _hex, name in Column.COLOR_CHOICES]
 
 
 # --- Issue 003: components are self-contained (URLs, palette, fg-color) ---
 
 WC = {"HTTP_X_WEB_COMPONENTS": "true"}
+
+
+def _palette_from(html: str) -> list:
+    match = re.search(r'<kanban-board [^>]*colors="([^"]*)"', html)
+    assert match, "kanban-board has no colors attribute"
+    return json.loads(unescape(match.group(1)))
 
 
 def test_components_card_fragment_has_href(client: Client, col_a: Column):
@@ -609,9 +618,7 @@ def test_components_board_title_fragment_has_href(client: Client, board: Board):
 def test_components_index_is_self_contained(client: Client, board: Board, col_a):
     html = client.get(reverse("index", args=["components"])).content.decode()
     assert f'create-column-url="{reverse("column_create")}"' in html
-    assert "colors='" in html or 'colors="' in html
-    for _hex, name in Column.COLOR_CHOICES:
-        assert name in html
+    assert _palette_from(html) == [list(c) for c in Column.COLOR_CHOICES]
     assert "app-data" not in html
     assert "window.urls" not in html
     assert "window.colorChoices" not in html
