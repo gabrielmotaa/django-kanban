@@ -1,1 +1,2 @@
 {% if activity %}<div hx-swap-oob="afterbegin:#card-timeline">{% include "kanban/templates/_activity_entry.html" %}</div>{% endif %}
+{% if activities %}<div hx-swap-oob="afterbegin:#card-timeline">{% for activity in activities %}{% include "kanban/templates/_activity_entry.html" %}{% endfor %}</div>{% endif %}

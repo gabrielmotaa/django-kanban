@@ -102,13 +102,16 @@ def test_unknown_kind_is_rejected(card):
         record_activity(card, "nope")
 
 
-def test_timestamps_are_absolute_and_local(card):
+def test_timestamps_are_absolute_and_local(card, settings):
+    settings.TIME_ZONE = "America/Sao_Paulo"
+    timezone.activate("America/Sao_Paulo")
     comment = Comment.objects.create(card=card, text="hi")
     Comment.objects.filter(pk=comment.pk).update(
         created_at=dt.datetime(2026, 10, 2, 14, 5, tzinfo=dt.UTC)
     )
     comment.refresh_from_db()
-    assert comment.created_display == "02/10/2026 14:05"
+    assert comment.created_display == "02/10/2026 11:05"  # UTC-3
+    timezone.deactivate()
 
 
 def test_comment_defaults(card):
@@ -380,3 +383,65 @@ def test_mutations_return_the_new_activity_entry(client: Client, card, tech):
     else:
         assert "<kanban-activity-entry" in html
     assert "Descrição alterada" in html
+
+
+@pytest.mark.parametrize("tech", VARIANTS)
+def test_setting_and_completing_in_one_request_returns_both_entries(
+    client: Client, card, tech
+):
+    response = patch(
+        client,
+        reverse("card_due", args=[card.pk]),
+        {"due_date": "2026-10-12", "completed": "true"},
+        tech,
+    )
+    html = response.content.decode()
+    assert kinds(card) == ["due_set", "due_completed"]
+    assert "Data de entrega definida para 12/10/2026" in html
+    assert "Data de entrega marcada como concluída" in html
+    assert html.index("marcada como concluída") < html.index("definida para")
+
+
+def test_unchanged_due_date_records_nothing(client: Client, card):
+    url = reverse("card_due", args=[card.pk])
+    patch(client, url, {"due_date": "2026-10-12", "completed": "false"}, "templates")
+    patch(client, url, {"due_date": "2026-10-12", "completed": "false"}, "templates")
+    assert kinds(card) == ["due_set"]
+
+
+@pytest.mark.parametrize("tech", VARIANTS)
+def test_comment_over_the_limit_is_rejected(client: Client, card, tech):
+    response = client.post(
+        reverse("card_comments", args=[card.pk]), {"text": "x" * 5001}, **headers(tech)
+    )
+    assert response.status_code == 400
+    assert "no máximo 5000 caracteres" in response.content.decode()
+
+
+@pytest.mark.parametrize("tech", VARIANTS)
+def test_board_page_query_count_ignores_comments(client: Client, card, tech):
+    from django.db import connection
+    from django.test.utils import CaptureQueriesContext
+
+    def count() -> int:
+        with CaptureQueriesContext(connection) as ctx:
+            assert client.get(reverse("index", args=[tech])).status_code == 200
+        return len(ctx)
+
+    Comment.objects.create(card=card, text="one")
+    baseline = count()
+    for n in range(5):
+        extra = Card.objects.create(column=card.column, title=f"c{n}", order=n + 1)
+        Comment.objects.create(card=extra, text="a")
+        Comment.objects.create(card=extra, text="b")
+    assert count() == baseline
+
+
+def test_deleting_a_comment_updates_the_card_front(client: Client, card):
+    keep = Comment.objects.create(card=card, text="keep")
+    gone = Comment.objects.create(card=card, text="gone")
+    response = client.delete(
+        reverse("comment_detail", args=[gone.pk]), **headers("components")
+    )
+    assert 'comments="1"' in response.content.decode()
+    assert keep.pk

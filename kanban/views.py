@@ -262,18 +262,20 @@ class CardDueView(ApiView):
         card.completed = form.cleaned_data["completed"] and card.due_date is not None
         card.save(update_fields=["due_date", "completed", "updated_at"])
 
-        activity = None
+        activities = []
         if card.due_date != before_date:
             if card.due_date:
-                activity = record_activity(
-                    card, "due_set", date=card.due_date.isoformat()
+                activities.append(
+                    record_activity(card, "due_set", date=card.due_date.isoformat())
                 )
             else:
-                activity = record_activity(card, "due_removed")
+                activities.append(record_activity(card, "due_removed"))
         if card.completed and not before_completed:
-            activity = record_activity(card, "due_completed")
+            activities.append(record_activity(card, "due_completed"))
         template_path = template_for_request(request, "_card_due_updated.html")
-        return render(request, template_path, {"card": card, "activity": activity})
+        # Newest first, like the timeline (one request may record two entries).
+        context = {"card": card, "activities": activities[::-1]}
+        return render(request, template_path, context)
 
 
 def checklist_response(
