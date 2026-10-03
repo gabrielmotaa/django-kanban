@@ -18,7 +18,7 @@
             <div id="card-checklists" class="card-checklists">
                 {% for checklist in card.checklists.all %}{% include "kanban/templates/_checklist.html" %}{% endfor %}
             </div>
-            {# Activity (011) goes here. #}
+            {% include "kanban/templates/_card_activity.html" %}
         </div>
 
         <aside class="card-dialog__side">

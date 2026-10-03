@@ -3,11 +3,13 @@ from django.urls import reverse
 from django.utils.html import format_html
 
 from kanban.models import (
+    Activity,
     Board,
     Card,
     Checklist,
     ChecklistItem,
     Column,
+    Comment,
     Label,
 )
 
@@ -106,3 +108,21 @@ class LabelAdmin(admin.ModelAdmin):
             obj.color,
             obj.color,
         )
+
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ("id", "card", "text", "created_at")
+    list_filter = ("card__column__board",)
+    search_fields = ("text", "card__title")
+
+
+@admin.register(Activity)
+class ActivityAdmin(admin.ModelAdmin):
+    list_display = ("id", "card", "kind", "message_preview", "created_at")
+    list_filter = ("kind", "card__column__board")
+    search_fields = ("card__title",)
+
+    @admin.display(description="Message")
+    def message_preview(self, obj):
+        return obj.message

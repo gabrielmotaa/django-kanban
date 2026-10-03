@@ -13,6 +13,7 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.views import View
 
+from kanban.activity import record_activity
 from kanban.forms import (
     BoardEditForm,
     CardCreateForm,
@@ -26,11 +27,20 @@ from kanban.forms import (
     ChecklistRenameForm,
     ColumnCreateForm,
     ColumnEditForm,
+    CommentForm,
     LabelContextForm,
     LabelCreateForm,
     LabelEditForm,
 )
-from kanban.models import Board, Card, Checklist, ChecklistItem, Column, Label
+from kanban.models import (
+    Board,
+    Card,
+    Checklist,
+    ChecklistItem,
+    Column,
+    Comment,
+    Label,
+)
 from kanban.utils import (
     ApiError,
     error_response,
@@ -62,7 +72,9 @@ def label_registry(board: Board) -> list[dict]:
 def index(request: HttpRequest, tech: str) -> HttpResponse:
     board = get_object_or_404(
         Board.objects.prefetch_related(
-            "columns__cards__labels", "columns__cards__checklists__items"
+            "columns__cards__labels",
+            "columns__cards__checklists__items",
+            "columns__cards__comments",
         ),
         pk=1,
     )
@@ -108,6 +120,7 @@ class CardCreateView(ApiView):
         card = Card.objects.create(
             column=column, title=form.cleaned_data["title"], order=order
         )
+        record_activity(card, "card_created", column=column.title)
         template_path = template_for_request(request, "_card.html")
         return render(request, template_path, {"card": card})
 
@@ -126,10 +139,16 @@ class CardDetailView(ApiView):
             raise ApiError(form_error_message(form))
 
         if form.cleaned_data["title"]:
+            old_title = card.title
             card.title = form.cleaned_data["title"]
             card.save(update_fields=["title"])
+            activity = None
+            if card.title != old_title:
+                activity = record_activity(
+                    card, "title_renamed", old=old_title, new=card.title
+                )
             template_path = template_for_request(request, "_card_title_updated.html")
-            return render(request, template_path, {"card": card})
+            return render(request, template_path, {"card": card, "activity": activity})
 
         target_column = fetch_or_error(
             Column, "Coluna não encontrada.", pk=form.cleaned_data["column_id"]
@@ -164,9 +183,15 @@ class CardDetailView(ApiView):
                         c.order = index
                         c.save(update_fields=["order"])
 
+                origin = card.column
                 card.column = target_column
                 card.order = order
                 card.save(update_fields=["column", "order"])
+                record_activity(
+                    card,
+                    "card_moved",
+                    **{"from": origin.title, "to": target_column.title},
+                )
 
         return HttpResponse(status=HTTPStatus.NO_CONTENT)
 
@@ -185,7 +210,7 @@ def fetch_card(pk: int) -> Card:
     """A card with what the dialog needs (column, board, labels)."""
     return fetch_or_error(
         Card.objects.select_related("column__board").prefetch_related(
-            "labels", "checklists__items"
+            "labels", "checklists__items", "comments", "activities"
         ),
         "Card não encontrado.",
         pk=pk,
@@ -198,6 +223,7 @@ def card_context(card: Card) -> dict:
         "board_labels": card.column.board.labels.all(),
         "attached_ids": {label.pk for label in card.labels.all()},
         "color_choices": Column.COLOR_CHOICES,
+        "timeline": card.timeline(),
     }
 
 
@@ -215,10 +241,12 @@ class CardDescriptionView(ApiView):
         if not form.is_valid():
             raise ApiError(form_error_message(form))
 
+        changed = card.description != form.cleaned_data["description"]
         card.description = form.cleaned_data["description"]
         card.save(update_fields=["description", "updated_at"])
+        activity = record_activity(card, "description_changed") if changed else None
         template_path = template_for_request(request, "_card_description_updated.html")
-        return render(request, template_path, {"card": card})
+        return render(request, template_path, {"card": card, "activity": activity})
 
 
 class CardDueView(ApiView):
@@ -228,22 +256,41 @@ class CardDueView(ApiView):
         if not form.is_valid():
             raise ApiError(form_error_message(form))
 
+        before_date, before_completed = card.due_date, card.completed
         card.due_date = form.cleaned_data["due_date"]
         # A card without a date cannot be completed.
         card.completed = form.cleaned_data["completed"] and card.due_date is not None
         card.save(update_fields=["due_date", "completed", "updated_at"])
+
+        activity = None
+        if card.due_date != before_date:
+            if card.due_date:
+                activity = record_activity(
+                    card, "due_set", date=card.due_date.isoformat()
+                )
+            else:
+                activity = record_activity(card, "due_removed")
+        if card.completed and not before_completed:
+            activity = record_activity(card, "due_completed")
         template_path = template_for_request(request, "_card_due_updated.html")
-        return render(request, template_path, {"card": card})
+        return render(request, template_path, {"card": card, "activity": activity})
 
 
-def checklist_response(request, template, card_pk, checklist_pk=None, item_pk=None):
+def checklist_response(
+    request, template, card_pk, checklist_pk=None, item_pk=None, activity=None
+):
     """Render a checklist reply from a freshly fetched card (counts included)."""
     card = fetch_card(card_pk)
     checklist = next((c for c in card.checklists.all() if c.pk == checklist_pk), None)
     item = None
     if checklist is not None:
         item = next((i for i in checklist.items.all() if i.pk == item_pk), None)
-    context = {"card": card, "checklist": checklist, "item": item}
+    context = {
+        "card": card,
+        "checklist": checklist,
+        "item": item,
+        "activity": activity,
+    }
     return render(request, template_for_request(request, template), context)
 
 
@@ -306,17 +353,27 @@ class ChecklistItemDetailView(ApiView):
         form = ChecklistItemEditForm(QueryDict(request.body))
         if not form.is_valid():
             raise ApiError(form_error_message(form))
+        was_done = item.done
         if form.cleaned_data["text"]:
             item.text = form.cleaned_data["text"]
         if form.cleaned_data["done"] is not None:
             item.done = form.cleaned_data["done"]
         item.save(update_fields=["text", "done"])
+        activity = None
+        if item.done and not was_done:
+            activity = record_activity(
+                item.checklist.card,
+                "checklist_item_completed",
+                text=item.text,
+                checklist=item.checklist.title,
+            )
         return checklist_response(
             request,
             "_checklist_item_updated.html",
             item.checklist.card_id,
             item.checklist_id,
             item.pk,
+            activity,
         )
 
     def delete(self, request: HttpRequest, pk: int) -> HttpResponse:
@@ -330,6 +387,42 @@ class ChecklistItemDetailView(ApiView):
         return checklist_response(
             request, "_checklist_item_deleted.html", card_id, checklist_id
         )
+
+
+class CardCommentsView(ApiView):
+    def post(self, request: HttpRequest, pk: int) -> HttpResponse:
+        card = fetch_card(pk)
+        form = CommentForm(request.POST)
+        if not form.is_valid():
+            raise ApiError(form_error_message(form))
+        comment = Comment.objects.create(card=card, text=form.cleaned_data["text"])
+        return comment_response(request, "_comment_created.html", pk, comment.pk)
+
+
+class CommentDetailView(ApiView):
+    def patch(self, request: HttpRequest, pk: int) -> HttpResponse:
+        comment = fetch_or_error(Comment, "Comentário não encontrado.", pk=pk)
+        form = CommentForm(QueryDict(request.body))
+        if not form.is_valid():
+            raise ApiError(form_error_message(form))
+        comment.text = form.cleaned_data["text"]
+        comment.save(update_fields=["text", "updated_at"])
+        return comment_response(
+            request, "_comment_updated.html", comment.card_id, comment.pk
+        )
+
+    def delete(self, request: HttpRequest, pk: int) -> HttpResponse:
+        comment = fetch_or_error(Comment, "Comentário não encontrado.", pk=pk)
+        card_id = comment.card_id
+        comment.delete()
+        return comment_response(request, "_comment_deleted.html", card_id)
+
+
+def comment_response(request, template, card_pk, comment_pk=None) -> HttpResponse:
+    card = fetch_card(card_pk)
+    comment = next((c for c in card.comments.all() if c.pk == comment_pk), None)
+    context = {"card": card, "comment": comment, "activity": None}
+    return render(request, template_for_request(request, template), context)
 
 
 class CardLabelsView(ApiView):
@@ -352,14 +445,20 @@ class CardLabelsView(ApiView):
         if label.board_id != card.column.board_id:
             raise ApiError("Etiqueta de outro quadro.")
 
-        if attach:
+        attached = card.labels.filter(pk=label.pk).exists()
+        activity = None
+        if attach and not attached:
             card.labels.add(label)
-        else:
+            activity = record_activity(card, "label_added", name=str(label))
+        elif not attach and attached:
             card.labels.remove(label)
+            activity = record_activity(card, "label_removed", name=str(label))
 
         card = fetch_card(pk)
         template_path = template_for_request(request, "_card_labels_updated.html")
-        return render(request, template_path, card_context(card))
+        context = card_context(card)
+        context["activity"] = activity
+        return render(request, template_path, context)
 
 
 def labels_response(request, card: Card, affected: list[Card]) -> HttpResponse:
@@ -382,7 +481,7 @@ def refetch(cards: list[int]) -> list[Card]:
     return list(
         Card.objects.filter(pk__in=cards)
         .select_related("column__board")
-        .prefetch_related("labels", "checklists__items")
+        .prefetch_related("labels", "checklists__items", "comments", "activities")
     )
 
 

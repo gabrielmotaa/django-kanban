@@ -1,0 +1,35 @@
+<li id="comment-{{ comment.pk }}" class="comment" x-data="{ editing: false }">
+    <p class="comment__meta"><strong>Você</strong> <span>{{ comment.created_display }}</span></p>
+    <div x-show="!editing">
+        <p class="comment__text">{{ comment.text }}</p>
+        <div class="comment__actions">
+            <button type="button"
+                    class="comment__action"
+                    aria-label="Editar comentário"
+                    @click="editing = true; $nextTick(() => $refs.input.focus())"
+            >Editar</button>
+            <button type="button"
+                    class="comment__action"
+                    aria-label="Excluir comentário"
+                    hx-delete="{% url 'comment_detail' comment.pk %}"
+                    hx-target="#comment-{{ comment.pk }}"
+                    hx-swap="outerHTML"
+                    hx-confirm="Excluir comentário?"
+            >Excluir</button>
+        </div>
+    </div>
+    <form x-show="editing"
+          x-cloak
+          hx-patch="{% url 'comment_detail' comment.pk %}"
+          hx-target="#comment-{{ comment.pk }}"
+          hx-swap="outerHTML"
+          class="card-activity__composer"
+          @keydown.escape.prevent.stop="editing = false"
+    >
+        <textarea x-ref="input" name="text" rows="2" maxlength="5000" required aria-label="Editar comentário" class="card-activity__input">{{ comment.text }}</textarea>
+        <div class="card-dialog__form-actions">
+            <button type="submit" class="card-dialog__btn card-dialog__btn--primary">Salvar</button>
+            <button type="button" @click="editing = false" class="card-dialog__btn card-dialog__btn--secondary">Cancelar</button>
+        </div>
+    </form>
+</li>

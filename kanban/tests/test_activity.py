@@ -247,7 +247,7 @@ class TestActivityFromViews:
         )  # reopened: none
         patch(client, url, {"due_date": "", "completed": "false"}, tech)
         assert kinds(card) == ["due_set", "due_completed", "due_removed"]
-        assert card.activities.first().data == {"date": "2026-10-12"}
+        assert card.activities.get(kind="due_set").data == {"date": "2026-10-12"}
 
     def test_checklist_item_completed(self, client: Client, card, tech):
         checklist = Checklist.objects.create(card=card, title="Steps", order=0)

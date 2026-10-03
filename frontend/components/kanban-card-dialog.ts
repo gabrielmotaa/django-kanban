@@ -233,6 +233,25 @@ export class KanbanCardDialog extends HtmxElement {
 
 	private opener?: HTMLElement;
 
+	override connectedCallback() {
+		super.connectedCallback();
+		// Any section that announces a card update may carry the activity entry
+		// it caused; show it at the top of the timeline (the event goes on to
+		// the board for the card front).
+		this.addEventListener("kanban-card-updated", this.onCardUpdated, {
+			signal: this.signal,
+		});
+	}
+
+	private onCardUpdated = (e: Event) => {
+		const { html } = (e as CustomEvent<{ html: string }>).detail;
+		const template = document.createElement("template");
+		template.innerHTML = html.trim();
+		const entries = template.content.querySelectorAll("kanban-activity-entry");
+		const activity = this.querySelector(":scope > kanban-card-activity");
+		if (activity && entries.length) activity.prepend(...entries);
+	};
+
 	async open(opener: HTMLElement) {
 		this.opener = opener;
 		await this.updateComplete;

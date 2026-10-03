@@ -3,6 +3,8 @@ from datetime import timedelta
 from django.db import models
 from django.utils import timezone
 
+from kanban.activity import KIND_CHOICES, render_message
+
 FG_OVERRIDES = {
     "#f59e0b": "#1e293b",  # Âmbar
 }
@@ -102,6 +104,25 @@ class Card(models.Model):
     DUE_CHIPS = {"overdue": "Atrasado", "soon": "Vence em breve"}
 
     @property
+    def comment_count(self):
+        return len(self.comments.all())
+
+    @property
+    def comment_label(self):
+        """Accessible name of the comments badge (empty without comments)."""
+        count = self.comment_count
+        if not count:
+            return ""
+        return "1 comentário" if count == 1 else f"{count} comentários"
+
+    def timeline(self):
+        """Comments and activity entries together, newest first."""
+        entries = [{"type": "comment", "obj": c} for c in self.comments.all()]
+        entries += [{"type": "activity", "obj": a} for a in self.activities.all()]
+        entries.sort(key=lambda e: (e["obj"].created_at, e["obj"].pk), reverse=True)
+        return entries
+
+    @property
     def checklist_done(self):
         return sum(c.done_count for c in self.checklists.all())
 
@@ -197,3 +218,51 @@ class ChecklistItem(models.Model):
 
     def __str__(self):
         return self.text
+
+
+def format_timestamp(value):
+    """Absolute ``dd/mm/aaaa HH:MM`` in the local time zone (same for both UIs)."""
+    return timezone.localtime(value).strftime("%d/%m/%Y %H:%M")
+
+
+class Comment(models.Model):
+    """A user comment on a card (no author: the app has no authentication)."""
+
+    card = models.ForeignKey(Card, on_delete=models.CASCADE, related_name="comments")
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
+
+    @property
+    def created_display(self):
+        return format_timestamp(self.created_at)
+
+    def __str__(self):
+        return self.text
+
+
+class Activity(models.Model):
+    """One automatic history entry of a card."""
+
+    card = models.ForeignKey(Card, on_delete=models.CASCADE, related_name="activities")
+    kind = models.CharField(max_length=40, choices=KIND_CHOICES)
+    data = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
+        verbose_name_plural = "activities"
+
+    @property
+    def message(self):
+        return render_message(self.kind, self.data)
+
+    @property
+    def created_display(self):
+        return format_timestamp(self.created_at)
+
+    def __str__(self):
+        return self.message
