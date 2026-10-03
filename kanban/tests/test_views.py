@@ -666,3 +666,29 @@ def test_components_index_renders_cards_inside_columns(client: Client, col_a: Co
     html = client.get(reverse("index", args=["components"])).content.decode()
     assert "<kanban-card" in html
     assert "Alpha" in html
+
+
+# --- Issue 005: templates partials (color picker, column header) ---
+
+
+def test_template_column_menu_is_dismissible_and_expandable(
+    client: Client, board: Board, col_a: Column
+):
+    html = client.get(reverse("column_detail", args=[col_a.pk])).content.decode()
+    assert ':aria-expanded="menuOpen"' in html
+    assert '@keydown.escape.window="menuOpen = false"' in html
+    assert '@keydown.escape="editingTitle = false"' in html
+
+
+def test_template_column_color_picker_patches_each_color(client: Client, col_a: Column):
+    html = client.get(reverse("column_detail", args=[col_a.pk])).content.decode()
+    for hex_, _name in Column.COLOR_CHOICES:
+        assert f"""hx-vals='{{"color": "{hex_}"}}'""" in html
+
+
+def test_template_create_column_color_picker_selects_locally(
+    client: Client, board: Board
+):
+    html = client.get(reverse("index", args=["templates"])).content.decode()
+    for hex_, _name in Column.COLOR_CHOICES:
+        assert f"@click=\"selectedColor = '{hex_}'\"" in html

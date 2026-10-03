@@ -3,7 +3,7 @@ import os
 os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 
 import pytest
-from playwright.sync_api import Page
+from playwright.sync_api import Page, expect
 
 from kanban.models import Board, Card, Column
 from kanban.tests.parity import ParityBoardPage
@@ -194,7 +194,7 @@ def test_click_away_and_escape_close_column_menu(live_server, page: Page, tech):
     edit = column.get_by_role("button", name="Editar nome")
 
     board_page.open_column_menu("Column A")
-    assert edit.is_visible()
+    expect(edit).to_be_visible()
     page.get_by_role("heading", level=1).click()
     edit.wait_for(state="hidden")
 
