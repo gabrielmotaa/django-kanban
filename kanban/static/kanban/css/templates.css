@@ -1354,3 +1354,124 @@ body {
     box-shadow: var(--shadow-dropdown);
     box-sizing: border-box;
 }
+
+/* Comments and activity */
+.card-activity__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.card-activity__header .card-dialog__section-title {
+    margin: 0;
+}
+
+.card-activity__toggle {
+    padding: 4px 8px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: var(--color-bg-column);
+    font: inherit;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+}
+
+.card-activity__toggle:hover {
+    background: var(--color-border-hover);
+}
+
+.card-activity__composer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.card-activity__input {
+    display: block;
+    width: 100%;
+    min-height: 56px;
+    padding: 8px 12px;
+    border: 1px solid var(--color-input-border);
+    border-radius: var(--radius-md);
+    font: inherit;
+    font-size: var(--font-size-base);
+    outline: none;
+    box-sizing: border-box;
+    resize: vertical;
+}
+
+.card-activity__input:focus {
+    border-color: var(--color-primary);
+}
+
+.card-activity__list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.comment {
+    padding: 8px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.comment__meta {
+    margin: 0 0 4px;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+
+.comment__meta strong {
+    color: var(--color-text-primary);
+}
+
+.comment__text {
+    margin: 0;
+    font-size: var(--font-size-base);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.comment__actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.comment__action {
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.comment__action:hover {
+    color: var(--color-text-primary);
+}
+
+.activity-entry {
+    padding: 0 12px;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+
+.activity-entry__time {
+    margin-left: 8px;
+}
+
+.card-checklists + .card-dialog__section {
+    margin-top: 24px;
+}

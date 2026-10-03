@@ -19,11 +19,12 @@
     {% endif %}
     {% endwith %}
     <div class="card__title-view">{{ card.title }}</div>
-    {% if card.description or card.due_date or card.checklist_total %}
+    {% if card.description or card.due_date or card.checklist_total or card.comment_count %}
     <div class="card__badges">
         {% if card.description %}<span class="badge" role="img" aria-label="Este card tem descrição">≡</span>{% endif %}
         {% include "kanban/templates/_due_badge.html" %}
         {% if card.checklist_total %}<span class="badge{% if card.checklist_status == "complete" %} badge--complete{% endif %}" role="img" aria-label="{{ card.checklist_label }}">☑ {{ card.checklist_done }}/{{ card.checklist_total }}</span>{% endif %}
+        {% if card.comment_count %}<span class="badge" role="img" aria-label="{{ card.comment_label }}">💬 {{ card.comment_count }}</span>{% endif %}
     </div>
     {% endif %}
 </div>

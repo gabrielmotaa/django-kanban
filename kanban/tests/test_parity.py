@@ -1,5 +1,6 @@
 import datetime as dt
 import os
+import re
 
 os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 
@@ -7,7 +8,16 @@ import pytest
 from django.utils import timezone
 from playwright.sync_api import Page, expect
 
-from kanban.models import Board, Card, Checklist, ChecklistItem, Column, Label
+from kanban.activity import record_activity
+from kanban.models import (
+    Board,
+    Card,
+    Checklist,
+    ChecklistItem,
+    Column,
+    Comment,
+    Label,
+)
 from kanban.tests.parity import ParityBoardPage
 
 pytestmark = [pytest.mark.django_db(transaction=True), pytest.mark.integration]
@@ -35,6 +45,12 @@ def snapshot_for(page: Page, live_server, tech: str, expand: str | None = None) 
         Label.objects.get_or_create(board_id=1, name="Melhoria", color="#3b82f6")
         Label.objects.get_or_create(board_id=1, name="", color="#10b981")
         Card.objects.get(pk=1).labels.add(bug)
+    if expand == "activity-dialog" and not Comment.objects.exists():
+        Comment.objects.create(card_id=1, text="First comment\nwith two lines")
+        record_activity(Card.objects.get(pk=1), "description_changed")
+        record_activity(
+            Card.objects.get(pk=1), "card_moved", **{"from": "A", "to": "B"}
+        )
     if expand and expand.startswith("checklist"):
         checklist, _ = Checklist.objects.get_or_create(
             card_id=1, title="Steps", defaults={"order": 0}
@@ -60,6 +76,8 @@ def snapshot_for(page: Page, live_server, tech: str, expand: str | None = None) 
     elif expand == "rename-column":
         board_page.open_column_rename("Column A")
     elif expand in ("card-dialog", "card-dialog-described"):
+        board_page.open_card_dialog("Card 1")
+    elif expand == "activity-dialog":
         board_page.open_card_dialog("Card 1")
     elif expand in ("checklist-dialog", "checklist-popover"):
         board_page.open_card_dialog("Card 1")
@@ -92,6 +110,7 @@ def snapshot_for(page: Page, live_server, tech: str, expand: str | None = None) 
         "rename-column",
         "card-dialog",
         "card-dialog-described",
+        "activity-dialog",
         "checklist-dialog",
         "checklist-popover",
         "due-dialog",
@@ -461,7 +480,9 @@ def test_escape_in_edit_mode_cancels_edit_but_keeps_dialog(
     board_page.dialog().get_by_role("heading", level=2).get_by_role("button").click()
     board_page.dialog().get_by_role("textbox", name="Título do card").fill("draft")
     page.keyboard.press("Escape")
-    expect(board_page.dialog().get_by_role("textbox")).to_have_count(0)
+    expect(
+        board_page.dialog().get_by_role("textbox", name="Título do card")
+    ).to_have_count(0)
     expect(board_page.dialog()).to_be_visible()
     assert Card.objects.get(pk=1).title == "Card 1"
     assert Card.objects.get(pk=1).description == ""
@@ -836,3 +857,99 @@ def test_whitespace_item_is_rejected_with_a_toast(live_server, page: Page, tech)
     box.press("Enter")
     expect(board_page.toast()).to_have_text("O texto do item é obrigatório.")
     assert not ChecklistItem.objects.exists()
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_moving_a_card_leaves_an_activity_entry(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+
+    board_page.drag_card_to_column("Card 1", "Column B")
+    assert Card.objects.get(pk=1).column_id == 2
+    board_page.open_card_dialog("Card 1")
+    expect(
+        board_page.timeline_item("Card movido de “Column A” para “Column B”")
+    ).to_be_visible()
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_comment_lifecycle_and_card_badge(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+    board_page.open_card_dialog("Card 1")
+
+    board_page.add_comment("First")
+    board_page.add_comment("Second")
+    assert board_page.comment_badge("Column A").count() == 1
+    expect(board_page.comment_badge("Column A")).to_have_text("💬 2")
+    # Newest first, with the fixed author and an absolute timestamp.
+    first_item = page.get_by_role("listitem").first
+    expect(first_item).to_contain_text("Second")
+    expect(first_item).to_contain_text("Você")
+    expect(first_item).to_contain_text(re.compile(r"\d{2}/\d{2}/\d{4} \d{2}:\d{2}"))
+
+    board_page.timeline_item("First").get_by_role(
+        "button", name="Editar comentário"
+    ).click()
+    page.get_by_role("textbox", name="Editar comentário").fill("First, edited")
+    page.get_by_role("button", name="Salvar", exact=True).click()
+    expect(board_page.timeline_item("First, edited")).to_be_visible()
+    assert Comment.objects.filter(text="First, edited").exists()
+
+    page.once("dialog", lambda d: d.accept())
+    board_page.timeline_item("Second").get_by_role(
+        "button", name="Excluir comentário"
+    ).click()
+    expect(board_page.timeline_item("Second")).to_have_count(0)
+    expect(board_page.comment_badge("Column A")).to_have_text("💬 1")
+
+    page.once("dialog", lambda d: d.accept())
+    board_page.timeline_item("First, edited").get_by_role(
+        "button", name="Excluir comentário"
+    ).click()
+    expect(board_page.comment_badge("Column A")).to_have_count(0)
+    assert not Comment.objects.exists()
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_details_toggle_hides_activity_but_not_comments(live_server, page: Page, tech):
+    Comment.objects.create(card_id=1, text="A comment")
+    record_activity(Card.objects.get(pk=1), "description_changed")
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+    board_page.open_card_dialog("Card 1")
+    expect(board_page.timeline_item("Descrição alterada")).to_be_visible()
+
+    page.get_by_role("button", name="Ocultar detalhes").click()
+    expect(page.get_by_role("button", name="Mostrar detalhes")).to_be_visible()
+    expect(board_page.timeline_item("Descrição alterada")).to_have_count(0)
+    expect(board_page.timeline_item("A comment")).to_be_visible()
+
+    page.get_by_role("button", name="Mostrar detalhes").click()
+    expect(board_page.timeline_item("Descrição alterada")).to_be_visible()
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_actions_inside_the_dialog_add_activity_live(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+    board_page.open_card_dialog("Card 1")
+
+    board_page.edit_description("hello")
+    expect(board_page.timeline_item("Descrição alterada")).to_have_count(1)
+    board_page.rename_card_in_dialog("Renamed")
+    expect(
+        board_page.timeline_item("Título alterado de “Card 1” para “Renamed”")
+    ).to_have_count(1)
+    assert Card.objects.get(pk=1).activities.count() == 2
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_blank_comment_is_rejected_with_a_toast(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+    board_page.open_card_dialog("Card 1")
+    page.get_by_role("textbox", name="Escrever um comentário…").fill("   ")
+    page.get_by_role("button", name="Salvar comentário").click()
+    expect(board_page.toast()).to_have_text("O comentário é obrigatório.")
+    assert not Comment.objects.exists()

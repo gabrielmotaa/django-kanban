@@ -106,7 +106,7 @@ class ParityBoardPage:
         dialog = self.dialog()
         dialog.get_by_role("heading", level=2).get_by_role("button").click()
         dialog.get_by_role("textbox", name="Título do card").fill(new_title)
-        dialog.get_by_role("button", name="Salvar").click()
+        dialog.get_by_role("button", name="Salvar", exact=True).click()
         dialog.get_by_role("heading", level=2, name=new_title).wait_for()
 
     def edit_description(self, text: str, current: str | None = None) -> None:
@@ -220,6 +220,22 @@ class ParityBoardPage:
     def checklist_badge(self, column_title: str) -> Locator:
         return self.column(column_title).get_by_role(
             "img", name=re.compile(r"^Checklist \d+ de \d+$")
+        )
+
+    # -- comments and activity (page-level locators: see edit_description) -----
+
+    def add_comment(self, text: str) -> None:
+        box = self.page.get_by_role("textbox", name="Escrever um comentário…")
+        box.fill(text)
+        self.page.get_by_role("button", name="Salvar comentário").click()
+        self.timeline_item(text).wait_for()
+
+    def timeline_item(self, text: str) -> Locator:
+        return self.page.get_by_role("listitem").filter(has_text=text)
+
+    def comment_badge(self, column_title: str) -> Locator:
+        return self.column(column_title).get_by_role(
+            "img", name=re.compile(r"comentários?$")
         )
 
     def delete_card_from_dialog(self) -> None:

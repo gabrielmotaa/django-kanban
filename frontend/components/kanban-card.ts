@@ -96,6 +96,12 @@ export class KanbanCard extends HtmxElement {
 	@property({ type: Boolean })
 	completed = false;
 
+	@property({ type: Number })
+	comments = 0;
+
+	@property({ attribute: "comments-label" })
+	commentsLabel = "";
+
 	@property({ attribute: "checklist-done", type: Number })
 	checklistDone = 0;
 
@@ -206,7 +212,10 @@ export class KanbanCard extends HtmxElement {
 				}
         <div class="title-view">${this.title}</div>
         ${
-					this.hasDescription || this.due || this.checklistTotal
+					this.hasDescription ||
+					this.due ||
+					this.checklistTotal ||
+					this.comments
 						? html`<div class="badges">
               ${this.hasDescription ? html`<kanban-badge icon="≡" label="Este card tem descrição"></kanban-badge>` : ""}
               ${this.due ? html`<kanban-due-badge due=${this.due} status=${this.dueStatus} label=${this.dueLabel}></kanban-due-badge>` : ""}
@@ -220,6 +229,7 @@ export class KanbanCard extends HtmxElement {
                     ></kanban-badge>`
 									: ""
 							}
+              ${this.comments ? html`<kanban-badge icon="💬" text=${String(this.comments)} label=${this.commentsLabel}></kanban-badge>` : ""}
             </div>`
 						: ""
 				}

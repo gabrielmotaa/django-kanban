@@ -187,7 +187,7 @@ class BoardPage:
         dialog = self.page.get_by_role("dialog")
         dialog.get_by_role("heading", level=2).get_by_role("button").click()
         dialog.get_by_role("textbox", name="Título do card").fill(new_title)
-        dialog.get_by_role("button", name="Salvar").click()
+        dialog.get_by_role("button", name="Salvar", exact=True).click()
         dialog.get_by_role("heading", level=2, name=new_title).wait_for()
         dialog.get_by_role("button", name="Fechar").click()
         dialog.wait_for(state="hidden")

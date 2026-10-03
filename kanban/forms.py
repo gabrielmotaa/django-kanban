@@ -163,3 +163,13 @@ class ChecklistItemEditForm(forms.Form):
         elif "text" not in self.data and cleaned_data.get("done") is None:
             raise forms.ValidationError("Informe o texto ou o estado do item.")
         return cleaned_data
+
+
+class CommentForm(forms.Form):
+    text = forms.CharField(
+        max_length=5000,
+        error_messages={
+            "required": "O comentário é obrigatório.",
+            "max_length": "O comentário deve ter no máximo 5000 caracteres.",
+        },
+    )

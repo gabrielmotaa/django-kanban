@@ -33,6 +33,12 @@ urlpatterns = [
         views.ChecklistItemDetailView.as_view(),
         name="checklist_item_detail",
     ),
+    path(
+        "card/<int:pk>/comments/",
+        views.CardCommentsView.as_view(),
+        name="card_comments",
+    ),
+    path("comment/<int:pk>/", views.CommentDetailView.as_view(), name="comment_detail"),
     path("card/<int:pk>/labels/", views.CardLabelsView.as_view(), name="card_labels"),
     path("label/", views.LabelCreateView.as_view(), name="label_create"),
     path("label/<int:pk>/", views.LabelDetailView.as_view(), name="label_detail"),
