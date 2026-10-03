@@ -26,24 +26,36 @@ def board_data():
     Card.objects.create(id=2, column=col_b, title="Card 2", order=0)
 
 
-def snapshot_for(page: Page, live_server, tech: str, *, expanded: bool) -> str:
+def snapshot_for(page: Page, live_server, tech: str, expand: str | None = None) -> str:
     board_page = ParityBoardPage(page, live_server.url, tech)
     board_page.navigate()
-    if expanded:
+    if expand == "column-menu":
         board_page.open_column_menu("Column A")
+    elif expand == "create-column":
         board_page.open_create_column_form()
+    elif expand == "rename-column":
+        board_page.open_column_rename("Column A")
+    elif expand == "edit-card":
+        board_page.open_card_editor("Card 1")
+    elif expand == "edit-board-title":
+        board_page.open_board_title_editor()
     return board_page.aria_snapshot()
 
 
-def test_aria_snapshot_parity_collapsed(live_server, page: Page):
-    templates = snapshot_for(page, live_server, "templates", expanded=False)
-    components = snapshot_for(page, live_server, "components", expanded=False)
-    assert templates == components
-
-
-def test_aria_snapshot_parity_expanded(live_server, page: Page):
-    templates = snapshot_for(page, live_server, "templates", expanded=True)
-    components = snapshot_for(page, live_server, "components", expanded=True)
+@pytest.mark.parametrize(
+    "expand",
+    [
+        None,
+        "column-menu",
+        "create-column",
+        "rename-column",
+        "edit-card",
+        "edit-board-title",
+    ],
+)
+def test_aria_snapshot_parity(live_server, page: Page, expand):
+    templates = snapshot_for(page, live_server, "templates", expand)
+    components = snapshot_for(page, live_server, "components", expand)
     assert templates == components
 
 
