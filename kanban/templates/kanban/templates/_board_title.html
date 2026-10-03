@@ -20,7 +20,7 @@
         hx-patch="{% url 'board_detail' board.pk %}"
         hx-target="#board-title-container"
         hx-swap="outerHTML"
-        @htmx:after-request="editing = false"
+        @htmx:after-request="if ($event.detail.successful) editing = false"
         class="board-header__form"
     >
         {% csrf_token %}

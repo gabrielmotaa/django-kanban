@@ -34,7 +34,7 @@
               hx-post="{% url 'column_create' %}" 
               hx-target="#board"
               hx-swap="beforeend" 
-              @htmx:after-request="adding = false; selectedColor = '#64748b'; $el.reset()"
+              @htmx:after-request="if ($event.detail.successful) { adding = false; selectedColor = '#64748b'; $el.reset() }"
               class="column-create__form"
         >
             {% csrf_token %}
@@ -66,6 +66,8 @@
         </form>
     </div>
 </div>
+
+<div id="toast-area" class="toast-area"></div>
 
 {% endblock content %}
 
@@ -114,7 +116,11 @@
                 }
 
                  const cardId = card.dataset.cardId;
+                 const fromColumn = sourceColumn;
+                 const fromIndex = sourceIndex;
+                 rollbackOnFailure(card, () => restoreCard(card, fromColumn, fromIndex));
                  htmx.ajax("patch", "{% url 'card_detail' 0 %}".replace('/0/', `/${cardId}/`), {
+                     source: card,
                      values: {
                          column_id: destColumn.dataset.columnId,
                          order: index,
@@ -176,7 +182,10 @@
                     }
 
                      const colId = column.dataset.columnId;
+                     const fromIndex = sourceColumnIndex;
+                     rollbackOnFailure(column, () => restoreColumn(column, fromIndex));
                      htmx.ajax("patch", `{% url 'column_detail' 0 %}`.replace('/0/', `/${colId}/`), {
+                         source: column,
                          values: {
                              order: index,
                          },
@@ -248,6 +257,39 @@
                 }
             }
             return closestEl;
+        }
+
+        // Rollback of optimistic moves: a failed request puts the element back.
+        function rollbackOnFailure(el, rollback) {
+            const failures = ["htmx:responseError", "htmx:sendError", "htmx:timeout"];
+            const cleanup = () => {
+                failures.forEach((name) => el.removeEventListener(name, fail));
+                el.removeEventListener("htmx:afterRequest", done);
+            };
+            // Events of descendants' own requests bubble up; only react to ours.
+            const fail = (e) => {
+                if (e.target !== el) return;
+                cleanup();
+                rollback();
+            };
+            const done = (e) => {
+                if (e.target === el) cleanup();
+            };
+            failures.forEach((name) => el.addEventListener(name, fail));
+            el.addEventListener("htmx:afterRequest", done);
+        }
+
+        function restoreCard(card, column, index) {
+            const container = column.querySelector(".column__cards");
+            const siblings = [...container.querySelectorAll(".card")].filter((c) => c !== card);
+            container.insertBefore(card, siblings[index] ?? null);
+            updateOrders();
+        }
+
+        function restoreColumn(column, index) {
+            const siblings = [...board.querySelectorAll(".column")].filter((c) => c !== column);
+            board.insertBefore(column, siblings[index] ?? null);
+            updateColumnOrders();
         }
 
         // Orders

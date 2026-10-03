@@ -7,3 +7,4 @@ export * from "./components/kanban-column";
 export * from "./components/kanban-column-header";
 export * from "./components/kanban-inline-edit";
 export * from "./components/kanban-menu";
+export * from "./components/kanban-toast";
