@@ -1,5 +1,6 @@
 import { css, html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { applyServerElement } from "../lib/apply-server-element";
 import { type Palette, readPalette } from "../lib/palette";
 import { sendWebComponentsHeader } from "../lib/web-components-header";
 import type { KanbanBoard } from "./kanban-board";
@@ -528,6 +529,15 @@ export class KanbanColumn extends LitElement {
 		return closest;
 	}
 
+	// PATCH responses are minimal: only the column element, without cards.
+	private onColumnPatched = (e: CustomEvent) => {
+		const { successful, xhr } = e.detail;
+		if (!successful) return;
+		applyServerElement(this, xhr.responseText);
+		this.editingTitle = false;
+		this.menuOpen = false;
+	};
+
 	override updated() {
 		this.setAttribute("role", "group");
 		this.setAttribute("aria-label", this.title);
@@ -613,7 +623,7 @@ export class KanbanColumn extends LitElement {
           ${
 						this.editingTitle
 							? html`
-                <form class="edit-form" hx-patch=${this.editUrl} hx-target="host" hx-swap="outerHTML">
+                <form class="edit-form" hx-patch=${this.editUrl} hx-swap="none" @htmx:after-request=${this.onColumnPatched}>
                   <input
                     type="text"
                     name="title"
@@ -682,8 +692,8 @@ export class KanbanColumn extends LitElement {
                                       style="--dot-color: ${hex};"
                                       hx-patch=${this.editUrl}
                                       hx-vals=${JSON.stringify({ color: hex })}
-                                      hx-target="host"
-                                      hx-swap="outerHTML"
+                                      hx-swap="none"
+                                      @htmx:after-request=${this.onColumnPatched}
                                     ></button>
                                 `,
 																)}

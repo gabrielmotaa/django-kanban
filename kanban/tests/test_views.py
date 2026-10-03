@@ -632,3 +632,37 @@ def test_components_column_create_response_has_urls(client: Client, board: Board
     html = response.content.decode()
     assert 'create-card-url="' in html
     assert 'fg-color="#ffffff"' in html
+
+
+# --- Issue 004: minimal column fragments for components ---
+
+
+@pytest.mark.parametrize("field", [{"title": "Renamed"}, {"color": "#ef4444"}])
+def test_components_column_patch_has_no_cards(client: Client, col_a: Column, field):
+    Card.objects.create(column=col_a, title="Alpha", order=0)
+    Card.objects.create(column=col_a, title="Beta", order=1)
+    response = client.patch(
+        reverse("column_detail", args=[col_a.pk]), urlencode(field), **WC
+    )
+    html = response.content.decode()
+    assert response.status_code == 200
+    assert "<kanban-column" in html
+    assert "kanban-card" not in html
+    assert "Alpha" not in html
+
+
+@pytest.mark.parametrize("field", [{"title": "Renamed"}, {"color": "#ef4444"}])
+def test_templates_column_patch_keeps_cards(client: Client, col_a: Column, field):
+    Card.objects.create(column=col_a, title="Alpha", order=0)
+    Card.objects.create(column=col_a, title="Beta", order=1)
+    response = client.patch(reverse("column_detail", args=[col_a.pk]), urlencode(field))
+    html = response.content.decode()
+    assert "Alpha" in html
+    assert "Beta" in html
+
+
+def test_components_index_renders_cards_inside_columns(client: Client, col_a: Column):
+    Card.objects.create(column=col_a, title="Alpha", order=0)
+    html = client.get(reverse("index", args=["components"])).content.decode()
+    assert "<kanban-card" in html
+    assert "Alpha" in html
