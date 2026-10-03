@@ -34,7 +34,7 @@
               hx-post="{% url 'column_create' %}" 
               hx-target="#board"
               hx-swap="beforeend" 
-              @htmx:after-request="adding = false; selectedColor = '#64748b'; $el.reset()"
+              @htmx:after-request="if ($event.detail.successful) { adding = false; selectedColor = '#64748b'; $el.reset() }"
               class="column-create__form"
         >
             {% csrf_token %}
@@ -43,6 +43,7 @@
                    type="text" 
                    name="title" 
                    placeholder="Nome da coluna..." 
+                   aria-label="Nome da coluna"
                    required
                    class="column-create__input"
                    maxlength="100"
@@ -54,14 +55,7 @@
                 <label class="column-create__color-label">Cor da Coluna</label>
                 <div class="column-create__color-grid">
                     <input type="hidden" name="color" :value="selectedColor">
-                    <template x-for="color in ['#64748b', '#ef4444', '#f97316', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899']" :key="color">
-                        <button type="button" 
-                                @click="selectedColor = color"
-                                class="column-create__color-dot"
-                                :class="selectedColor === color ? 'column-create__color-dot--active' : ''"
-                                :style="'--dot-color: ' + color"
-                        ></button>
-                    </template>
+                    {% include "kanban/templates/_color_picker.html" with choices=color_choices prefix="column-create" mode="select" %}
                 </div>
             </div>
             
@@ -72,6 +66,10 @@
         </form>
     </div>
 </div>
+
+<dialog id="card-dialog" class="card-dialog" aria-labelledby="card-dialog-heading"></dialog>
+
+<div id="toast-area" class="toast-area" popover="manual"></div>
 
 {% endblock content %}
 
@@ -120,7 +118,11 @@
                 }
 
                  const cardId = card.dataset.cardId;
+                 const fromColumn = sourceColumn;
+                 const fromIndex = sourceIndex;
+                 rollbackOnFailure(card, () => restoreCard(card, fromColumn, fromIndex));
                  htmx.ajax("patch", "{% url 'card_detail' 0 %}".replace('/0/', `/${cardId}/`), {
+                     source: card,
                      values: {
                          column_id: destColumn.dataset.columnId,
                          order: index,
@@ -182,7 +184,10 @@
                     }
 
                      const colId = column.dataset.columnId;
+                     const fromIndex = sourceColumnIndex;
+                     rollbackOnFailure(column, () => restoreColumn(column, fromIndex));
                      htmx.ajax("patch", `{% url 'column_detail' 0 %}`.replace('/0/', `/${colId}/`), {
+                         source: column,
                          values: {
                              order: index,
                          },
@@ -256,6 +261,39 @@
             return closestEl;
         }
 
+        // Rollback of optimistic moves: a failed request puts the element back.
+        function rollbackOnFailure(el, rollback) {
+            const failures = ["htmx:responseError", "htmx:sendError", "htmx:timeout"];
+            const cleanup = () => {
+                failures.forEach((name) => el.removeEventListener(name, fail));
+                el.removeEventListener("htmx:afterRequest", done);
+            };
+            // Events of descendants' own requests bubble up; only react to ours.
+            const fail = (e) => {
+                if (e.target !== el) return;
+                cleanup();
+                rollback();
+            };
+            const done = (e) => {
+                if (e.target === el) cleanup();
+            };
+            failures.forEach((name) => el.addEventListener(name, fail));
+            el.addEventListener("htmx:afterRequest", done);
+        }
+
+        function restoreCard(card, column, index) {
+            const container = column.querySelector(".column__cards");
+            const siblings = [...container.querySelectorAll(".card")].filter((c) => c !== card);
+            container.insertBefore(card, siblings[index] ?? null);
+            updateOrders();
+        }
+
+        function restoreColumn(column, index) {
+            const siblings = [...board.querySelectorAll(".column")].filter((c) => c !== column);
+            board.insertBefore(column, siblings[index] ?? null);
+            updateColumnOrders();
+        }
+
         // Orders
         function updateOrders() {
             board.querySelectorAll(".column").forEach((col) => {
@@ -282,6 +320,29 @@
             } else {
                 board.insertBefore(draggingColumn, after);
             }
+        });
+
+        // Card dialog: htmx loads the fragment into the <dialog>, then we open it.
+        const dialog = document.getElementById("card-dialog");
+        let dialogCardId = null;
+
+        document.body.addEventListener("htmx:afterSwap", (e) => {
+            // Moves are sent with the card as source and inherit its hx-target.
+            if (e.detail.target !== dialog || e.detail.requestConfig.verb !== "get") return;
+            dialogCardId = e.detail.requestConfig.elt.id;
+            if (!dialog.open) dialog.showModal();
+        });
+
+        dialog.addEventListener("click", (e) => {
+            if (e.target === dialog) dialog.close();
+        });
+
+        dialog.addEventListener("close", () => {
+            dialog.innerHTML = "";
+            // The card front may have been swapped out-of-band: look it up by id.
+            const card = dialogCardId && document.getElementById(dialogCardId);
+            if (card) card.focus();
+            dialogCardId = null;
         });
 
         // Init

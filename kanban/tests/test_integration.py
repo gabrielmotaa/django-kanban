@@ -183,27 +183,21 @@ class BoardPage:
         self.page.wait_for_timeout(500)
 
     def edit_card_title(self, card_id: int, new_title: str):
-        card = self.card_locator(card_id)
-        card.click()
-        if self.tech == "templates":
-            input_el = card.locator(".card__edit-input")
-            input_el.fill(new_title)
-            card.locator(".card__btn-save").click()
-        else:
-            input_el = card.locator(".edit-input")
-            input_el.fill(new_title)
-            card.locator(".btn-save").click()
-        self.page.wait_for_timeout(500)
+        self.card_locator(card_id).click()
+        dialog = self.page.get_by_role("dialog")
+        dialog.get_by_role("heading", level=2).get_by_role("button").click()
+        dialog.get_by_role("textbox", name="Título do card").fill(new_title)
+        dialog.get_by_role("button", name="Salvar", exact=True).click()
+        dialog.get_by_role("heading", level=2, name=new_title).wait_for()
+        dialog.get_by_role("button", name="Fechar").click()
+        dialog.wait_for(state="hidden")
 
     def delete_card(self, card_id: int):
-        card = self.card_locator(card_id)
-        card.click()
-        self.page.once("dialog", lambda dialog: dialog.accept())
-        if self.tech == "templates":
-            card.locator(".card__btn-delete").click()
-        else:
-            card.locator(".btn-delete").click()
-        self.page.wait_for_timeout(500)
+        self.card_locator(card_id).click()
+        dialog = self.page.get_by_role("dialog")
+        self.page.once("dialog", lambda d: d.accept())
+        dialog.get_by_role("button", name="Excluir card").click()
+        dialog.wait_for(state="hidden")
 
 
 @pytest.mark.parametrize("tech", ["templates", "components"])

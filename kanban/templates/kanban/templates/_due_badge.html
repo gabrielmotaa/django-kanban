@@ -1,0 +1,1 @@
+{% if card.due_date %}<span class="badge badge--{{ card.due_status }}" role="img" aria-label="{{ card.due_label }}">◷ {{ card.due_date|date:"d/m" }}</span>{% endif %}

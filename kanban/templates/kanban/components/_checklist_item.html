@@ -1,0 +1,1 @@
+<kanban-checklist-item href="{% url 'checklist_item_detail' item.pk %}" done="{% if item.done %}true{% else %}false{% endif %}">{{ item.text }}</kanban-checklist-item>

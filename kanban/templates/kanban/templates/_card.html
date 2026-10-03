@@ -1,55 +1,30 @@
-<div 
-    x-data="{ editing: false }"
+<div
     class="card"
     draggable="true"
     id="card-{{ card.pk }}"
     data-card-id="{{ card.pk }}"
     data-order="{{ card.order }}"
-    @click="if (!window.dragging) { editing = true; $nextTick(() => $refs.input.focus()) }"
+    tabindex="0"
+    hx-get="{% url 'card_dialog' card.pk %}"
+    hx-trigger="click[!window.dragging], keydown[key=='Enter']"
+    hx-target="#card-dialog"
+    hx-swap="innerHTML"
+    {% if oob %}hx-swap-oob="true"{% endif %}
 >
-
-    {# View mode #}
-    <div 
-        x-show="!editing"
-        class="card__title-view"
-    >
-        {{ card.title }}
+    {% with labels=card.labels.all %}
+    {% if labels %}
+    <div class="card__labels">
+        {% for label in labels %}{% include "kanban/templates/_label_pill.html" %}{% endfor %}
     </div>
-
-    {# Edit mode #}
-    <form 
-        @click.stop
-        x-show="editing"
-        x-cloak
-        hx-patch="{% url 'card_detail' card.pk %}"
-        hx-target="#card-{{ card.pk }}"
-        hx-swap="outerHTML"
-        @htmx:after-swap.window="editing = false"
-        class="card__edit-form"
-    >
-        {% csrf_token %}
-        <input
-            x-ref="input"
-            type="text"
-            name="title"
-            value="{{ card.title }}"
-            class="card__edit-input"
-            maxlength="200"
-            @keydown.escape="editing = false"
-        >
-        <div class="card__edit-actions">
-            <button 
-                type="button"
-                hx-delete="{% url 'card_detail' card.pk %}"
-                hx-target="#card-{{ card.pk }}"
-                hx-swap="outerHTML"
-                hx-confirm="Deletar este card?"
-                class="card__btn-delete"
-            >
-                Deletar
-            </button>
-            <button type="button" @click="editing = false" class="card__btn-cancel">Cancelar</button>
-            <button type="submit" class="card__btn-save">Salvar</button>
-        </div>
-    </form>
+    {% endif %}
+    {% endwith %}
+    <div class="card__title-view">{{ card.title }}</div>
+    {% if card.description or card.due_date or card.checklist_total or card.comment_count %}
+    <div class="card__badges">
+        {% if card.description %}<span class="badge" role="img" aria-label="Este card tem descrição">≡</span>{% endif %}
+        {% include "kanban/templates/_due_badge.html" %}
+        {% if card.checklist_total %}<span class="badge{% if card.checklist_status == "complete" %} badge--complete{% endif %}" role="img" aria-label="{{ card.checklist_label }}">☑ {{ card.checklist_done }}/{{ card.checklist_total }}</span>{% endif %}
+        {% if card.comment_count %}<span class="badge" role="img" aria-label="{{ card.comment_label }}">💬 {{ card.comment_count }}</span>{% endif %}
+    </div>
+    {% endif %}
 </div>

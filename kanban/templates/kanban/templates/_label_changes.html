@@ -1,0 +1,3 @@
+{% include "kanban/templates/_label_popover.html" %}
+{% include "kanban/templates/_label_pills.html" with oob=True %}
+{% for affected in affected_cards %}{% include "kanban/templates/_card.html" with card=affected oob=True %}{% endfor %}

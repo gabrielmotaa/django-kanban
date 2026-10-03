@@ -1,0 +1,48 @@
+<li id="checklist-item-{{ item.pk }}" class="card-checklist__item{% if item.done %} card-checklist__item--done{% endif %}" x-data="{ editing: false }">
+    <input type="checkbox"
+           id="checklist-item-{{ item.pk }}-done"
+           aria-label="{{ item.text }}"
+           {% if item.done %}checked{% endif %}
+           hx-patch="{% url 'checklist_item_detail' item.pk %}"
+           hx-vals='{"done": "{% if item.done %}false{% else %}true{% endif %}"}'
+           hx-trigger="change"
+           hx-target="#checklist-item-{{ item.pk }}"
+           hx-swap="outerHTML"
+           hx-sync="this:replace"
+           @htmx:response-error="$el.checked = !$el.checked"
+           @htmx:send-error="$el.checked = !$el.checked"
+           @htmx:timeout="$el.checked = !$el.checked"
+    >
+    <button type="button"
+            class="card-checklist__text"
+            x-show="!editing"
+            @click="editing = true; $nextTick(() => $refs.input.focus())"
+    >{{ item.text }}</button>
+    <form x-show="editing"
+          x-cloak
+          hx-patch="{% url 'checklist_item_detail' item.pk %}"
+          hx-target="#checklist-item-{{ item.pk }}"
+          hx-swap="outerHTML"
+          class="card-checklist__item-form"
+          @keydown.escape.prevent.stop="editing = false"
+    >
+        <input x-ref="input"
+               type="text"
+               name="text"
+               value="{{ item.text }}"
+               maxlength="200"
+               required
+               aria-label="Texto do item"
+               class="card-checklist__input"
+        >
+        <button type="submit" class="card-dialog__btn card-dialog__btn--primary">Salvar</button>
+        <button type="button" @click="editing = false" class="card-dialog__btn card-dialog__btn--secondary">Cancelar</button>
+    </form>
+    <button type="button"
+            class="card-checklist__remove"
+            aria-label="Remover item"
+            hx-delete="{% url 'checklist_item_detail' item.pk %}"
+            hx-target="#checklist-item-{{ item.pk }}"
+            hx-swap="outerHTML"
+    >×</button>
+</li>

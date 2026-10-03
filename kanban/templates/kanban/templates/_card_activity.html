@@ -1,0 +1,29 @@
+<section id="card-activity" class="card-dialog__section card-activity" x-data="{ details: true }">
+    <div class="card-activity__header">
+        <h3 class="card-dialog__section-title">Comentários e atividade</h3>
+        <button type="button"
+                class="card-activity__toggle"
+                @click="details = !details"
+                x-text="details ? 'Ocultar detalhes' : 'Mostrar detalhes'"
+        >Ocultar detalhes</button>
+    </div>
+    <form class="card-activity__composer"
+          hx-post="{% url 'card_comments' card.pk %}"
+          hx-target="#card-timeline"
+          hx-swap="afterbegin"
+          @htmx:after-request="if ($event.detail.successful) $el.reset()"
+    >
+        <textarea name="text"
+                  rows="2"
+                  maxlength="5000"
+                  required
+                  placeholder="Escrever um comentário…"
+                  aria-label="Escrever um comentário…"
+                  class="card-activity__input"
+        ></textarea>
+        <button type="submit" class="card-dialog__btn card-dialog__btn--primary" aria-label="Salvar comentário">Salvar</button>
+    </form>
+    <ul id="card-timeline" class="card-activity__list">
+        {% for entry in timeline %}{% if entry.type == "comment" %}{% include "kanban/templates/_comment.html" with comment=entry.obj %}{% else %}{% include "kanban/templates/_activity_entry.html" with activity=entry.obj %}{% endif %}{% endfor %}
+    </ul>
+</section>

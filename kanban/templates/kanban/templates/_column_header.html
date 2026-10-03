@@ -1,0 +1,83 @@
+    <div class="column__header-bg">
+        <div class="column__title">
+            {# View mode #}
+            <div x-show="!editingTitle" class="column__header">
+                <span class="column__title-text">{{ column.title }}</span>
+                
+                {# Dropdown Menu Trigger #}
+                <div class="column__menu-wrapper">
+                    <button type="button" 
+                            @click="menuOpen = !menuOpen" 
+                            aria-label="Opções da coluna"
+                            :aria-expanded="menuOpen"
+                            class="column__menu-trigger"
+                    >
+                        ⋮
+                    </button>
+                    
+                    {# Dropdown Menu Content #}
+                    <div x-show="menuOpen" 
+                         x-cloak 
+                         @click.away="menuOpen = false" 
+                         @keydown.escape.window="menuOpen = false" 
+                         class="column__menu-dropdown"
+                    >
+                        <button type="button" 
+                                @click="editingTitle = true; menuOpen = false; $nextTick(() => $refs.titleInput.focus())" 
+                                class="column__menu-btn"
+                        >
+                            Editar nome
+                        </button>
+                        
+                        <div class="column__menu-divider"></div>
+                        
+                        {# Color Picker Section inside Menu #}
+                        <div>
+                            <div class="column__menu-section-title">Cor da Coluna</div>
+                            <div class="column__color-grid">
+                                {% url 'column_detail' column.pk as column_url %}
+                                {% include "kanban/templates/_color_picker.html" with choices=column.COLOR_CHOICES prefix="column" mode="patch" url=column_url current=column.color %}
+                            </div>
+                        </div>
+                        
+                        <div class="column__menu-divider"></div>
+                        
+                        <button type="button" 
+                                hx-delete="{% url 'column_detail' column.pk %}"
+                                hx-target="closest .column"
+                                hx-swap="outerHTML"
+                                hx-confirm="Deseja realmente apagar a coluna '{{ column.title }}' e todos os seus cards?"
+                                class="column__menu-btn column__menu-btn--danger"
+                        >
+                            Apagar coluna
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {# Edit mode #}
+            <form x-show="editingTitle"
+                  x-cloak
+                  hx-patch="{% url 'column_detail' column.pk %}"
+                  hx-target="closest .column"
+                  hx-swap="outerHTML"
+                  @htmx:after-request="if ($event.detail.successful) editingTitle = false"
+                  class="column__edit-form"
+            >
+                {% csrf_token %}
+                <input 
+                    x-ref="titleInput"
+                    type="text"
+                    name="title"
+                    value="{{ column.title }}"
+                    required
+                    aria-label="Nome da coluna"
+                    class="column__edit-input"
+                    @keydown.escape="editingTitle = false"
+                >
+                <button type="submit" aria-label="Salvar nome" class="column__edit-btn-save">✓</button>
+                <button type="button" @click="editingTitle = false" aria-label="Cancelar edição" class="column__edit-btn-cancel">✗</button>
+            </form>
+        </div>
+    </div>
+  

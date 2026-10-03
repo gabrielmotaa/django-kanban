@@ -1,3 +1,6 @@
+import json
+import re
+from html import unescape
 from urllib.parse import urlencode
 
 import pytest
@@ -267,7 +270,10 @@ def test_column_edit_invalid_empty_fields(client: Client, col_a: Column):
         content_type="application/x-www-form-urlencoded",
     )
     assert response.status_code == 400
-    assert response.content.decode("utf-8") == "No title or color provided"
+    assert (
+        "Informe um título, uma cor ou a nova posição da coluna."
+        in response.content.decode("utf-8")
+    )
 
 
 def test_board_edit_invalid(client: Client, board: Board):
@@ -468,7 +474,7 @@ def test_column_edit_invalid_field_errors(client: Client, col_a: Column):
         content_type="application/x-www-form-urlencoded",
     )
     assert response.status_code == 400
-    assert "order" in response.content.decode("utf-8")
+    assert "Requisição inválida." in response.content.decode("utf-8")
 
 
 @pytest.mark.parametrize("web_components", [True, False])
@@ -513,7 +519,7 @@ def test_card_edit_invalid_field_errors(client: Client, col_a: Column):
         content_type="application/x-www-form-urlencoded",
     )
     assert response.status_code == 400
-    assert "order" in response.content.decode("utf-8")
+    assert "Requisição inválida." in response.content.decode("utf-8")
 
 
 def test_card_move_same_column_clamp_order(client: Client, col_a: Column):
@@ -562,3 +568,130 @@ def test_column_move_clamp_order(
     col_b.refresh_from_db()
     assert col_b.order == 0
     assert col_a.order == 1
+
+
+def test_template_index_accessible_names(client: Client, board: Board, col_a: Column):
+    html = client.get(reverse("index", args=["templates"])).content.decode()
+    assert 'aria-label="Opções da coluna"' in html
+    assert 'aria-label="Salvar nome"' in html
+    assert 'aria-label="Cancelar edição"' in html
+    assert 'aria-label="Nome da coluna"' in html
+    assert 'aria-label="Título do quadro"' in html
+    for _hex, name in Column.COLOR_CHOICES:
+        assert f'aria-label="{name}"' in html
+
+
+def test_components_index_exposes_color_names(client: Client, board: Board):
+    html = client.get(reverse("index", args=["components"])).content.decode()
+    names = [name for _hex, name in _palette_from(html)]
+    assert names == [name for _hex, name in Column.COLOR_CHOICES]
+
+
+# --- Issue 003: components are self-contained (URLs, palette, fg-color) ---
+
+WC = {"HTTP_X_WEB_COMPONENTS": "true"}
+
+
+def _palette_from(html: str) -> list:
+    match = re.search(r'<kanban-board [^>]*colors="([^"]*)"', html)
+    assert match, "kanban-board has no colors attribute"
+    return json.loads(unescape(match.group(1)))
+
+
+def test_components_card_fragment_has_href(client: Client, col_a: Column):
+    card = Card.objects.create(column=col_a, title="C", order=0)
+    html = client.get(reverse("card_detail", args=[card.pk]), **WC).content.decode()
+    assert f'href="{reverse("card_detail", args=[card.pk])}"' in html
+
+
+def test_components_column_fragment_has_urls_and_fg_color(client: Client, board: Board):
+    column = Column.objects.create(board=board, title="Amber", order=0, color="#f59e0b")
+    html = client.get(reverse("column_detail", args=[column.pk]), **WC).content.decode()
+    assert f'href="{reverse("column_detail", args=[column.pk])}"' in html
+    assert f'create-card-url="{reverse("card_create")}"' in html
+    assert f'fg-color="{column.fg_color}"' in html
+    assert 'fg-color="#1e293b"' in html
+
+
+def test_components_board_title_fragment_has_href(client: Client, board: Board):
+    html = client.get(reverse("board_detail", args=[board.pk]), **WC).content.decode()
+    assert f'href="{reverse("board_detail", args=[board.pk])}"' in html
+
+
+def test_components_index_is_self_contained(client: Client, board: Board, col_a):
+    html = client.get(reverse("index", args=["components"])).content.decode()
+    assert f'create-column-url="{reverse("column_create")}"' in html
+    assert _palette_from(html) == [list(c) for c in Column.COLOR_CHOICES]
+    assert "app-data" not in html
+    assert "window.urls" not in html
+    assert "window.colorChoices" not in html
+    assert "X-Web-Components" not in html
+
+
+def test_components_column_create_response_has_urls(client: Client, board: Board):
+    response = client.post(
+        reverse("column_create"), {"board_id": board.pk, "title": "N"}, **WC
+    )
+    html = response.content.decode()
+    assert 'create-card-url="' in html
+    assert 'fg-color="#ffffff"' in html
+
+
+# --- Issue 004: minimal column fragments for components ---
+
+
+@pytest.mark.parametrize("field", [{"title": "Renamed"}, {"color": "#ef4444"}])
+def test_components_column_patch_has_no_cards(client: Client, col_a: Column, field):
+    Card.objects.create(column=col_a, title="Alpha", order=0)
+    Card.objects.create(column=col_a, title="Beta", order=1)
+    response = client.patch(
+        reverse("column_detail", args=[col_a.pk]), urlencode(field), **WC
+    )
+    html = response.content.decode()
+    assert response.status_code == 200
+    assert "<kanban-column" in html
+    assert "kanban-card" not in html
+    assert "Alpha" not in html
+
+
+@pytest.mark.parametrize("field", [{"title": "Renamed"}, {"color": "#ef4444"}])
+def test_templates_column_patch_keeps_cards(client: Client, col_a: Column, field):
+    Card.objects.create(column=col_a, title="Alpha", order=0)
+    Card.objects.create(column=col_a, title="Beta", order=1)
+    response = client.patch(reverse("column_detail", args=[col_a.pk]), urlencode(field))
+    html = response.content.decode()
+    assert "Alpha" in html
+    assert "Beta" in html
+
+
+def test_components_index_renders_cards_inside_columns(client: Client, col_a: Column):
+    Card.objects.create(column=col_a, title="Alpha", order=0)
+    html = client.get(reverse("index", args=["components"])).content.decode()
+    assert "<kanban-card" in html
+    assert "Alpha" in html
+
+
+# --- Issue 005: templates partials (color picker, column header) ---
+
+
+def test_template_column_menu_is_dismissible_and_expandable(
+    client: Client, board: Board, col_a: Column
+):
+    html = client.get(reverse("column_detail", args=[col_a.pk])).content.decode()
+    assert ':aria-expanded="menuOpen"' in html
+    assert '@keydown.escape.window="menuOpen = false"' in html
+    assert '@keydown.escape="editingTitle = false"' in html
+
+
+def test_template_column_color_picker_patches_each_color(client: Client, col_a: Column):
+    html = client.get(reverse("column_detail", args=[col_a.pk])).content.decode()
+    for hex_, _name in Column.COLOR_CHOICES:
+        assert f"""hx-vals='{{"color": "{hex_}"}}'""" in html
+
+
+def test_template_create_column_color_picker_selects_locally(
+    client: Client, board: Board
+):
+    html = client.get(reverse("index", args=["templates"])).content.decode()
+    for hex_, _name in Column.COLOR_CHOICES:
+        assert f"@click=\"selectedColor = '{hex_}'\"" in html

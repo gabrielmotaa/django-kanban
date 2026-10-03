@@ -1,0 +1,9 @@
+<kanban-card-dialog card-id="{{ card.pk }}" title="{{ card.title }}" column-title="{{ card.column.title }}" href="{% url 'card_detail' card.pk %}" checklists-url="{% url 'card_checklists' card.pk %}">
+    {% include "kanban/components/_card_labels_section.html" %}
+    {% include "kanban/components/_card_due_section.html" %}
+    <kanban-card-description href="{% url 'card_description' card.pk %}">{{ card.description }}</kanban-card-description>
+    {% for checklist in card.checklists.all %}{% include "kanban/components/_checklist.html" %}{% endfor %}
+    <kanban-card-activity comments-url="{% url 'card_comments' card.pk %}">
+        {% for entry in timeline %}{% if entry.type == "comment" %}{% include "kanban/components/_comment.html" with comment=entry.obj %}{% else %}{% include "kanban/components/_activity_entry.html" with activity=entry.obj %}{% endif %}{% endfor %}
+    </kanban-card-activity>
+</kanban-card-dialog>
