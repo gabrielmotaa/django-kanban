@@ -1,4 +1,4 @@
-<div class="column" data-column-id="{{ column.pk }}" x-data="{ editingTitle: false, menuOpen: false }" style="--column-color: {{ column.color|default:'#64748b' }}; --column-fg: {{ column.fg_color }};">
+<div class="column" role="group" aria-label="{{ column.title }}" data-column-id="{{ column.pk }}" x-data="{ editingTitle: false, menuOpen: false }" style="--column-color: {{ column.color|default:'#64748b' }}; --column-fg: {{ column.fg_color }};">
     <div class="column__header-bg">
         <div class="column__title">
             {# View mode #}
@@ -9,6 +9,7 @@
                 <div class="column__menu-wrapper">
                     <button type="button" 
                             @click="menuOpen = !menuOpen" 
+                            aria-label="Opções da coluna"
                             class="column__menu-trigger"
                     >
                         ⋮
@@ -78,10 +79,11 @@
                     name="title"
                     value="{{ column.title }}"
                     required
+                    aria-label="Nome da coluna"
                     class="column__edit-input"
                 >
-                <button type="submit" class="column__edit-btn-save">✓</button>
-                <button type="button" @click="editingTitle = false" class="column__edit-btn-cancel">✗</button>
+                <button type="submit" aria-label="Salvar nome" class="column__edit-btn-save">✓</button>
+                <button type="button" @click="editingTitle = false" aria-label="Cancelar edição" class="column__edit-btn-cancel">✗</button>
             </form>
         </div>
     </div>
@@ -117,6 +119,7 @@
                     type="text" 
                     name="title" 
                     placeholder="Título do card..." 
+                    aria-label="Título do card"
                     required 
                     class="column__add-card-input"
                     maxlength="200"

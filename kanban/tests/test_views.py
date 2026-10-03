@@ -562,3 +562,20 @@ def test_column_move_clamp_order(
     col_b.refresh_from_db()
     assert col_b.order == 0
     assert col_a.order == 1
+
+
+def test_template_index_accessible_names(client: Client, board: Board, col_a: Column):
+    html = client.get(reverse("index", args=["templates"])).content.decode()
+    assert 'aria-label="Opções da coluna"' in html
+    assert 'aria-label="Salvar nome"' in html
+    assert 'aria-label="Cancelar edição"' in html
+    assert 'aria-label="Nome da coluna"' in html
+    assert 'aria-label="Título do quadro"' in html
+    for _hex, name in Column.COLOR_CHOICES:
+        assert f'aria-label="{name}"' in html
+
+
+def test_components_index_exposes_color_names(client: Client, board: Board):
+    html = client.get(reverse("index", args=["components"])).content.decode()
+    for _hex, name in Column.COLOR_CHOICES:
+        assert f'"{name}"' in html
