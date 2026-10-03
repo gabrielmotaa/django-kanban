@@ -67,6 +67,8 @@
     </div>
 </div>
 
+<dialog id="card-dialog" class="card-dialog" aria-labelledby="card-dialog-heading"></dialog>
+
 <div id="toast-area" class="toast-area"></div>
 
 {% endblock content %}
@@ -318,6 +320,27 @@
             } else {
                 board.insertBefore(draggingColumn, after);
             }
+        });
+
+        // Card dialog: htmx loads the fragment into the <dialog>, then we open it.
+        const dialog = document.getElementById("card-dialog");
+        let dialogOpener = null;
+
+        document.body.addEventListener("htmx:afterSwap", (e) => {
+            // Moves are sent with the card as source and inherit its hx-target.
+            if (e.detail.target !== dialog || e.detail.requestConfig.verb !== "get") return;
+            dialogOpener = e.detail.requestConfig.elt;
+            dialog.showModal();
+        });
+
+        dialog.addEventListener("click", (e) => {
+            if (e.target === dialog) dialog.close();
+        });
+
+        dialog.addEventListener("close", () => {
+            dialog.innerHTML = "";
+            if (dialogOpener) dialogOpener.focus();
+            dialogOpener = null;
         });
 
         // Init

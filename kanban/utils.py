@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from django.db.models import Model
+from django.db.models import Model, QuerySet
 from django.forms import Form
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
@@ -43,10 +43,13 @@ def error_response(
     return response
 
 
-def fetch_or_error[M: Model](model: type[M], message: str, **lookup) -> M:
+def fetch_or_error[M: Model](
+    source: type[M] | QuerySet[M], message: str, **lookup
+) -> M:
+    manager = source.objects if isinstance(source, type) else source
     try:
-        return model.objects.get(**lookup)
-    except model.DoesNotExist:
+        return manager.get(**lookup)
+    except manager.model.DoesNotExist:
         raise ApiError(message, HTTPStatus.NOT_FOUND) from None
 
 

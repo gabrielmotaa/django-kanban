@@ -1,0 +1,28 @@
+<div id="card-dialog-title" class="card-dialog__title" x-data="{ editing: false }">
+    <h2 id="card-dialog-heading" class="card-dialog__heading" x-show="!editing">
+        <button type="button"
+                class="card-dialog__title-btn"
+                @click="editing = true; $nextTick(() => $refs.input.focus())"
+        >{{ card.title }}</button>
+    </h2>
+    <form x-show="editing"
+          x-cloak
+          hx-patch="{% url 'card_detail' card.pk %}"
+          hx-target="#card-dialog-title"
+          hx-swap="outerHTML"
+          class="card-dialog__title-form"
+          @keydown.escape.prevent.stop="editing = false"
+    >
+        <input x-ref="input"
+               type="text"
+               name="title"
+               value="{{ card.title }}"
+               maxlength="200"
+               required
+               aria-label="Título do card"
+               class="card-dialog__title-input"
+        >
+        <button type="submit" class="card-dialog__btn card-dialog__btn--primary">Salvar</button>
+        <button type="button" @click="editing = false" class="card-dialog__btn card-dialog__btn--secondary">Cancelar</button>
+    </form>
+</div>

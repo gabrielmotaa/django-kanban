@@ -1,0 +1,32 @@
+<div class="card-dialog__body" x-data>
+    <button type="button"
+            class="card-dialog__close"
+            aria-label="Fechar"
+            @click="$el.closest('dialog').close()"
+    >×</button>
+
+    <header class="card-dialog__header">
+        {% include "kanban/templates/_card_dialog_title.html" %}
+        <p class="card-dialog__column">na coluna {{ card.column.title }}</p>
+    </header>
+
+    <div class="card-dialog__layout">
+        <div class="card-dialog__main">
+            {# Labels and due date (008, 009) go here, then the description. #}
+            {% include "kanban/templates/_card_description.html" %}
+            {# Checklists (010) and activity (011) go here. #}
+        </div>
+
+        <aside class="card-dialog__side">
+            <h3 class="card-dialog__section-title">Ações</h3>
+            <button type="button"
+                    class="card-dialog__action card-dialog__action--danger"
+                    hx-delete="{% url 'card_detail' card.pk %}"
+                    hx-target="#card-{{ card.pk }}"
+                    hx-swap="outerHTML"
+                    hx-confirm="Deletar este card?"
+                    @htmx:after-request="if ($event.detail.successful) $el.closest('dialog').close()"
+            >Excluir card</button>
+        </aside>
+    </div>
+</div>

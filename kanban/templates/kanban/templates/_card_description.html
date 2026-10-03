@@ -1,0 +1,27 @@
+<section id="card-description" class="card-dialog__section" x-data="{ editing: false }">
+    <h3 class="card-dialog__section-title">Descrição</h3>
+    <button type="button"
+            x-show="!editing"
+            class="card-description__view{% if not card.description %} card-description__view--empty{% endif %}"
+            @click="editing = true; $nextTick(() => $refs.input.focus())"
+    >{% if card.description %}{{ card.description }}{% else %}Adicione uma descrição mais detalhada…{% endif %}</button>
+    <form x-show="editing"
+          x-cloak
+          hx-patch="{% url 'card_description' card.pk %}"
+          hx-target="#card-description"
+          hx-swap="outerHTML"
+          @keydown.escape.prevent.stop="editing = false"
+    >
+        <textarea x-ref="input"
+                  name="description"
+                  rows="4"
+                  maxlength="5000"
+                  aria-label="Descrição"
+                  class="card-description__input"
+        >{{ card.description }}</textarea>
+        <div class="card-dialog__form-actions">
+            <button type="submit" class="card-dialog__btn card-dialog__btn--primary">Salvar</button>
+            <button type="button" @click="editing = false" class="card-dialog__btn card-dialog__btn--secondary">Cancelar</button>
+        </div>
+    </form>
+</section>

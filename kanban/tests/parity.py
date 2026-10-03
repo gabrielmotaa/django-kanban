@@ -35,7 +35,8 @@ class ParityBoardPage:
         return self.page.get_by_role("group", name=title, exact=True)
 
     def card(self, title: str) -> Locator:
-        return self.page.get_by_text(title, exact=True)
+        # Scoped to columns so an open dialog showing the same title is ignored.
+        return self.page.get_by_role("group").get_by_text(title, exact=True)
 
     # -- actions ------------------------------------------------------------
 

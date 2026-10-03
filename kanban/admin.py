@@ -46,7 +46,7 @@ class CardAdmin(admin.ModelAdmin):
         "updated_at",
     )
     list_filter = ("column__board", "column")
-    search_fields = ("title",)
+    search_fields = ("title", "description")
 
     @admin.display(description="Column")
     def column_link(self, obj):
