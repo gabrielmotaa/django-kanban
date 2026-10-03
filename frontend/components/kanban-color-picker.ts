@@ -96,7 +96,8 @@ export class KanbanColorPicker extends LitElement {
 	}
 
 	private choose(value: string) {
-		this.value = value;
+		// The owner applies the choice by updating `value` (e.g. after the server
+		// confirmed it), so a rejected change never leaves a stale highlight.
 		this.dispatchEvent(
 			new CustomEvent("change", {
 				bubbles: true,

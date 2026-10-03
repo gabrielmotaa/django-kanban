@@ -14,6 +14,11 @@ export function htmxRequest(
 	values: Record<string, string> = {},
 ): Promise<HtmxResult> {
 	return new Promise((resolve) => {
+		// A custom handler skips htmx's error events, so network failures and
+		// timeouts are reported here instead of leaving the promise pending.
+		const fail = () => resolve({ successful: false, html: "" });
+		source.addEventListener("htmx:sendError", fail, { once: true });
+		source.addEventListener("htmx:timeout", fail, { once: true });
 		window.htmx.ajax(verb, url, {
 			source: source as HTMLElement,
 			values,
