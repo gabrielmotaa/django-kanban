@@ -668,3 +668,25 @@ body {
 .column-create__btn-cancel:hover {
     background: var(--color-text-light);
 }
+
+/* Toasts (error feedback) */
+.toast-area {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 1000;
+}
+
+.toast {
+    max-width: 360px;
+    padding: 12px 16px;
+    border-radius: var(--radius-lg);
+    background: var(--color-danger);
+    color: white;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    box-shadow: var(--shadow-lg);
+}

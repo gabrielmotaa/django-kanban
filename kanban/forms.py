@@ -1,10 +1,32 @@
 from django import forms
 
+TITLE_MESSAGES = {"required": "O título é obrigatório."}
+INVALID_REQUEST = "Requisição inválida."
+ID_MESSAGES = {
+    "required": INVALID_REQUEST,
+    "invalid": INVALID_REQUEST,
+    "min_value": INVALID_REQUEST,
+}
+COLOR_MESSAGES = {"max_length": "Cor inválida."}
+
+
+def title_field(max_length: int, **kwargs) -> forms.CharField:
+    return forms.CharField(
+        max_length=max_length,
+        error_messages={
+            **TITLE_MESSAGES,
+            "max_length": f"O título deve ter no máximo {max_length} caracteres.",
+        },
+        **kwargs,
+    )
+
 
 class CardEditForm(forms.Form):
-    title = forms.CharField(max_length=200, required=False)
-    column_id = forms.IntegerField(min_value=0, required=False)
-    order = forms.IntegerField(min_value=0, required=False)
+    title = title_field(200, required=False)
+    column_id = forms.IntegerField(
+        min_value=0, required=False, error_messages=ID_MESSAGES
+    )
+    order = forms.IntegerField(min_value=0, required=False, error_messages=ID_MESSAGES)
 
     def clean(self):
         cleaned_data = super().clean()
@@ -13,26 +35,24 @@ class CardEditForm(forms.Form):
         order = cleaned_data.get("order")
 
         if not title and (column_id is None or order is None):
-            raise forms.ValidationError(
-                "Either title or column_id and order must be provided."
-            )
+            raise forms.ValidationError("Informe um título ou a nova posição do card.")
 
 
 class CardCreateForm(forms.Form):
-    column_id = forms.IntegerField(min_value=1)
-    title = forms.CharField(max_length=200)
+    column_id = forms.IntegerField(min_value=1, error_messages=ID_MESSAGES)
+    title = title_field(200)
 
 
 class ColumnCreateForm(forms.Form):
-    board_id = forms.IntegerField(min_value=1)
-    title = forms.CharField(max_length=100)
-    color = forms.CharField(max_length=7, required=False)
+    board_id = forms.IntegerField(min_value=1, error_messages=ID_MESSAGES)
+    title = title_field(100)
+    color = forms.CharField(max_length=7, required=False, error_messages=COLOR_MESSAGES)
 
 
 class ColumnEditForm(forms.Form):
-    title = forms.CharField(max_length=100, required=False)
-    color = forms.CharField(max_length=7, required=False)
-    order = forms.IntegerField(min_value=0, required=False)
+    title = title_field(100, required=False)
+    color = forms.CharField(max_length=7, required=False, error_messages=COLOR_MESSAGES)
+    order = forms.IntegerField(min_value=0, required=False, error_messages=ID_MESSAGES)
 
     def clean(self):
         cleaned_data = super().clean()
@@ -41,8 +61,10 @@ class ColumnEditForm(forms.Form):
         order = cleaned_data.get("order")
 
         if not title and not color and order is None:
-            raise forms.ValidationError("No title or color provided")
+            raise forms.ValidationError(
+                "Informe um título, uma cor ou a nova posição da coluna."
+            )
 
 
 class BoardEditForm(forms.Form):
-    title = forms.CharField(max_length=100)
+    title = title_field(100)

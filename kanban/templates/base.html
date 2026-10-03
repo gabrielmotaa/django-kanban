@@ -25,7 +25,13 @@
             event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
         });
         document.body.addEventListener('htmx:beforeSwap', (event) => {
-            if (event.detail.xhr.status === 204) {
+            const xhr = event.detail.xhr;
+            if (xhr.status === 204) {
+                event.detail.shouldSwap = true;
+            }
+            // Error responses that carry a toast (see kanban.utils.error_response)
+            // are swapped into the toast area; they still count as errors.
+            if (xhr.status >= 400 && xhr.getResponseHeader('HX-Retarget')) {
                 event.detail.shouldSwap = true;
             }
         });

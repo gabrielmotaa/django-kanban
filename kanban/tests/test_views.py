@@ -270,7 +270,10 @@ def test_column_edit_invalid_empty_fields(client: Client, col_a: Column):
         content_type="application/x-www-form-urlencoded",
     )
     assert response.status_code == 400
-    assert response.content.decode("utf-8") == "No title or color provided"
+    assert (
+        "Informe um título, uma cor ou a nova posição da coluna."
+        in response.content.decode("utf-8")
+    )
 
 
 def test_board_edit_invalid(client: Client, board: Board):
@@ -471,7 +474,7 @@ def test_column_edit_invalid_field_errors(client: Client, col_a: Column):
         content_type="application/x-www-form-urlencoded",
     )
     assert response.status_code == 400
-    assert "order" in response.content.decode("utf-8")
+    assert "Requisição inválida." in response.content.decode("utf-8")
 
 
 @pytest.mark.parametrize("web_components", [True, False])
@@ -516,7 +519,7 @@ def test_card_edit_invalid_field_errors(client: Client, col_a: Column):
         content_type="application/x-www-form-urlencoded",
     )
     assert response.status_code == 400
-    assert "order" in response.content.decode("utf-8")
+    assert "Requisição inválida." in response.content.decode("utf-8")
 
 
 def test_card_move_same_column_clamp_order(client: Client, col_a: Column):
