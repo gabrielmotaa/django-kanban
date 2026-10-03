@@ -5,6 +5,8 @@
  * attributes), but an `outerHTML` swap would replace the host and lose the
  * light-DOM children the response deliberately leaves out (e.g. the cards of
  * a column). So the response is parsed and only its attributes are copied.
+ * Attributes are only added or updated, never removed (client-managed ones
+ * such as `order` or `role` must survive).
  */
 export function applyServerElement(host: Element, html: string) {
 	const template = document.createElement("template");

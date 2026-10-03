@@ -153,7 +153,14 @@ def test_recolor_column_keeps_cards_editable(live_server, page: Page, tech):
 
     board_page.open_column_menu("Column A")
     board_page.column("Column A").get_by_role("button", name="Azul").click()
-    page.wait_for_timeout(500)
+    # The UI reflects the server response (templates swap, components apply it).
+    page.wait_for_function(
+        """() => {
+            const el = document.querySelector('kanban-column, .column');
+            return el && (el.getAttribute('color') === '#3b82f6'
+                || el.getAttribute('style')?.includes('#3b82f6'));
+        }"""
+    )
     assert Column.objects.get(pk=1).color == "#3b82f6"
     assert board_page.card("Card 1").is_visible()
 
