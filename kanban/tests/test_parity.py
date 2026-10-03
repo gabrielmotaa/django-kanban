@@ -72,3 +72,22 @@ def test_create_card_then_drag(live_server, page: Page, tech):
     new_card.refresh_from_db()
     assert new_card.column_id == 2
     board_page.screenshot("create-card-then-drag")
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_change_color_of_column_with_quotes_in_title(live_server, page: Page, tech):
+    title = "Coluna \"aspas\" e 'apóstrofo'"
+    Column.objects.filter(pk=1).update(title=title)
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+
+    board_page.open_column_menu(title)
+    board_page.column(title).get_by_role("button", name="Vermelho").click()
+
+    for _ in range(30):
+        column = Column.objects.get(pk=1)
+        if column.color == "#ef4444":
+            break
+        page.wait_for_timeout(100)
+    assert column.color == "#ef4444"
+    assert column.title == title
