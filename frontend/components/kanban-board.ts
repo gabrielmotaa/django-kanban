@@ -203,14 +203,18 @@ export class KanbanBoard extends HtmxElement {
 		applyCardUpdate(this, e.detail.html);
 	};
 
+	private dialogRequest = 0;
+
 	private async openDialog(card: KanbanCard) {
+		const request = ++this.dialogRequest;
 		const { successful, html } = await htmxRequest(
 			card,
 			"get",
 			card.dialogHref,
 		);
 		const host = this.renderRoot.querySelector(".dialog-host");
-		if (!successful || !host) return;
+		// Ignore stale responses (double click) and a dialog that is already open.
+		if (!successful || !host || request !== this.dialogRequest) return;
 		host.innerHTML = html;
 		host.querySelector("kanban-card-dialog")?.open(card);
 	}

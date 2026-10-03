@@ -382,3 +382,50 @@ def test_dragging_a_card_never_opens_the_dialog(live_server, page: Page, tech):
     assert Card.objects.get(pk=1).column_id == 2
     page.wait_for_timeout(300)
     assert board_page.dialog().count() == 0
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_focus_returns_to_card_after_saving_in_dialog(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+
+    board_page.open_card_dialog("Card 1")
+    board_page.edit_description("saved")
+    board_page.rename_card_in_dialog("Renamed")
+    page.keyboard.press("Escape")
+    board_page.dialog().wait_for(state="hidden")
+
+    assert board_page.focused_card_text().startswith("Renamed")
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_escape_in_edit_mode_cancels_edit_but_keeps_dialog(
+    live_server, page: Page, tech
+):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+    board_page.open_card_dialog("Card 1")
+
+    page.get_by_role("button", name="Adicione uma descrição mais detalhada…").click()
+    page.get_by_role("textbox", name="Descrição").fill("draft")
+    page.keyboard.press("Escape")
+    expect(page.get_by_role("textbox", name="Descrição")).to_have_count(0)
+    expect(board_page.dialog()).to_be_visible()
+
+    board_page.dialog().get_by_role("heading", level=2).get_by_role("button").click()
+    board_page.dialog().get_by_role("textbox", name="Título do card").fill("draft")
+    page.keyboard.press("Escape")
+    expect(board_page.dialog().get_by_role("textbox")).to_have_count(0)
+    expect(board_page.dialog()).to_be_visible()
+    assert Card.objects.get(pk=1).title == "Card 1"
+    assert Card.objects.get(pk=1).description == ""
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_enter_on_focused_card_opens_dialog(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+
+    page.evaluate("document.querySelector('.card, kanban-card').focus()")
+    page.keyboard.press("Enter")
+    expect(board_page.dialog()).to_be_visible()
