@@ -27,6 +27,8 @@ def board_data():
 
 
 def snapshot_for(page: Page, live_server, tech: str, expand: str | None = None) -> str:
+    if expand == "card-dialog-described":
+        Card.objects.filter(pk=1).update(description="First line\nSecond line")
     board_page = ParityBoardPage(page, live_server.url, tech)
     board_page.navigate()
     if expand == "column-menu":
@@ -35,8 +37,8 @@ def snapshot_for(page: Page, live_server, tech: str, expand: str | None = None) 
         board_page.open_create_column_form()
     elif expand == "rename-column":
         board_page.open_column_rename("Column A")
-    elif expand == "edit-card":
-        board_page.open_card_editor("Card 1")
+    elif expand in ("card-dialog", "card-dialog-described"):
+        board_page.open_card_dialog("Card 1")
     elif expand == "edit-board-title":
         board_page.open_board_title_editor()
     return board_page.aria_snapshot()
@@ -49,7 +51,8 @@ def snapshot_for(page: Page, live_server, tech: str, expand: str | None = None) 
         "column-menu",
         "create-column",
         "rename-column",
-        "edit-card",
+        "card-dialog",
+        "card-dialog-described",
         "edit-board-title",
     ],
 )
@@ -164,9 +167,9 @@ def test_recolor_column_keeps_cards_editable(live_server, page: Page, tech):
     assert Column.objects.get(pk=1).color == "#3b82f6"
     assert board_page.card("Card 1").is_visible()
 
-    board_page.open_card_editor("Card 1")
-    page.get_by_role("textbox", name="Título do card").fill("Edited 1")
-    page.get_by_role("button", name="Salvar").click()
+    board_page.open_card_dialog("Card 1")
+    board_page.rename_card_in_dialog("Edited 1")
+    board_page.close_card_dialog()
     board_page.card("Edited 1").wait_for()
     assert Card.objects.get(pk=1).title == "Edited 1"
 
@@ -276,3 +279,106 @@ def test_failed_column_move_rolls_back(live_server, page: Page, tech):
     expect(board_page.toast()).to_have_text("Coluna não encontrada.")
     assert board_page.column_titles() == ["Column A", "Column B"]
     assert Column.objects.get(pk=2).order == 1
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_description_roundtrip_updates_card_front(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+    assert board_page.description_indicator("Column A").count() == 0
+
+    board_page.open_card_dialog("Card 1")
+    board_page.edit_description("Some details\nsecond line")
+    expect(board_page.description_indicator("Column A")).to_have_count(1)
+    assert Card.objects.get(pk=1).description == "Some details\nsecond line"
+
+    # The saved text is what the dialog shows when it is opened again.
+    board_page.close_card_dialog()
+    board_page.open_card_dialog("Card 1")
+    expect(board_page.dialog().get_by_text("Some details")).to_be_visible()
+
+    page.reload()
+    board_page.navigate()
+    expect(board_page.description_indicator("Column A")).to_have_count(1)
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_clearing_description_removes_indicator(live_server, page: Page, tech):
+    Card.objects.filter(pk=1).update(description="to be cleared")
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+    expect(board_page.description_indicator("Column A")).to_have_count(1)
+
+    board_page.open_card_dialog("Card 1")
+    board_page.edit_description("", current="to be cleared")
+    expect(board_page.description_indicator("Column A")).to_have_count(0)
+    assert Card.objects.get(pk=1).description == ""
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_rename_in_dialog_updates_card_front(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+
+    board_page.open_card_dialog("Card 1")
+    board_page.rename_card_in_dialog("Renamed in dialog")
+    board_page.close_card_dialog()
+
+    board_page.card("Renamed in dialog").wait_for()
+    assert Card.objects.get(pk=1).title == "Renamed in dialog"
+    # The renamed card is still draggable.
+    board_page.drag_card_to_column("Renamed in dialog", "Column B")
+    assert Card.objects.get(pk=1).column_id == 2
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_delete_card_from_dialog(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+
+    board_page.open_card_dialog("Card 1")
+    board_page.delete_card_from_dialog()
+
+    expect(board_page.card("Card 1")).to_have_count(0)
+    assert not Card.objects.filter(pk=1).exists()
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_escape_closes_dialog_and_returns_focus(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+
+    board_page.open_card_dialog("Card 1")
+    page.keyboard.press("Escape")
+    board_page.dialog().wait_for(state="hidden")
+    assert board_page.focused_card_text() == "Card 1"
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_backdrop_click_closes_dialog(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+
+    board_page.open_card_dialog("Card 1")
+    page.mouse.click(5, 5)  # outside the dialog panel
+    board_page.dialog().wait_for(state="hidden")
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_dialog_has_the_card_title_as_name(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+    board_page.open_card_dialog("Card 1")
+    expect(page.get_by_role("dialog", name="Card 1")).to_be_visible()
+    expect(board_page.dialog().get_by_text("na coluna Column A")).to_be_visible()
+
+
+@pytest.mark.parametrize("tech", TECHS)
+def test_dragging_a_card_never_opens_the_dialog(live_server, page: Page, tech):
+    board_page = ParityBoardPage(page, live_server.url, tech)
+    board_page.navigate()
+
+    board_page.drag_card_to_column("Card 1", "Column B")
+    assert Card.objects.get(pk=1).column_id == 2
+    page.wait_for_timeout(300)
+    assert board_page.dialog().count() == 0

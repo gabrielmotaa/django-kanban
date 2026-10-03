@@ -88,9 +88,52 @@ class ParityBoardPage:
         column.get_by_role("button", name="Editar nome").click()
         column.get_by_role("textbox", name="Nome da coluna").wait_for()
 
-    def open_card_editor(self, card_title: str) -> None:
+    # -- card dialog --------------------------------------------------------
+
+    def dialog(self) -> Locator:
+        return self.page.get_by_role("dialog")
+
+    def open_card_dialog(self, card_title: str) -> None:
         self.card(card_title).click()
-        self.page.get_by_role("textbox", name="Título do card").wait_for()
+        self.dialog().get_by_role("button", name="Fechar").wait_for()
+
+    def close_card_dialog(self) -> None:
+        self.dialog().get_by_role("button", name="Fechar").click()
+        self.dialog().wait_for(state="hidden")
+
+    def rename_card_in_dialog(self, new_title: str) -> None:
+        dialog = self.dialog()
+        dialog.get_by_role("heading", level=2).get_by_role("button").click()
+        dialog.get_by_role("textbox", name="Título do card").fill(new_title)
+        dialog.get_by_role("button", name="Salvar").click()
+        dialog.get_by_role("heading", level=2, name=new_title).wait_for()
+
+    def edit_description(self, text: str, current: str | None = None) -> None:
+        dialog = self.dialog()
+        label = current or "Adicione uma descrição mais detalhada…"
+        dialog.get_by_role("button", name=label).click()
+        dialog.get_by_role("textbox", name="Descrição").fill(text)
+        dialog.get_by_role("button", name="Salvar").click()
+        dialog.get_by_role("textbox", name="Descrição").wait_for(state="hidden")
+
+    def delete_card_from_dialog(self) -> None:
+        self.page.once("dialog", lambda d: d.accept())
+        self.dialog().get_by_role("button", name="Excluir card").click()
+        self.dialog().wait_for(state="hidden")
+
+    def description_indicator(self, column_title: str) -> Locator:
+        return self.column(column_title).get_by_role(
+            "img", name="Este card tem descrição"
+        )
+
+    def focused_card_text(self) -> str:
+        return self.page.evaluate(
+            """() => {
+                const el = document.activeElement;
+                const card = el && el.closest('.card, kanban-card');
+                return card ? card.textContent.trim() : '';
+            }"""
+        )
 
     def open_board_title_editor(self) -> None:
         self.page.get_by_role("button", name="Editar título do quadro").click()
