@@ -14,7 +14,7 @@
 {% block content %}
 {% include 'kanban/components/_board_title.html' %}
 
-<kanban-board id="board" board-id="{{ board.pk }}" create-column-url="{% url 'column_create' %}" colors="{{ color_choices_json }}">
+<kanban-board id="board" board-id="{{ board.pk }}" create-column-url="{% url 'column_create' %}" colors="{{ color_choices_json }}" labels="{{ labels_json }}">
     {% for column in board.columns.all %}
         {% include 'kanban/components/_column.html' with with_cards=True %}
     {% endfor %}

@@ -12,7 +12,8 @@
 
     <div class="card-dialog__layout">
         <div class="card-dialog__main">
-            {# Labels and due date (008, 009) go here, then the description. #}
+            {% include "kanban/templates/_card_labels.html" %}
+            {# Due date (009) goes here, then the description. #}
             {% include "kanban/templates/_card_description.html" %}
             {# Checklists (010) and activity (011) go here. #}
         </div>

@@ -1,0 +1,1 @@
+{% if label.name %}<span class="label-pill" style="--label-color: {{ label.color }}; --label-fg: {{ label.fg_color }};">{{ label.name }}</span>{% else %}<span class="label-pill label-pill--bar" role="img" aria-label="{{ label.color_name }}" style="--label-color: {{ label.color }}; --label-fg: {{ label.fg_color }};"></span>{% endif %}

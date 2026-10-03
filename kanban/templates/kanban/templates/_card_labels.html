@@ -1,0 +1,17 @@
+<section id="card-labels"
+         class="card-dialog__section card-labels"
+         x-data="{ open: false, view: 'list', query: '' }"
+         @keydown.escape="if (open) { $event.preventDefault(); $event.stopPropagation(); open = false }"
+>
+    <h3 class="card-dialog__section-title">Etiquetas</h3>
+    <div class="card-labels__row">
+        {% include "kanban/templates/_label_pills.html" %}
+        <button type="button"
+                class="card-labels__add"
+                aria-label="Adicionar etiqueta"
+                :aria-expanded="open"
+                @click="open = !open; view = 'list'; query = ''"
+        >+</button>
+    </div>
+    {% include "kanban/templates/_label_popover.html" %}
+</section>

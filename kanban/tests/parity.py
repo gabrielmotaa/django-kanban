@@ -123,6 +123,36 @@ class ParityBoardPage:
     def description_button(self, text: str) -> Locator:
         return self.page.get_by_role("button", name=text)
 
+    # -- labels (page-level locators: see edit_description) ------------------
+
+    def open_label_popover(self) -> None:
+        self.page.get_by_role("button", name="Adicionar etiqueta").click()
+        self.page.get_by_role("searchbox", name="Buscar etiquetas…").wait_for()
+
+    def toggle_label(self, name: str, checked: bool) -> None:
+        self.page.get_by_role("checkbox", name=name, exact=True).set_checked(checked)
+
+    def label_checkbox(self, name: str) -> Locator:
+        return self.page.get_by_role("checkbox", name=name, exact=True)
+
+    def start_editing_label(self, name: str) -> None:
+        self.page.get_by_role("button", name=f"Editar etiqueta {name}").click()
+        self.page.get_by_role("textbox", name="Nome da etiqueta").wait_for()
+
+    def save_label_form(self, name: str | None = None, color: str | None = None):
+        if name is not None:
+            self.page.get_by_role("textbox", name="Nome da etiqueta").fill(name)
+        if color is not None:
+            self.page.get_by_role("button", name=color, exact=True).click()
+        self.page.get_by_role("button", name="Salvar", exact=True).click()
+
+    def delete_label_in_form(self) -> None:
+        self.page.once("dialog", lambda d: d.accept())
+        self.page.get_by_role("button", name="Excluir", exact=True).click()
+
+    def card_label_count(self, column_title: str, label_name: str) -> int:
+        return self.column(column_title).get_by_text(label_name, exact=True).count()
+
     def delete_card_from_dialog(self) -> None:
         self.page.once("dialog", lambda d: d.accept())
         self.dialog().get_by_role("button", name="Excluir card").click()
@@ -131,6 +161,17 @@ class ParityBoardPage:
     def description_indicator(self, column_title: str) -> Locator:
         return self.column(column_title).get_by_role(
             "img", name="Este card tem descrição"
+        )
+
+    def wait_for_focused_card(self, text: str) -> None:
+        """Focus is restored right after the dialog's close event: poll for it."""
+        self.page.wait_for_function(
+            """(text) => {
+                const el = document.activeElement;
+                const card = el && el.closest('.card, kanban-card');
+                return !!card && card.textContent.trim().startsWith(text);
+            }""",
+            arg=text,
         )
 
     def focused_card_text(self) -> str:
@@ -166,6 +207,16 @@ class ParityBoardPage:
         raw = self._stable_snapshot()
         lines = [re.sub(r"\s+", " ", line).rstrip() for line in raw.splitlines()]
         lines = [re.sub(r"^(\s*- text: )(.+) \2$", r"\1\2", line) for line in lines]
+        # Same artifact with the rendered card front in between (labels, badges):
+        # "text: Card 1 Bug Card 1" -> "text: Bug Card 1".
+        lines = [
+            re.sub(
+                r"^(\s*- text: )(?P<t>.+?) (?P<mid>.+) (?P=t)$",
+                r"\1\g<mid> \g<t>",
+                line,
+            )
+            for line in lines
+        ]
         # While a card is being edited the component's unslotted light-DOM
         # title is the only leftover; it sits right before the title textbox.
         return "\n".join(

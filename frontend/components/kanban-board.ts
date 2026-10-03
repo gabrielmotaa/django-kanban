@@ -1,8 +1,9 @@
-import { css, html } from "lit";
+import { css, html, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { applyCardUpdate } from "../lib/card-update";
 import { HtmxElement } from "../lib/htmx-element";
 import { htmxRequest } from "../lib/htmx-request";
+import type { LabelDef } from "../lib/labels";
 import { buttons } from "../styles/buttons";
 import { forms } from "../styles/forms";
 import { reset } from "../styles/reset";
@@ -138,6 +139,15 @@ export class KanbanBoard extends HtmxElement {
 	@property({ attribute: "create-column-url" })
 	createColumnUrl = "";
 
+	/** Label registry (definitions in label order), served as JSON by the server. */
+	@property({
+		converter: {
+			fromAttribute: (value: string | null): LabelDef[] =>
+				value ? JSON.parse(value) : [],
+		},
+	})
+	labels: LabelDef[] = [];
+
 	dragState: DragState = null;
 
 	@state()
@@ -183,6 +193,13 @@ export class KanbanBoard extends HtmxElement {
 		this.addEventListener("columnmove", this.onColumnMove as EventListener, {
 			signal,
 		});
+	}
+
+	protected override updated(changed: PropertyValues) {
+		super.updated(changed);
+		if (changed.has("labels")) {
+			this.dispatchEvent(new CustomEvent("kanban-labels-changed"));
+		}
 	}
 
 	private onDragStart = (e: CustomEvent) => {
