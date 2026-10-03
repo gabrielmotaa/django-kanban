@@ -61,7 +61,7 @@
                   hx-patch="{% url 'column_detail' column.pk %}"
                   hx-target="closest .column"
                   hx-swap="outerHTML"
-                  @htmx:after-request="editingTitle = false"
+                  @htmx:after-request="if ($event.detail.successful) editingTitle = false"
                   class="column__edit-form"
             >
                 {% csrf_token %}

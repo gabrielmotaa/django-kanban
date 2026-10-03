@@ -1,3 +1,5 @@
+import { appendToast } from "./toast";
+
 export type HtmxResult = { successful: boolean; html: string };
 
 /**
@@ -26,7 +28,11 @@ export function htmxRequest(
 				// A custom handler replaces htmx's own response handling, which is
 				// what sets `successful`; mirror its rule (status < 400).
 				const { xhr } = info as { xhr: XMLHttpRequest };
-				resolve({ successful: xhr.status < 400, html: xhr.responseText });
+				const successful = xhr.status < 400;
+				if (!successful && xhr.getResponseHeader("X-Toast")) {
+					appendToast(xhr.responseText);
+				}
+				resolve({ successful, html: xhr.responseText });
 			},
 		});
 	});

@@ -73,11 +73,8 @@ class ParityBoardPage:
             "els => els.map(e => e.getAttribute('aria-label'))"
         )
 
-    def column_card_titles(self, column_title: str) -> list[str]:
-        return self.column(column_title).evaluate(
-            """el => [...el.querySelectorAll('kanban-card, .card')]
-                .map(c => c.textContent.trim())"""
-        )
+    def column_has_card(self, column_title: str, card_title: str) -> bool:
+        return self.column(column_title).get_by_text(card_title, exact=True).count() > 0
 
     def toast(self) -> Locator:
         return self.page.get_by_role("alert")

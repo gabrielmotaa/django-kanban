@@ -46,7 +46,7 @@ def assert_toast(response, tech: str, status: int, message: str):
     html = response.content.decode()
     assert TOAST_MARKUP[tech] in html
     assert message in html
-    assert response["HX-Retarget"] == "#toast-area"
+    assert response["X-Toast"] == "true"
     assert response["HX-Reswap"] == "beforeend"
 
 

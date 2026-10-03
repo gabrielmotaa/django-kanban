@@ -1,6 +1,7 @@
 import { css, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { HtmxElement } from "../lib/htmx-element";
+import { htmxRequest } from "../lib/htmx-request";
 import { buttons } from "../styles/buttons";
 import { forms } from "../styles/forms";
 import { reset } from "../styles/reset";
@@ -28,7 +29,6 @@ export type CardMoveDetail = {
 	order: number;
 };
 
-const WEB_COMPONENTS_HEADERS = { "X-Web-Components": "true" };
 const DEFAULT_COLUMN_COLOR = "#64748b";
 
 /**
@@ -183,30 +183,60 @@ export class KanbanBoard extends HtmxElement {
 	};
 
 	private onCardMove = (e: CustomEvent<CardMoveDetail>) => {
-		const { href, column_id, order } = e.detail;
-		window.htmx.ajax("patch", href, {
-			values: { column_id, order },
-			headers: WEB_COMPONENTS_HEADERS,
-			swap: "none",
-		});
-
-		this.dragState = null;
+		void this.moveCard(e.detail);
 	};
+
+	private async moveCard({ href, column_id, order }: CardMoveDetail) {
+		const state = this.dragState;
+		this.dragState = null;
+		if (state?.type !== "card") return;
+
+		const toColumn = state.card.closest("kanban-column");
+		const { successful } = await htmxRequest(state.card, "patch", href, {
+			column_id: String(column_id),
+			order: String(order),
+		});
+		if (successful) return;
+
+		// Roll the optimistic move back to where the card came from.
+		const { card, fromColumn, fromIndex } = state;
+		const siblings = [...fromColumn.querySelectorAll("kanban-card")].filter(
+			(c) => c !== card,
+		);
+		fromColumn.insertBefore(card, siblings[fromIndex] ?? null);
+		fromColumn.updateOrders();
+		toColumn?.updateOrders();
+	}
 
 	private onColumnMove = (e: CustomEvent) => {
-		const { href, order, fromIndex } = e.detail;
-		this.updateColumnOrders();
-
-		if (fromIndex !== order) {
-			window.htmx.ajax("patch", href, {
-				values: { order },
-				headers: WEB_COMPONENTS_HEADERS,
-				swap: "none",
-			});
-		}
-
-		this.dragState = null;
+		void this.moveColumn(e.detail);
 	};
+
+	private async moveColumn({
+		href,
+		order,
+		fromIndex,
+	}: {
+		href: string;
+		order: number;
+		fromIndex: number;
+	}) {
+		const state = this.dragState;
+		this.dragState = null;
+		this.updateColumnOrders();
+		if (state?.type !== "column" || fromIndex === order) return;
+
+		const { successful } = await htmxRequest(state.column, "patch", href, {
+			order: String(order),
+		});
+		if (successful) return;
+
+		const siblings = [...this.querySelectorAll("kanban-column")].filter(
+			(c) => c !== state.column,
+		);
+		this.insertBefore(state.column, siblings[state.fromIndex] ?? null);
+		this.updateColumnOrders();
+	}
 
 	private updateColumnOrders() {
 		const columns = [...this.querySelectorAll("kanban-column")];

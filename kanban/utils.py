@@ -26,9 +26,11 @@ def error_response(
 ) -> HttpResponse:
     """Toast fragment that htmx inserts into the page's toast area.
 
-    HTMX does not swap 4xx responses on its own; ``HX-Retarget`` and
-    ``HX-Reswap`` tell it where the toast goes and the page configures it to
-    swap these responses.
+    HTMX does not swap 4xx responses on its own. ``X-Toast`` marks the
+    response so the page (``base.html``) swaps it into ``#toast-area``, and
+    ``HX-Reswap`` appends it. ``HX-Retarget`` is not used: htmx resolves its
+    selector inside the *requesting element's root*, which fails for requests
+    sent from inside a shadow root (the components version).
     """
     response = render(
         request,
@@ -36,7 +38,7 @@ def error_response(
         {"message": message},
         status=status,
     )
-    response["HX-Retarget"] = "#toast-area"
+    response["X-Toast"] = "true"
     response["HX-Reswap"] = "beforeend"
     return response
 

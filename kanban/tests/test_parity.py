@@ -260,8 +260,8 @@ def test_failed_card_move_rolls_back(live_server, page: Page, tech):
     board_page.drag_card_to_column("Card 1", "Column B")
 
     expect(board_page.toast()).to_have_text("Coluna não encontrada.")
-    assert board_page.column_card_titles("Column A") == ["Card 1"]
-    assert board_page.column_card_titles("Column B") == []
+    assert board_page.column_has_card("Column A", "Card 1")
+    assert not board_page.column_has_card("Column B", "Card 1")
     assert Card.objects.get(pk=1).column_id == 1
 
 

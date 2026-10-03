@@ -22,7 +22,7 @@
                 hx-post="{% url 'card_create' %}" 
                 hx-target="#column-{{ column.pk }}-cards" 
                 hx-swap="beforeend" 
-                @htmx:after-request="adding = false; $el.reset()"
+                @htmx:after-request="if ($event.detail.successful) { adding = false; $el.reset() }"
                 class="column__add-card-form"
             >
                 {% csrf_token %}
