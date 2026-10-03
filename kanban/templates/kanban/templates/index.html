@@ -43,6 +43,7 @@
                    type="text" 
                    name="title" 
                    placeholder="Nome da coluna..." 
+                   aria-label="Nome da coluna"
                    required
                    class="column-create__input"
                    maxlength="100"
@@ -54,14 +55,15 @@
                 <label class="column-create__color-label">Cor da Coluna</label>
                 <div class="column-create__color-grid">
                     <input type="hidden" name="color" :value="selectedColor">
-                    <template x-for="color in ['#64748b', '#ef4444', '#f97316', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899']" :key="color">
-                        <button type="button" 
-                                @click="selectedColor = color"
-                                class="column-create__color-dot"
-                                :class="selectedColor === color ? 'column-create__color-dot--active' : ''"
-                                :style="'--dot-color: ' + color"
-                        ></button>
-                    </template>
+                    {% for hex, name in color_choices %}
+                    <button type="button" 
+                            @click="selectedColor = '{{ hex }}'"
+                            aria-label="{{ name }}"
+                            class="column-create__color-dot"
+                            :class="selectedColor === '{{ hex }}' ? 'column-create__color-dot--active' : ''"
+                            style="--dot-color: {{ hex }};"
+                    ></button>
+                    {% endfor %}
                 </div>
             </div>
             

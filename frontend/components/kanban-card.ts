@@ -5,23 +5,23 @@ import type { KanbanColumn } from "./kanban-column";
 
 @customElement("kanban-card")
 export class KanbanCard extends LitElement {
-  @property({ attribute: "card-id", type: Number })
-  cardId = 0;
+	@property({ attribute: "card-id", type: Number })
+	cardId = 0;
 
-  @property({ type: Number, reflect: true })
-  order = 0;
+	@property({ type: Number, reflect: true })
+	order = 0;
 
-  @property()
-  title = "";
+	@property()
+	title = "";
 
-  @state()
-  private editing = false;
+	@state()
+	private editing = false;
 
-  private isDragging = false;
+	private isDragging = false;
 
-  private cleanupController?: AbortController;
+	private cleanupController?: AbortController;
 
-  static styles = css`
+	static styles = css`
     :host {
       display: block;
     }
@@ -132,114 +132,116 @@ export class KanbanCard extends LitElement {
     }
   `;
 
-  get editUrl(): string {
-    return window.urls.cardDetail.replace("/0/", `/${this.cardId}/`);
-  }
+	get editUrl(): string {
+		return window.urls.cardDetail.replace("/0/", `/${this.cardId}/`);
+	}
 
-  get deleteUrl(): string {
-    return window.urls.cardDetail.replace("/0/", `/${this.cardId}/`);
-  }
+	get deleteUrl(): string {
+		return window.urls.cardDetail.replace("/0/", `/${this.cardId}/`);
+	}
 
-  override updated() {
-    if (this.shadowRoot) {
-      // biome-ignore lint: htmx.process() accepts ShadowRoot at runtime but TS types don't reflect it
-      window.htmx.process(this.shadowRoot as any);
-    }
-  }
+	override updated() {
+		if (this.shadowRoot) {
+			// biome-ignore lint: htmx.process() accepts ShadowRoot at runtime but TS types don't reflect it
+			window.htmx.process(this.shadowRoot as any);
+		}
+	}
 
-  override firstUpdated() {
-    if (!this.title) {
-      this.title = this.textContent?.trim() || "";
-    }
-  }
+	override firstUpdated() {
+		if (!this.title) {
+			this.title = this.textContent?.trim() || "";
+		}
+	}
 
-  override connectedCallback() {
-    super.connectedCallback();
+	override connectedCallback() {
+		super.connectedCallback();
 
-    this.draggable = true;
-    this.cleanupController = new AbortController();
-    const { signal } = this.cleanupController;
+		this.draggable = true;
+		this.cleanupController = new AbortController();
+		const { signal } = this.cleanupController;
 
-    this.addEventListener("dragstart", this.onDragStart, { signal });
-    this.addEventListener("dragend", this.onDragEnd, { signal });
-    this.addEventListener("click", this.onCardClick, { signal });
-  }
+		this.addEventListener("dragstart", this.onDragStart, { signal });
+		this.addEventListener("dragend", this.onDragEnd, { signal });
+		this.addEventListener("click", this.onCardClick, { signal });
+	}
 
-  override disconnectedCallback() {
-    super.disconnectedCallback();
-    this.cleanupController?.abort();
-  }
+	override disconnectedCallback() {
+		super.disconnectedCallback();
+		this.cleanupController?.abort();
+	}
 
-  private onDragStart = () => {
-    const column = this.closest("kanban-column") as KanbanColumn;
-    const cards = [...column.querySelectorAll("kanban-card")];
-    const index = cards.indexOf(this);
+	private onDragStart = () => {
+		const column = this.closest("kanban-column") as KanbanColumn;
+		const cards = [...column.querySelectorAll("kanban-card")];
+		const index = cards.indexOf(this);
 
-    this.dispatchEvent(
-      new CustomEvent("kanban-card-dragstart", {
-        bubbles: true,
-        composed: true,
-        detail: {
-          type: "card",
-          card: this,
-          fromColumn: column,
-          fromIndex: index,
-        } satisfies DragState,
-      }),
-    );
+		this.dispatchEvent(
+			new CustomEvent("kanban-card-dragstart", {
+				bubbles: true,
+				composed: true,
+				detail: {
+					type: "card",
+					card: this,
+					fromColumn: column,
+					fromIndex: index,
+				} satisfies DragState,
+			}),
+		);
 
-    this.isDragging = true;
-    requestAnimationFrame(() => this.classList.add("dragging"));
-  };
+		this.isDragging = true;
+		requestAnimationFrame(() => this.classList.add("dragging"));
+	};
 
-  private onDragEnd = () => {
-    this.classList.remove("dragging");
-    setTimeout(() => {
-      this.isDragging = false;
-    }, 0);
+	private onDragEnd = () => {
+		this.classList.remove("dragging");
+		setTimeout(() => {
+			this.isDragging = false;
+		}, 0);
 
-    this.dispatchEvent(
-      new CustomEvent("kanban-card-dragend", {
-        bubbles: true,
-        composed: true,
-      }),
-    );
-  };
+		this.dispatchEvent(
+			new CustomEvent("kanban-card-dragend", {
+				bubbles: true,
+				composed: true,
+			}),
+		);
+	};
 
-  private onCardClick = () => {
-    if (this.editing) return;
-    if (this.isDragging) return;
-    this.editing = true;
-    this.updateComplete.then(() => {
-      const input = this.shadowRoot?.querySelector(
-        ".edit-input",
-      ) as HTMLInputElement;
-      input?.focus();
-    });
-  };
+	private onCardClick = () => {
+		if (this.editing) return;
+		if (this.isDragging) return;
+		this.editing = true;
+		this.updateComplete.then(() => {
+			const input = this.shadowRoot?.querySelector(
+				".edit-input",
+			) as HTMLInputElement;
+			input?.focus();
+		});
+	};
 
-  private onCancel = (e: Event) => {
-    e.preventDefault();
-    e.stopPropagation();
-    this.editing = false;
-  };
+	private onCancel = (e: Event) => {
+		e.preventDefault();
+		e.stopPropagation();
+		this.editing = false;
+	};
 
-  private onKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "Escape") {
-      this.editing = false;
-    }
-  };
+	private onKeyDown = (e: KeyboardEvent) => {
+		if (e.key === "Escape") {
+			this.editing = false;
+		}
+	};
 
-  override render() {
-    return html`
+	override render() {
+		return html`
       <div class="card">
-        ${this.editing
-        ? html`
+        ${
+					this.editing
+						? html`
               <form class="edit-form" hx-patch=${this.editUrl} hx-target="host" hx-swap="outerHTML" @click=${(e: Event) => e.stopPropagation()}>
                 <input
                   type="text"
                   name="title"
                   .value=${this.title}
+                  aria-label="Título do card"
                   class="edit-input"
                   maxlength="200"
                   @keydown=${this.onKeyDown}
@@ -262,15 +264,15 @@ export class KanbanCard extends LitElement {
                 </div>
               </form>
             `
-        : html`<div class="title-view">${this.title}</div>`
-      }
+						: html`<div class="title-view">${this.title}</div>`
+				}
       </div>
     `;
-  }
+	}
 }
 
 declare global {
-  interface HTMLElementTagNameMap {
-    "kanban-card": KanbanCard;
-  }
+	interface HTMLElementTagNameMap {
+		"kanban-card": KanbanCard;
+	}
 }

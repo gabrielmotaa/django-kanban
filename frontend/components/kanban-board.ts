@@ -4,46 +4,46 @@ import type { KanbanCard } from "./kanban-card";
 import type { KanbanColumn } from "./kanban-column";
 
 export type DragState =
-  | {
-    type: "card";
-    card: KanbanCard;
-    fromColumn: KanbanColumn;
-    fromIndex: number;
-  }
-  | {
-    type: "column";
-    column: KanbanColumn;
-    fromIndex: number;
-  }
-  | null;
+	| {
+			type: "card";
+			card: KanbanCard;
+			fromColumn: KanbanColumn;
+			fromIndex: number;
+	  }
+	| {
+			type: "column";
+			column: KanbanColumn;
+			fromIndex: number;
+	  }
+	| null;
 
 export type CardMoveDetail = {
-  card_id: number;
-  column_id: number;
-  order: number;
+	card_id: number;
+	column_id: number;
+	order: number;
 };
 
 @customElement("kanban-board")
 export class KanbanBoard extends LitElement {
-  @property({ type: Number, attribute: "board-id" })
-  boardId = 0;
+	@property({ type: Number, attribute: "board-id" })
+	boardId = 0;
 
-  dragState: DragState = null;
+	dragState: DragState = null;
 
-  private cleanupController?: AbortController;
+	private cleanupController?: AbortController;
 
-  @state()
-  private addingColumn = false;
+	@state()
+	private addingColumn = false;
 
-  @state()
-  private newColumnTitle = "";
+	@state()
+	private newColumnTitle = "";
 
-  @state()
-  private newColumnColor = "#64748b";
+	@state()
+	private newColumnColor = "#64748b";
 
-  colorChoices = window.colorChoices.map(([hex]) => hex);
+	colorChoices = window.colorChoices;
 
-  static styles = css`
+	static styles = css`
     input, button, select, textarea {
       font: inherit;
     }
@@ -197,131 +197,131 @@ export class KanbanBoard extends LitElement {
     }
   `;
 
-  override connectedCallback() {
-    super.connectedCallback();
+	override connectedCallback() {
+		super.connectedCallback();
 
-    this.cleanupController = new AbortController();
-    const { signal } = this.cleanupController;
+		this.cleanupController = new AbortController();
+		const { signal } = this.cleanupController;
 
-    this.addEventListener(
-      "kanban-card-dragstart",
-      this.onCardDragStart as EventListener,
-      { signal },
-    );
-    this.addEventListener(
-      "kanban-card-dragend",
-      this.onCardDragEnd as EventListener,
-      { signal },
-    );
-    this.addEventListener(
-      "kanban-column-dragstart",
-      this.onColumnDragStart as EventListener,
-      { signal },
-    );
-    this.addEventListener(
-      "kanban-column-dragend",
-      this.onColumnDragEnd as EventListener,
-      { signal },
-    );
-    this.addEventListener("cardmove", this.onCardMove as EventListener, {
-      signal,
-    });
-    this.addEventListener("columnmove", this.onColumnMove as EventListener, {
-      signal,
-    });
-  }
+		this.addEventListener(
+			"kanban-card-dragstart",
+			this.onCardDragStart as EventListener,
+			{ signal },
+		);
+		this.addEventListener(
+			"kanban-card-dragend",
+			this.onCardDragEnd as EventListener,
+			{ signal },
+		);
+		this.addEventListener(
+			"kanban-column-dragstart",
+			this.onColumnDragStart as EventListener,
+			{ signal },
+		);
+		this.addEventListener(
+			"kanban-column-dragend",
+			this.onColumnDragEnd as EventListener,
+			{ signal },
+		);
+		this.addEventListener("cardmove", this.onCardMove as EventListener, {
+			signal,
+		});
+		this.addEventListener("columnmove", this.onColumnMove as EventListener, {
+			signal,
+		});
+	}
 
-  override disconnectedCallback() {
-    super.disconnectedCallback();
+	override disconnectedCallback() {
+		super.disconnectedCallback();
 
-    this.cleanupController?.abort();
-  }
+		this.cleanupController?.abort();
+	}
 
-  override updated() {
-    if (this.shadowRoot) {
-      // biome-ignore lint: htmx.process() accepts ShadowRoot at runtime but TS types don't reflect it
-      window.htmx.process(this.shadowRoot as any);
-    }
-  }
+	override updated() {
+		if (this.shadowRoot) {
+			// biome-ignore lint: htmx.process() accepts ShadowRoot at runtime but TS types don't reflect it
+			window.htmx.process(this.shadowRoot as any);
+		}
+	}
 
-  private onCardDragStart = (e: CustomEvent) => {
-    this.dragState = e.detail;
-  };
+	private onCardDragStart = (e: CustomEvent) => {
+		this.dragState = e.detail;
+	};
 
-  private onCardDragEnd = () => {
-    this.dragState = null;
-  };
+	private onCardDragEnd = () => {
+		this.dragState = null;
+	};
 
-  private onColumnDragStart = (e: CustomEvent) => {
-    this.dragState = e.detail;
-  };
+	private onColumnDragStart = (e: CustomEvent) => {
+		this.dragState = e.detail;
+	};
 
-  private onColumnDragEnd = () => {
-    this.dragState = null;
-  };
+	private onColumnDragEnd = () => {
+		this.dragState = null;
+	};
 
-  private onCardMove = (e: CustomEvent<CardMoveDetail>) => {
-    const { card_id, column_id, order } = e.detail;
-    const url = window.urls.cardDetail.replace("/0/", `/${card_id}/`);
-    window.htmx.ajax("patch", url, {
-      values: { column_id, order },
-      swap: "none",
-    });
+	private onCardMove = (e: CustomEvent<CardMoveDetail>) => {
+		const { card_id, column_id, order } = e.detail;
+		const url = window.urls.cardDetail.replace("/0/", `/${card_id}/`);
+		window.htmx.ajax("patch", url, {
+			values: { column_id, order },
+			swap: "none",
+		});
 
-    this.dragState = null;
-  };
+		this.dragState = null;
+	};
 
-  private onColumnMove = (e: CustomEvent) => {
-    const { column_id, order, fromIndex } = e.detail;
-    this.updateColumnOrders();
+	private onColumnMove = (e: CustomEvent) => {
+		const { column_id, order, fromIndex } = e.detail;
+		this.updateColumnOrders();
 
-    if (fromIndex !== order) {
-      const url = window.urls.columnDetail.replace("/0/", `/${column_id}/`);
-      window.htmx.ajax("patch", url, {
-        values: { order },
-        swap: "none",
-      });
-    }
+		if (fromIndex !== order) {
+			const url = window.urls.columnDetail.replace("/0/", `/${column_id}/`);
+			window.htmx.ajax("patch", url, {
+				values: { order },
+				swap: "none",
+			});
+		}
 
-    this.dragState = null;
-  };
+		this.dragState = null;
+	};
 
-  private updateColumnOrders() {
-    const columns = [...this.querySelectorAll("kanban-column")];
-    columns.forEach((col, index) => {
-      col.order = index;
-    });
-  }
+	private updateColumnOrders() {
+		const columns = [...this.querySelectorAll("kanban-column")];
+		columns.forEach((col, index) => {
+			col.order = index;
+		});
+	}
 
-  // Column Adding Handlers
-  private onStartColumnAdd = () => {
-    this.addingColumn = true;
-    this.newColumnTitle = "";
-    this.newColumnColor = "#64748b";
-    this.updateComplete.then(() => {
-      const input = this.shadowRoot?.querySelector(
-        ".input",
-      ) as HTMLInputElement;
-      input?.focus();
-    });
-  };
+	// Column Adding Handlers
+	private onStartColumnAdd = () => {
+		this.addingColumn = true;
+		this.newColumnTitle = "";
+		this.newColumnColor = "#64748b";
+		this.updateComplete.then(() => {
+			const input = this.shadowRoot?.querySelector(
+				".input",
+			) as HTMLInputElement;
+			input?.focus();
+		});
+	};
 
-  private onCancelColumnAdd = () => {
-    this.addingColumn = false;
-  };
+	private onCancelColumnAdd = () => {
+		this.addingColumn = false;
+	};
 
-  private onAddColumnSuccess = () => {
-    this.addingColumn = false;
-  };
+	private onAddColumnSuccess = () => {
+		this.addingColumn = false;
+	};
 
-  private onColumnKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "Escape") {
-      this.addingColumn = false;
-    }
-  };
+	private onColumnKeyDown = (e: KeyboardEvent) => {
+		if (e.key === "Escape") {
+			this.addingColumn = false;
+		}
+	};
 
-  render() {
-    return html`
+	render() {
+		return html`
       <!-- board wrapper -->
       <div class="board-wrapper">
         <div class="board">
@@ -330,8 +330,9 @@ export class KanbanBoard extends LitElement {
 
         <!-- Add Column Section -->
         <div class="create-column">
-          ${this.addingColumn
-        ? html`
+          ${
+						this.addingColumn
+							? html`
                 <form
                   class="form"
                   hx-post=${window.urls.columnCreate}
@@ -345,6 +346,7 @@ export class KanbanBoard extends LitElement {
                     name="title"
                     class="input"
                     placeholder="Nome da coluna..."
+                    aria-label="Nome da coluna"
                     required
                     maxlength="100"
                     .value=${this.newColumnTitle}
@@ -357,15 +359,16 @@ export class KanbanBoard extends LitElement {
                     <label class="color-label">Cor da Coluna</label>
                     <div class="color-grid">
                       ${this.colorChoices.map(
-          (color) => html`
+												([color, name]) => html`
                         <button
                           type="button"
+                          aria-label=${name}
                           class="color-dot ${this.newColumnColor === color ? "color-dot--active" : ""}"
                           style="--dot-color: ${color}"
                           @click=${() => (this.newColumnColor = color)}
                         ></button>
                       `,
-        )}
+											)}
                     </div>
                   </div>
 
@@ -375,20 +378,20 @@ export class KanbanBoard extends LitElement {
                   </div>
                 </form>
               `
-        : html`
+							: html`
                 <button class="trigger" @click=${this.onStartColumnAdd}>
                   + Adicionar coluna
                 </button>
               `
-      }
+					}
         </div>
       </div>
     `;
-  }
+	}
 }
 
 declare global {
-  interface HTMLElementTagNameMap {
-    "kanban-board": KanbanBoard;
-  }
+	interface HTMLElementTagNameMap {
+		"kanban-board": KanbanBoard;
+	}
 }

@@ -524,6 +524,8 @@ export class KanbanColumn extends LitElement {
 	}
 
 	override updated() {
+		this.setAttribute("role", "group");
+		this.setAttribute("aria-label", this.title);
 		if (this.shadowRoot) {
 			// biome-ignore lint/suspicious/noExplicitAny: htmx.process() accepts ShadowRoot at runtime but TS types don't reflect it
 			window.htmx.process(this.shadowRoot as any);
@@ -610,13 +612,14 @@ export class KanbanColumn extends LitElement {
                   <input
                     type="text"
                     name="title"
+                    aria-label="Nome da coluna"
                     class="edit-input"
                     .value=${this.title}
                     required
                   />
                   <input type="hidden" name="color" .value=${this.color} />
-                  <button type="submit" class="edit-btn-save">✓</button>
-                  <button type="button" class="edit-btn-cancel" @click=${this.onRenameCancel}>✗</button>
+                  <button type="submit" class="edit-btn-save" aria-label="Salvar nome">✓</button>
+                  <button type="button" class="edit-btn-cancel" aria-label="Cancelar edição" @click=${this.onRenameCancel}>✗</button>
                 </form>
               `
 							: html`
@@ -633,6 +636,7 @@ export class KanbanColumn extends LitElement {
                     <button
                       type="button"
                       class="menu-trigger"
+                      aria-label="Opções da coluna"
                       @click=${() => (this.menuOpen = !this.menuOpen)}
                     >
                       ⋮
@@ -720,6 +724,7 @@ export class KanbanColumn extends LitElement {
                     name="title"
                     class="add-card-input"
                     placeholder="Título do card..."
+                    aria-label="Título do card"
                     required
                     maxlength="200"
                     @keydown=${(e: KeyboardEvent) => {
