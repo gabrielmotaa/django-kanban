@@ -160,11 +160,13 @@ class TestBoardErrors:
         assert_toast(r, tech, 400, "O título é obrigatório.")
 
 
-def test_toast_escapes_message(client, column):
-    # Messages are server-controlled, but the fragment must still autoescape.
+@pytest.mark.parametrize("web_components", [True, False])
+def test_toast_escapes_message(client, web_components):
     from kanban.utils import error_response
 
     request = client.get("/").wsgi_request
-    request.web_components = False
+    request.web_components = web_components
     response = error_response(request, "<script>x</script>", 400)
-    assert "<script>x" not in response.content.decode()
+    html = response.content.decode()
+    assert "<script>x" not in html
+    assert "&lt;script&gt;" in html

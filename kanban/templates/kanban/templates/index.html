@@ -264,14 +264,19 @@
             const failures = ["htmx:responseError", "htmx:sendError", "htmx:timeout"];
             const cleanup = () => {
                 failures.forEach((name) => el.removeEventListener(name, fail));
-                el.removeEventListener("htmx:afterRequest", cleanup);
+                el.removeEventListener("htmx:afterRequest", done);
             };
-            const fail = () => {
+            // Events of descendants' own requests bubble up; only react to ours.
+            const fail = (e) => {
+                if (e.target !== el) return;
                 cleanup();
                 rollback();
             };
+            const done = (e) => {
+                if (e.target === el) cleanup();
+            };
             failures.forEach((name) => el.addEventListener(name, fail));
-            el.addEventListener("htmx:afterRequest", cleanup);
+            el.addEventListener("htmx:afterRequest", done);
         }
 
         function restoreCard(card, column, index) {

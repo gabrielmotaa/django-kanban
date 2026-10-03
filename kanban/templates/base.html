@@ -32,8 +32,9 @@
             // Error responses that carry a toast (see kanban.utils.error_response)
             // are swapped into the toast area; they still count as errors.
             if (xhr.status >= 400 && xhr.getResponseHeader('X-Toast')) {
-                event.detail.shouldSwap = true;
-                event.detail.target = document.getElementById('toast-area');
+                const toastArea = document.getElementById('toast-area');
+                event.detail.shouldSwap = !!toastArea;
+                if (toastArea) event.detail.target = toastArea;
             }
         });
     </script>
