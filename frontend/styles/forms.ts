@@ -5,7 +5,7 @@ export const forms = css`
   .field {
     width: 100%;
     padding: var(--field-padding, 8px);
-    border: 1px solid var(--color-input-border);
+    border: var(--nb-border-sm);
     border-radius: var(--radius-md);
     font-size: var(--font-size-lg);
     outline: none;
@@ -13,6 +13,6 @@ export const forms = css`
   }
 
   .field:focus {
-    border-color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
   }
 `;

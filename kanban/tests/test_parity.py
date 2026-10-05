@@ -1,6 +1,7 @@
 import datetime as dt
 import os
 import re
+from pathlib import Path
 
 os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 
@@ -18,7 +19,7 @@ from kanban.models import (
     Comment,
     Label,
 )
-from kanban.tests.parity import ParityBoardPage
+from kanban.tests.parity import ParityBoardPage, pixel_diff
 
 pytestmark = [pytest.mark.django_db(transaction=True), pytest.mark.integration]
 
@@ -39,7 +40,10 @@ def board_data():
     Card.objects.create(id=2, column=col_b, title="Card 2", order=0)
 
 
-def snapshot_for(page: Page, live_server, tech: str, expand: str | None = None) -> str:
+def open_state(
+    page: Page, live_server, tech: str, expand: str | None = None
+) -> ParityBoardPage:
+    """Seed the data for ``expand`` and bring the UI into that state."""
     if expand and expand.startswith("label"):
         bug, _ = Label.objects.get_or_create(board_id=1, name="Bug", color="#ef4444")
         Label.objects.get_or_create(board_id=1, name="Melhoria", color="#3b82f6")
@@ -98,33 +102,54 @@ def snapshot_for(page: Page, live_server, tech: str, expand: str | None = None) 
             page.get_by_role("textbox", name="Nome da etiqueta").wait_for()
     elif expand == "edit-board-title":
         board_page.open_board_title_editor()
-    return board_page.aria_snapshot()
+    return board_page
 
 
-@pytest.mark.parametrize(
-    "expand",
-    [
-        None,
-        "column-menu",
-        "create-column",
-        "rename-column",
-        "card-dialog",
-        "card-dialog-described",
-        "activity-dialog",
-        "checklist-dialog",
-        "checklist-popover",
-        "due-dialog",
-        "due-popover",
-        "label-popover",
-        "label-edit",
-        "label-create",
-        "edit-board-title",
-    ],
-)
+def snapshot_for(page: Page, live_server, tech: str, expand: str | None = None) -> str:
+    return open_state(page, live_server, tech, expand).aria_snapshot()
+
+
+UI_STATES = [
+    None,
+    "column-menu",
+    "create-column",
+    "rename-column",
+    "card-dialog",
+    "card-dialog-described",
+    "activity-dialog",
+    "checklist-dialog",
+    "checklist-popover",
+    "due-dialog",
+    "due-popover",
+    "label-popover",
+    "label-edit",
+    "label-create",
+    "edit-board-title",
+]
+
+
+@pytest.mark.parametrize("expand", UI_STATES)
 def test_aria_snapshot_parity(live_server, page: Page, expand):
     templates = snapshot_for(page, live_server, "templates", expand)
     components = snapshot_for(page, live_server, "components", expand)
     assert templates == components
+
+
+@pytest.mark.parametrize("expand", UI_STATES)
+def test_visual_parity(live_server, page: Page, expand, tmp_path):
+    templates = open_state(page, live_server, "templates", expand).visual_snapshot()
+    components = open_state(page, live_server, "components", expand).visual_snapshot()
+    diff = pixel_diff(page, templates, components)
+    if diff.count:
+        directory = Path(os.environ.get("PARITY_SCREENSHOTS_DIR") or tmp_path)
+        directory.mkdir(parents=True, exist_ok=True)
+        prefix = f"visual-{expand or 'board'}"
+        (directory / f"{prefix}-templates.png").write_bytes(templates)
+        (directory / f"{prefix}-components.png").write_bytes(components)
+        (directory / f"{prefix}-diff.png").write_bytes(diff.image)
+        pytest.fail(
+            f"{diff.count} of {diff.total} pixels differ; see {directory}/{prefix}-*.png"
+        )
 
 
 @pytest.mark.parametrize("tech", TECHS)
@@ -787,8 +812,8 @@ def test_complete_checklist_badge_state(live_server, page: Page, tech):
     badge = board_page.column("Column A").get_by_role("img", name="Checklist 1 de 1")
     expect(badge).to_have_text("☑ 1/1")
     # Complete is green (--color-success), unlike the neutral state.
-    assert badge.evaluate(BADGE_BACKGROUND) == "rgb(16, 185, 129)"
-    assert neutral != "rgb(16, 185, 129)"
+    assert badge.evaluate(BADGE_BACKGROUND) == "rgb(74, 222, 128)"
+    assert neutral != "rgb(74, 222, 128)"
 
 
 @pytest.mark.parametrize("tech", TECHS)

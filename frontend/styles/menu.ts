@@ -27,11 +27,11 @@ export const menuItems = css`
   }
 
   .menu-btn--danger:hover {
-    background: #fef2f2;
+    background: var(--color-danger-soft);
   }
 
   .menu-divider {
-    border-top: 1px solid var(--color-border);
+    border-top: var(--nb-border-sm);
     margin: 6px 0;
   }
 

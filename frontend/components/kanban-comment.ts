@@ -17,7 +17,7 @@ export class KanbanComment extends LitElement {
       :host {
         display: block;
         padding: 8px 12px;
-        border: 1px solid var(--color-border);
+        border: var(--nb-border-sm);
         border-radius: var(--radius-md);
       }
 
@@ -77,7 +77,7 @@ export class KanbanComment extends LitElement {
         width: 100%;
         min-height: 56px;
         padding: 8px 12px;
-        border: 1px solid var(--color-input-border);
+        border: var(--nb-border-sm);
         border-radius: var(--radius-md);
         font-size: var(--font-size-base);
         outline: none;
@@ -86,7 +86,7 @@ export class KanbanComment extends LitElement {
       }
 
       .input:focus {
-        border-color: var(--color-primary);
+        box-shadow: var(--shadow-sm);
       }
 
       .buttons {
@@ -97,17 +97,23 @@ export class KanbanComment extends LitElement {
 
       .btn {
         padding: 6px 12px;
-        border: none;
+        border: var(--nb-border-sm);
+        box-shadow: var(--shadow-sm);
         border-radius: var(--radius-md);
         font-size: var(--font-size-base);
-        font-weight: var(--font-weight-medium);
+        font-weight: var(--font-weight-bold);
         cursor: pointer;
-        transition: background var(--transition-normal);
+        transition: background var(--transition-normal), transform var(--transition-fast), box-shadow var(--transition-fast);
+      }
+
+      .btn:active {
+        transform: var(--nb-press);
+        box-shadow: none;
       }
 
       .btn--primary {
         background: var(--color-primary);
-        color: white;
+        color: var(--color-on-accent);
       }
 
       .btn--primary:hover {
@@ -115,12 +121,12 @@ export class KanbanComment extends LitElement {
       }
 
       .btn--secondary {
-        background: var(--color-border);
+        background: var(--color-surface-muted);
         color: var(--color-text-light);
       }
 
       .btn--secondary:hover {
-        background: var(--color-border-hover);
+        background: var(--color-surface-hover);
       }
     `,
 	];

@@ -10,16 +10,22 @@ export const buttons = css`
   .btn {
     padding: var(--btn-padding, 6px 10px);
     font-size: var(--btn-font-size, var(--font-size-md));
-    font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-bold);
     border-radius: var(--btn-radius, var(--radius-sm));
-    border: none;
+    border: var(--nb-border-sm);
+    box-shadow: var(--shadow-sm);
     cursor: pointer;
-    transition: background var(--transition-normal);
+    transition: background var(--transition-normal), transform var(--transition-fast), box-shadow var(--transition-fast);
+  }
+
+  .btn:active {
+    transform: var(--nb-press);
+    box-shadow: none;
   }
 
   .btn-primary {
     background: var(--color-primary);
-    color: white;
+    color: var(--color-on-accent);
   }
 
   .btn-primary:hover {
@@ -27,11 +33,11 @@ export const buttons = css`
   }
 
   .btn-secondary {
-    background: var(--btn-secondary-bg, var(--color-border));
+    background: var(--btn-secondary-bg, var(--color-surface-muted));
     color: var(--btn-secondary-fg, var(--color-text-light));
   }
 
   .btn-secondary:hover {
-    background: var(--btn-secondary-hover-bg, var(--color-border-hover));
+    background: var(--btn-secondary-hover-bg, var(--color-surface-hover));
   }
 `;

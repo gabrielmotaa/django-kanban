@@ -47,8 +47,8 @@ export class KanbanMenu extends LitElement {
         right: 0;
         top: 100%;
         margin-top: 4px;
-        background: white;
-        border: 1px solid var(--color-border);
+        background: var(--color-bg-card);
+        border: var(--nb-border-sm);
         border-radius: var(--radius-lg);
         box-shadow: var(--shadow-dropdown);
         z-index: 100;

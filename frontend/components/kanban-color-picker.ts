@@ -38,7 +38,7 @@ export class KanbanColorPicker extends LitElement {
     :host([variant="menu"]) .dot {
       width: 22px;
       height: 22px;
-      border: 2px solid transparent;
+      border: var(--nb-border-sm);
       transition: transform var(--transition-fast);
     }
 
@@ -47,7 +47,8 @@ export class KanbanColorPicker extends LitElement {
     }
 
     :host([variant="menu"]) .dot--active {
-      border-color: var(--color-text-secondary);
+      outline: var(--nb-border-sm);
+      outline-offset: 2px;
     }
 
     :host([variant="form"]) .grid {
@@ -58,7 +59,7 @@ export class KanbanColorPicker extends LitElement {
     :host([variant="form"]) .dot {
       width: 100%;
       aspect-ratio: 1;
-      border: 3px solid transparent;
+      border: var(--nb-border-sm);
       outline: none;
       transition: transform var(--transition-fast);
     }
@@ -68,8 +69,8 @@ export class KanbanColorPicker extends LitElement {
     }
 
     :host([variant="form"]) .dot--active {
-      outline: 3px solid #000;
-      outline-offset: -3px;
+      outline: var(--nb-border);
+      outline-offset: 2px;
     }
   `;
 

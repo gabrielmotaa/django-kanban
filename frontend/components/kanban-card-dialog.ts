@@ -25,7 +25,7 @@ export class KanbanCardDialog extends HtmxElement {
       }
 
       dialog {
-        border: none;
+        border: var(--nb-border);
         padding: 0;
         width: min(768px, calc(100vw - 32px));
         max-height: calc(100vh - 64px);
@@ -33,12 +33,12 @@ export class KanbanCardDialog extends HtmxElement {
         border-radius: var(--radius-xl);
         background: var(--color-bg-card);
         color: var(--color-text-primary);
-        box-shadow: var(--shadow-lg);
+        box-shadow: var(--shadow-dialog);
         font-family: var(--font-family);
       }
 
       dialog::backdrop {
-        background: rgba(15, 23, 42, 0.5);
+        background: var(--color-backdrop);
       }
 
       .body {
@@ -106,7 +106,7 @@ export class KanbanCardDialog extends HtmxElement {
 
       kanban-inline-edit::part(input) {
         padding: 6px 12px;
-        border: 2px solid var(--color-input-border);
+        border: var(--nb-border-sm);
         border-radius: var(--radius-md);
         font-size: var(--font-size-xl);
         font-weight: var(--font-weight-semibold);
@@ -116,7 +116,7 @@ export class KanbanCardDialog extends HtmxElement {
       }
 
       kanban-inline-edit::part(input):focus {
-        border-color: var(--color-primary);
+        box-shadow: var(--shadow-sm);
       }
 
       .column {
@@ -156,7 +156,7 @@ export class KanbanCardDialog extends HtmxElement {
         gap: 8px;
         margin-top: 8px;
         padding: 12px;
-        border: 1px solid var(--color-border);
+        border: var(--nb-border-sm);
         border-radius: var(--radius-lg);
         background: var(--color-bg-card);
         box-shadow: var(--shadow-dropdown);
@@ -172,7 +172,7 @@ export class KanbanCardDialog extends HtmxElement {
         min-width: 0;
         width: 100%;
         padding: 6px 10px;
-        border: 1px solid var(--color-input-border);
+        border: var(--nb-border-sm);
         border-radius: var(--radius-md);
         font-size: var(--font-size-base);
         outline: none;
@@ -180,7 +180,7 @@ export class KanbanCardDialog extends HtmxElement {
       }
 
       .checklist-form input:focus {
-        border-color: var(--color-primary);
+        box-shadow: var(--shadow-sm);
       }
 
       .action {
@@ -188,21 +188,33 @@ export class KanbanCardDialog extends HtmxElement {
         width: 100%;
         padding: 8px 12px;
         background: var(--color-bg-column);
-        border: none;
+        border: var(--nb-border-sm);
+        box-shadow: var(--shadow-sm);
         border-radius: var(--radius-md);
         font-size: var(--font-size-base);
         color: var(--color-text-secondary);
         text-align: left;
         cursor: pointer;
-        transition: background var(--transition-normal);
+        transition: background var(--transition-normal), transform var(--transition-fast), box-shadow var(--transition-fast);
       }
 
       .action:hover {
-        background: var(--color-border-hover);
+        background: var(--color-surface-hover);
+      }
+
+      .action:active {
+        transform: var(--nb-press);
+        box-shadow: none;
       }
 
       .action--danger {
-        color: var(--color-danger);
+        margin-top: 8px;
+        background: var(--color-danger);
+        color: var(--color-on-accent);
+      }
+
+      .action--danger:hover {
+        background: var(--color-danger-hover);
       }
     `,
 	];

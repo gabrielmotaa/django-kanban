@@ -31,7 +31,7 @@ export class KanbanColumn extends HtmxElement {
         max-height: 100%;
         display: flex;
         flex-direction: column;
-        border: 1px solid var(--color-border);
+        border: var(--nb-border);
         min-height: 150px;
       }
 
@@ -62,8 +62,9 @@ export class KanbanColumn extends HtmxElement {
 
       .add-card-trigger {
         width: 100%;
-        background: rgba(255, 255, 255, 0.2);
-        border: 1px solid var(--color-border);
+        background: transparent;
+        border: var(--nb-border-sm);
+        border-style: dashed;
         border-radius: var(--radius-lg);
         padding: 12px;
         text-align: left;
@@ -74,7 +75,7 @@ export class KanbanColumn extends HtmxElement {
       }
 
       .add-card-trigger:hover {
-        background: var(--color-border-hover);
+        background: var(--color-surface-hover);
         color: var(--color-text-primary);
       }
 

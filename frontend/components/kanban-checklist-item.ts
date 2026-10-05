@@ -73,7 +73,7 @@ export class KanbanChecklistItem extends LitElement {
         min-width: 0;
         width: 100%;
         padding: 6px 10px;
-        border: 1px solid var(--color-input-border);
+        border: var(--nb-border-sm);
         border-radius: var(--radius-md);
         font-size: var(--font-size-base);
         outline: none;
@@ -81,7 +81,7 @@ export class KanbanChecklistItem extends LitElement {
       }
 
       .input:focus {
-        border-color: var(--color-primary);
+        box-shadow: var(--shadow-sm);
       }
 
       .remove {

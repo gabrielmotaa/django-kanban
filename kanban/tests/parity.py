@@ -6,8 +6,10 @@ appears in the URL; if a method here ever needs ``if tech == ...`` that is a
 parity defect to fix in the UI, not a reason to branch.
 """
 
+import base64
 import os
 import re
+from dataclasses import dataclass
 from pathlib import Path
 
 from playwright.sync_api import Locator, Page
@@ -324,6 +326,17 @@ class ParityBoardPage:
             previous = current
         return previous
 
+    def visual_snapshot(self) -> bytes:
+        """Viewport screenshot once fonts are loaded and the UI has settled.
+
+        The pointer is parked in the corner so no hover state leaks into the
+        image, and animations and the text caret are frozen.
+        """
+        self.page.mouse.move(0, 0)
+        self.page.evaluate("document.fonts.ready.then(() => true)")
+        self._stable_snapshot()
+        return self.page.screenshot(animations="disabled", caret="hide")
+
     def screenshot(self, name: str) -> None:
         """Save ``<PARITY_SCREENSHOTS_DIR>/<name>-<tech>.png`` when the env var is set."""
         directory = os.environ.get("PARITY_SCREENSHOTS_DIR")
@@ -331,3 +344,69 @@ class ParityBoardPage:
             return
         Path(directory).mkdir(parents=True, exist_ok=True)
         self.page.screenshot(path=str(Path(directory) / f"{name}-{self.tech}.png"))
+
+
+@dataclass
+class PixelDiff:
+    count: int
+    total: int
+    image: bytes
+
+
+_PIXEL_DIFF_JS = """
+async ([a, b, tolerance]) => {
+    const load = (b64) => fetch(`data:image/png;base64,${b64}`)
+        .then((r) => r.blob())
+        .then(createImageBitmap);
+    const [imgA, imgB] = await Promise.all([load(a), load(b)]);
+    const width = Math.max(imgA.width, imgB.width);
+    const height = Math.max(imgA.height, imgB.height);
+    const pixels = (img) => {
+        const ctx = new OffscreenCanvas(width, height).getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        return ctx.getImageData(0, 0, width, height).data;
+    };
+    const pa = pixels(imgA);
+    const pb = pixels(imgB);
+    const out = new OffscreenCanvas(width, height);
+    const outCtx = out.getContext("2d");
+    const diff = outCtx.createImageData(width, height);
+    let count = 0;
+    for (let i = 0; i < pa.length; i += 4) {
+        const differs = [0, 1, 2, 3].some(
+            (c) => Math.abs(pa[i + c] - pb[i + c]) > tolerance,
+        );
+        if (differs) count++;
+        // Differing pixels in magenta over a faded copy of the first image.
+        diff.data[i] = differs ? 255 : 255 - (255 - pa[i]) / 4;
+        diff.data[i + 1] = differs ? 0 : 255 - (255 - pa[i + 1]) / 4;
+        diff.data[i + 2] = differs ? 255 : 255 - (255 - pa[i + 2]) / 4;
+        diff.data[i + 3] = 255;
+    }
+    outCtx.putImageData(diff, 0, 0);
+    const blob = await out.convertToBlob({ type: "image/png" });
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    let binary = "";
+    for (const byte of bytes) binary += String.fromCharCode(byte);
+    return { count, total: width * height, image: btoa(binary) };
+}
+"""
+
+
+def pixel_diff(page: Page, a: bytes, b: bytes, tolerance: int = 16) -> PixelDiff:
+    """Compare two PNG screenshots in the browser (no image library needed).
+
+    A pixel differs when any RGBA channel is more than ``tolerance`` apart.
+    The default absorbs antialiasing noise on rounded corners, which Chrome
+    rasterizes slightly differently inside a shadow root (deltas around 10);
+    any real style difference (color, offset, weight) is far above it.
+    """
+    result = page.evaluate(
+        _PIXEL_DIFF_JS,
+        [base64.b64encode(a).decode(), base64.b64encode(b).decode(), tolerance],
+    )
+    return PixelDiff(
+        count=result["count"],
+        total=result["total"],
+        image=base64.b64decode(result["image"]),
+    )

@@ -26,7 +26,7 @@ export class KanbanBoardTitle extends HtmxElement {
         --btn-padding: 8px 16px;
         --btn-font-size: var(--font-size-base);
         --btn-radius: var(--radius-md);
-        --btn-secondary-hover-bg: var(--color-border-hover);
+        --btn-secondary-hover-bg: var(--color-surface-hover);
       }
 
       kanban-inline-edit::part(form) {
@@ -39,16 +39,15 @@ export class KanbanBoardTitle extends HtmxElement {
         font-size: var(--font-size-xl);
         font-weight: var(--font-weight-semibold);
         padding: 6px 12px;
-        border: 2px solid var(--color-input-border);
+        border: var(--nb-border-sm);
         border-radius: var(--radius-md);
         outline: none;
         color: var(--color-text-primary);
-        background: var(--color-bg-column);
         transition: border-color var(--transition-normal);
       }
 
       kanban-inline-edit::part(input):focus {
-        border-color: var(--color-primary);
+        box-shadow: var(--shadow-sm);
       }
 
       .view {
@@ -67,10 +66,11 @@ export class KanbanBoardTitle extends HtmxElement {
 
       .edit-btn {
         background: var(--color-bg-column);
-        border: none;
+        border: var(--nb-border-sm);
         cursor: pointer;
         padding: 8px;
         border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -78,7 +78,7 @@ export class KanbanBoardTitle extends HtmxElement {
       }
 
       .edit-btn:hover {
-        background: var(--color-border-hover);
+        background: var(--color-surface-hover);
         transform: scale(1.05);
       }
 

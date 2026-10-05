@@ -21,12 +21,18 @@
 }
 
 .home-title {
+    display: inline-block;
     font-size: 2.5rem;
     font-weight: var(--font-weight-bold);
     color: var(--color-text-primary);
     line-height: 1.2;
-    margin: 0 0 1rem 0;
+    margin: 0 0 1.5rem 0;
+    padding: 0.25rem 1rem;
     letter-spacing: -0.02em;
+    background-color: var(--color-bg-button-add);
+    border: var(--nb-border);
+    box-shadow: var(--shadow-md);
+    transform: rotate(-1deg);
 }
 
 .home-description {
@@ -43,16 +49,19 @@
     align-items: center;
     gap: 1rem;
     margin: 2.5rem 0;
-    color: var(--color-text-muted);
+    color: var(--color-text-primary);
     font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .home-divider::before,
 .home-divider::after {
     content: '';
     flex: 1;
-    height: 1px;
-    background-color: var(--color-border);
+    height: var(--border-width);
+    background-color: var(--color-ink);
 }
 
 /* Cards */
@@ -65,29 +74,32 @@
 .approach-card {
     display: block;
     text-decoration: none;
-    background-color: #ffffff;
-    border: 1px solid var(--color-border);
+    background-color: var(--color-bg-card);
+    border: var(--nb-border);
     border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
     padding: 1.75rem;
     text-align: left;
-    transition: border-color var(--transition-normal), box-shadow var(--transition-normal), transform var(--transition-normal);
+    transition: box-shadow var(--transition-fast), transform var(--transition-fast);
     cursor: pointer;
 }
 
 .approach-card:hover {
-    border-color: var(--color-primary);
     box-shadow: var(--shadow-lg);
-    transform: translateY(-2px);
+    transform: translate(-2px, -2px);
 }
 
 .approach-card:active {
-    transform: translateY(0);
+    box-shadow: none;
+    transform: translate(4px, 4px);
 }
 
 .card-icon {
     width: 40px;
     height: 40px;
+    border: var(--nb-border-sm);
     border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -96,26 +108,27 @@
 }
 
 .card-icon--htmx {
-    background-color: #fef3c7;
+    background-color: var(--color-bg-button-add);
 }
 
 .card-icon--lit {
-    background-color: #eff6ff;
+    background-color: var(--color-primary);
 }
 
 .card-title {
     font-size: var(--font-size-xl);
-    font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-bold);
     color: var(--color-text-primary);
     margin: 0 0 0.4rem 0;
 }
 
 .card-subtitle {
     font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
-    color: var(--color-primary);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-secondary);
     margin: 0 0 0.75rem 0;
-    letter-spacing: 0.01em;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
 }
 
 .card-description {
@@ -133,12 +146,12 @@
 
 .tag {
     font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-bold);
     padding: 0.2rem 0.6rem;
-    border-radius: 999px;
+    border-radius: var(--radius-sm);
     background-color: var(--color-bg-column);
-    color: var(--color-text-light);
-    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+    border: var(--nb-border-sm);
 }
 
 .card-arrow {
@@ -146,15 +159,14 @@
     align-items: center;
     justify-content: flex-end;
     margin-top: 1.25rem;
-    color: var(--color-text-muted);
+    color: var(--color-text-primary);
     font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-bold);
     gap: 0.3rem;
     transition: color var(--transition-normal), gap var(--transition-normal);
 }
 
 .approach-card:hover .card-arrow {
-    color: var(--color-primary);
     gap: 0.5rem;
 }
 
