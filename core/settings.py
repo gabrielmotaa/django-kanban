@@ -66,6 +66,10 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
+        # A file (not in-memory) test database gives the live server thread its
+        # own connection; an in-memory one is shared with the test thread, and
+        # concurrent queries on it fail with "database table is locked".
+        "TEST": {"NAME": BASE_DIR / "test_db.sqlite3"},
     }
 }
 
