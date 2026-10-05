@@ -43,14 +43,14 @@ export class KanbanChecklist extends LitElement {
 
       kanban-inline-edit::part(input) {
         padding: 6px 10px;
-        border: 1px solid var(--color-input-border);
+        border: var(--nb-border-sm);
         border-radius: var(--radius-md);
         font-size: var(--font-size-base);
         outline: none;
       }
 
       kanban-inline-edit::part(input):focus {
-        border-color: var(--color-primary);
+        box-shadow: var(--shadow-sm);
       }
 
       .title {
@@ -81,7 +81,7 @@ export class KanbanChecklist extends LitElement {
       .delete {
         padding: 4px 8px;
         background: var(--color-bg-column);
-        border: none;
+        border: var(--nb-border-sm);
         border-radius: var(--radius-md);
         font-size: var(--font-size-sm);
         color: var(--color-text-secondary);
@@ -89,7 +89,7 @@ export class KanbanChecklist extends LitElement {
       }
 
       .delete:hover {
-        background: var(--color-border-hover);
+        background: var(--color-surface-hover);
       }
 
       .progress {
@@ -107,9 +107,10 @@ export class KanbanChecklist extends LitElement {
 
       .bar {
         flex-grow: 1;
-        height: 8px;
-        border-radius: 4px;
-        background: var(--color-border);
+        height: 12px;
+        border: var(--nb-border-sm);
+        border-radius: var(--radius-sm);
+        background: var(--color-surface-muted);
         overflow: hidden;
       }
 
@@ -141,7 +142,7 @@ export class KanbanChecklist extends LitElement {
         min-width: 0;
         width: 100%;
         padding: 6px 10px;
-        border: 1px solid var(--color-input-border);
+        border: var(--nb-border-sm);
         border-radius: var(--radius-md);
         font-size: var(--font-size-base);
         outline: none;
@@ -149,7 +150,7 @@ export class KanbanChecklist extends LitElement {
       }
 
       .input:focus {
-        border-color: var(--color-primary);
+        box-shadow: var(--shadow-sm);
       }
     `,
 	];
@@ -255,7 +256,7 @@ export class KanbanChecklist extends LitElement {
           <button type="button" class="delete" @click=${this.onDelete}>Excluir</button>
         </div>
         <div class="progress">
-          <span class="percent">${percent}%</span>
+          <span class="percent">${`${percent}%`}</span>
           <div
             class="bar"
             role="progressbar"

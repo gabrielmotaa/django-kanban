@@ -36,7 +36,7 @@ export class KanbanCardActivity extends LitElement {
 
       .toggle {
         padding: 4px 8px;
-        border: none;
+        border: var(--nb-border-sm);
         border-radius: var(--radius-md);
         background: var(--color-bg-column);
         font-size: var(--font-size-sm);
@@ -45,7 +45,7 @@ export class KanbanCardActivity extends LitElement {
       }
 
       .toggle:hover {
-        background: var(--color-border-hover);
+        background: var(--color-surface-hover);
       }
 
       form {
@@ -61,7 +61,7 @@ export class KanbanCardActivity extends LitElement {
         width: 100%;
         min-height: 56px;
         padding: 8px 12px;
-        border: 1px solid var(--color-input-border);
+        border: var(--nb-border-sm);
         border-radius: var(--radius-md);
         font-size: var(--font-size-base);
         outline: none;
@@ -70,19 +70,25 @@ export class KanbanCardActivity extends LitElement {
       }
 
       .input:focus {
-        border-color: var(--color-primary);
+        box-shadow: var(--shadow-sm);
       }
 
       .btn {
         padding: 6px 12px;
-        border: none;
+        border: var(--nb-border-sm);
+        box-shadow: var(--shadow-sm);
         border-radius: var(--radius-md);
         background: var(--color-primary);
-        color: white;
+        color: var(--color-on-accent);
         font-size: var(--font-size-base);
-        font-weight: var(--font-weight-medium);
+        font-weight: var(--font-weight-bold);
         cursor: pointer;
-        transition: background var(--transition-normal);
+        transition: background var(--transition-normal), transform var(--transition-fast), box-shadow var(--transition-fast);
+      }
+
+      .btn:active {
+        transform: var(--nb-press);
+        box-shadow: none;
       }
 
       .btn:hover {

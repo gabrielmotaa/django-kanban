@@ -22,6 +22,7 @@ export class KanbanLabel extends LitElement {
       display: block;
       max-width: 100%;
       padding: 2px 8px;
+      border: var(--nb-border-sm);
       border-radius: var(--radius-sm);
       background: var(--label-color);
       color: var(--label-fg);

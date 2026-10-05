@@ -1,30 +1,46 @@
 :root {
     /* Font Family */
-    --font-family: 'Inter', system-ui, sans-serif;
+    --font-family: 'Space Grotesk', system-ui, sans-serif;
+
+    /* Neobrutalism: black ink outlines everything and casts hard shadows */
+    --color-ink: #000000;
+    --border-width: 3px;
+    --border-width-sm: 2px;
+    --nb-border: var(--border-width) solid var(--color-ink);
+    --nb-border-sm: var(--border-width-sm) solid var(--color-ink);
+    /* Pressed elements slide into their shadow */
+    --nb-press: translate(2px, 2px);
 
     /* Colors */
-    --color-bg-body: #f8fafc;
-    --color-bg-column: #f1f5f9;
+    --color-bg-body: #fff4d6;
+    --color-bg-column: #fffaeb;
     --color-bg-card: #ffffff;
-    --color-bg-button-add: #e2e8f0;
-    --color-bg-button-add-hover: #cbd5e1;
-    
-    --color-primary: #3b82f6;
-    --color-primary-hover: #2563eb;
-    --color-success: #10b981;
-    --color-success-hover: #059669;
-    --color-danger: #ef4444;
-    --color-danger-hover: #dc2626;
-    
-    --color-text-primary: #1e293b;
-    --color-text-secondary: #334155;
-    --color-text-light: #475569;
-    --color-text-muted: #64748b;
-    
-    --color-border: #e2e8f0;
-    --color-border-hover: #cbd5e1;
-    --color-input-border: #cbd5e1;
-    
+    --color-bg-button-add: #ffe066;
+    --color-bg-button-add-hover: #ffd23f;
+    --color-surface-muted: #f3ead3;
+    --color-surface-hover: #ffe9a8;
+
+    --color-primary: #7c9cff;
+    --color-primary-hover: #5f84ff;
+    --color-success: #4ade80;
+    --color-success-hover: #22c55e;
+    --color-danger: #ff6b6b;
+    --color-danger-hover: #ff4d4d;
+    --color-danger-soft: #ffe0e0;
+    --color-warning: #ffc83d;
+    /* Text on saturated fills (buttons, badges, toasts) */
+    --color-on-accent: var(--color-ink);
+    --color-backdrop: rgba(0, 0, 0, 0.45);
+
+    --color-text-primary: #000000;
+    --color-text-secondary: #111111;
+    --color-text-light: #222222;
+    --color-text-muted: #4a4a4a;
+
+    --color-border: var(--color-ink);
+    --color-border-hover: var(--color-ink);
+    --color-input-border: var(--color-ink);
+
     /* Font Sizes */
     --font-size-xs: 11px;
     --font-size-sm: 12px;
@@ -33,25 +49,26 @@
     --font-size-lg: 16px;
     --font-size-xl: 20px;
     --font-size-xxl: 28px;
-    
+
     /* Font Weights */
     --font-weight-normal: 400;
     --font-weight-medium: 500;
     --font-weight-semibold: 600;
     --font-weight-bold: 700;
-    
+
     /* Border Radius */
-    --radius-sm: 4px;
-    --radius-md: 6px;
-    --radius-lg: 8px;
-    --radius-xl: 10px;
-    
-    /* Shadows */
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.02);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
-    --shadow-dropdown: 0 4px 12px rgba(0, 0, 0, 0.1);
-    
+    --radius-sm: 2px;
+    --radius-md: 4px;
+    --radius-lg: 6px;
+    --radius-xl: 8px;
+
+    /* Hard offset shadows */
+    --shadow-sm: 2px 2px 0 var(--color-ink);
+    --shadow-md: 4px 4px 0 var(--color-ink);
+    --shadow-lg: 6px 6px 0 var(--color-ink);
+    --shadow-dropdown: 4px 4px 0 var(--color-ink);
+    --shadow-dialog: 8px 8px 0 var(--color-ink);
+
     /* Transitions */
     --transition-fast: 0.1s;
     --transition-normal: 0.2s;

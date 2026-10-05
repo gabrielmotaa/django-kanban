@@ -46,7 +46,7 @@ body {
     max-height: 100%;
     display: flex;
     flex-direction: column;
-    border: 1px solid var(--color-border);
+    border: var(--nb-border);
     min-height: 150px;
 }
 
@@ -104,10 +104,11 @@ body {
 
 .board-header__edit-btn {
     background: var(--color-bg-column);
-    border: none;
+    border: var(--nb-border-sm);
     cursor: pointer;
     padding: 8px;
     border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -115,7 +116,7 @@ body {
 }
 
 .board-header__edit-btn:hover {
-    background: var(--color-border-hover);
+    background: var(--color-surface-hover);
     transform: scale(1.05);
 }
 
@@ -133,7 +134,7 @@ body {
     font-size: var(--font-size-xl);
     font-weight: var(--font-weight-semibold);
     padding: 6px 12px;
-    border: 2px solid var(--color-input-border);
+    border: var(--nb-border-sm);
     border-radius: var(--radius-md);
     outline: none;
     color: var(--color-text-primary);
@@ -141,23 +142,31 @@ body {
 }
 
 .board-header__input:focus {
-    border-color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
 }
 
 .board-header__btn-save,
 .board-header__btn-cancel {
     padding: 8px 16px;
     font-size: var(--font-size-base);
-    font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-bold);
     border-radius: var(--radius-md);
-    border: none;
+    border: var(--nb-border-sm);
+    box-shadow: var(--shadow-sm);
     cursor: pointer;
-    transition: background var(--transition-normal);
+    transition: background var(--transition-normal), transform var(--transition-fast), box-shadow var(--transition-fast);
 }
+
+.board-header__btn-save:active,
+.board-header__btn-cancel:active {
+    transform: var(--nb-press);
+    box-shadow: none;
+}
+
 
 .board-header__btn-save {
     background: var(--color-primary);
-    color: white;
+    color: var(--color-on-accent);
 }
 
 .board-header__btn-save:hover {
@@ -165,12 +174,12 @@ body {
 }
 
 .board-header__btn-cancel {
-    background: var(--color-border);
+    background: var(--color-surface-muted);
     color: var(--color-text-light);
 }
 
 .board-header__btn-cancel:hover {
-    background: var(--color-border-hover);
+    background: var(--color-surface-hover);
 }
 
 /* Column Accent & Header */
@@ -178,8 +187,10 @@ body {
     background-color: var(--column-color, var(--color-text-muted));
     color: var(--column-fg, #ffffff);
     padding: 12px 16px;
-    border-top-left-radius: var(--radius-xl);
-    border-top-right-radius: var(--radius-xl);
+    border-bottom: var(--nb-border);
+    /* Inner radius: the column's own border sits outside this strip */
+    border-top-left-radius: calc(var(--radius-xl) - var(--border-width));
+    border-top-right-radius: calc(var(--radius-xl) - var(--border-width));
     transition: background-color var(--transition-normal);
 }
 
@@ -193,7 +204,7 @@ body {
 
 .column__title-text {
     font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-bold);
     color: inherit;
     padding: 4px 0;
     flex-grow: 1;
@@ -238,8 +249,8 @@ body {
     right: 0;
     top: 100%;
     margin-top: 4px;
-    background: white;
-    border: 1px solid var(--color-border);
+    background: var(--color-bg-card);
+    border: var(--nb-border-sm);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-dropdown);
     z-index: 100;
@@ -273,11 +284,11 @@ body {
 }
 
 .column__menu-btn--danger:hover {
-    background: #fef2f2;
+    background: var(--color-danger-soft);
 }
 
 .column__menu-divider {
-    border-top: 1px solid var(--color-border);
+    border-top: var(--nb-border-sm);
     margin: 6px 0;
 }
 
@@ -303,7 +314,7 @@ body {
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    border: 2px solid transparent;
+    border: var(--nb-border-sm);
     cursor: pointer;
     padding: 0;
     transition: transform var(--transition-fast);
@@ -315,7 +326,8 @@ body {
 }
 
 .column__color-dot--active {
-    border-color: var(--color-text-secondary);
+    outline: var(--nb-border-sm);
+    outline-offset: 2px;
 }
 
 /* Column Edit Form */
@@ -330,32 +342,37 @@ body {
     flex-grow: 1;
     min-width: 0;
     padding: 6px 10px;
-    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    border: var(--nb-border-sm);
     border-radius: var(--radius-md);
     font-size: var(--font-size-lg);
     outline: none;
-    background-color: rgba(255, 255, 255, 0.2);
-    color: inherit;
+    background-color: var(--color-bg-card);
+    color: var(--color-text-primary);
     font-weight: var(--font-weight-medium);
     transition: background-color var(--transition-normal), border-color var(--transition-normal);
 }
 
 .column__edit-input:focus {
-    background-color: white;
-    color: var(--color-text-primary);
-    border-color: white;
+    box-shadow: var(--shadow-sm);
 }
 
 .column__edit-btn-save,
 .column__edit-btn-cancel {
     flex-shrink: 0;
     padding: 6px 10px;
-    border: none;
+    border: var(--nb-border-sm);
+    box-shadow: var(--shadow-sm);
     border-radius: var(--radius-md);
     cursor: pointer;
     font-size: var(--font-size-base);
-    font-weight: var(--font-weight-semibold);
-    transition: opacity var(--transition-normal), transform var(--transition-fast);
+    font-weight: var(--font-weight-bold);
+    transition: opacity var(--transition-normal), transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.column__edit-btn-save:active,
+.column__edit-btn-cancel:active {
+    transform: var(--nb-press);
+    box-shadow: none;
 }
 
 .column__edit-btn-save:hover,
@@ -364,21 +381,22 @@ body {
 }
 
 .column__edit-btn-save {
-    background-color: white;
-    color: var(--column-color, var(--color-text-muted));
+    background-color: var(--color-bg-card);
+    color: var(--color-text-primary);
 }
 
 .column__edit-btn-cancel {
-    background-color: rgba(0, 0, 0, 0.15);
-    color: inherit;
+    background-color: var(--color-surface-muted);
+    color: var(--color-text-primary);
 }
 
 
 
 .column__add-card-trigger {
     width: 100%;
-    background: rgba(255, 255, 255, 0.2);
-    border: 1px solid var(--color-border);
+    background: transparent;
+    border: var(--nb-border-sm);
+    border-style: dashed;
     border-radius: var(--radius-lg);
     padding: 12px;
     text-align: left;
@@ -389,7 +407,7 @@ body {
 }
 
 .column__add-card-trigger:hover {
-    background: var(--color-border-hover);
+    background: var(--color-surface-hover);
     color: var(--color-text-primary);
 }
 
@@ -403,7 +421,7 @@ body {
 .column__add-card-input {
     width: 100%;
     padding: 8px;
-    border: 1px solid var(--color-input-border);
+    border: var(--nb-border-sm);
     border-radius: var(--radius-md);
     font-size: var(--font-size-lg);
     outline: none;
@@ -411,7 +429,7 @@ body {
 }
 
 .column__add-card-input:focus {
-    border-color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
 }
 
 .column__add-card-actions {
@@ -424,16 +442,24 @@ body {
 .column__add-card-cancel {
     padding: 6px 10px;
     font-size: var(--font-size-md);
-    font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-bold);
     border-radius: var(--radius-sm);
-    border: none;
+    border: var(--nb-border-sm);
+    box-shadow: var(--shadow-sm);
     cursor: pointer;
-    transition: background var(--transition-normal);
+    transition: background var(--transition-normal), transform var(--transition-fast), box-shadow var(--transition-fast);
 }
+
+.column__add-card-submit:active,
+.column__add-card-cancel:active {
+    transform: var(--nb-press);
+    box-shadow: none;
+}
+
 
 .column__add-card-submit {
     background: var(--color-primary);
-    color: white;
+    color: var(--color-on-accent);
 }
 
 .column__add-card-submit:hover {
@@ -441,18 +467,18 @@ body {
 }
 
 .column__add-card-cancel {
-    background: var(--color-border);
+    background: var(--color-surface-muted);
     color: var(--color-text-light);
 }
 
 .column__add-card-cancel:hover {
-    background: var(--color-border-hover);
+    background: var(--color-surface-hover);
 }
 
 /* Cards Styling and Actions */
 .card {
     background: var(--color-bg-card);
-    border: 1px solid var(--color-border);
+    border: var(--nb-border-sm);
     border-radius: var(--radius-lg);
     padding: 12px;
     margin-bottom: 8px;
@@ -464,7 +490,7 @@ body {
 
 .card:hover {
     box-shadow: var(--shadow-md);
-    border-color: var(--color-border-hover);
+    transform: translate(-1px, -1px);
 }
 
 .card.dragging {
@@ -505,7 +531,7 @@ body {
 
 /* Card dialog */
 .card-dialog {
-    border: none;
+    border: var(--nb-border);
     padding: 0;
     width: min(768px, calc(100vw - 32px));
     max-height: calc(100vh - 64px);
@@ -513,12 +539,12 @@ body {
     border-radius: var(--radius-xl);
     background: var(--color-bg-card);
     color: var(--color-text-primary);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-dialog);
     font-family: var(--font-family);
 }
 
 .card-dialog::backdrop {
-    background: rgba(15, 23, 42, 0.5);
+    background: var(--color-backdrop);
 }
 
 .card-dialog__body {
@@ -585,7 +611,7 @@ body {
     flex-grow: 1;
     min-width: 0;
     padding: 6px 12px;
-    border: 2px solid var(--color-input-border);
+    border: var(--nb-border-sm);
     border-radius: var(--radius-md);
     font: inherit;
     font-size: var(--font-size-xl);
@@ -596,7 +622,7 @@ body {
 }
 
 .card-dialog__title-input:focus {
-    border-color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
 }
 
 .card-dialog__column {
@@ -631,18 +657,25 @@ body {
 
 .card-dialog__btn {
     padding: 6px 12px;
-    border: none;
+    border: var(--nb-border-sm);
+    box-shadow: var(--shadow-sm);
     border-radius: var(--radius-md);
     font: inherit;
     font-size: var(--font-size-base);
-    font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-bold);
     cursor: pointer;
-    transition: background var(--transition-normal);
+    transition: background var(--transition-normal), transform var(--transition-fast), box-shadow var(--transition-fast);
 }
+
+.card-dialog__btn:active {
+    transform: var(--nb-press);
+    box-shadow: none;
+}
+
 
 .card-dialog__btn--primary {
     background: var(--color-primary);
-    color: white;
+    color: var(--color-on-accent);
 }
 
 .card-dialog__btn--primary:hover {
@@ -650,12 +683,12 @@ body {
 }
 
 .card-dialog__btn--secondary {
-    background: var(--color-border);
+    background: var(--color-surface-muted);
     color: var(--color-text-light);
 }
 
 .card-dialog__btn--secondary:hover {
-    background: var(--color-border-hover);
+    background: var(--color-surface-hover);
 }
 
 .card-dialog__form-actions {
@@ -670,7 +703,7 @@ body {
     min-height: 56px;
     padding: 8px 12px;
     background: var(--color-bg-column);
-    border: none;
+    border: var(--nb-border-sm);
     border-radius: var(--radius-md);
     font: inherit;
     font-size: var(--font-size-base);
@@ -682,7 +715,7 @@ body {
 }
 
 .card-description__view:hover {
-    background: var(--color-border-hover);
+    background: var(--color-surface-hover);
 }
 
 .card-description__view--empty {
@@ -694,7 +727,7 @@ body {
     width: 100%;
     min-height: 96px;
     padding: 8px 12px;
-    border: 1px solid var(--color-input-border);
+    border: var(--nb-border-sm);
     border-radius: var(--radius-md);
     font: inherit;
     font-size: var(--font-size-base);
@@ -704,7 +737,7 @@ body {
 }
 
 .card-description__input:focus {
-    border-color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
 }
 
 .card-dialog__action {
@@ -712,22 +745,34 @@ body {
     width: 100%;
     padding: 8px 12px;
     background: var(--color-bg-column);
-    border: none;
+    border: var(--nb-border-sm);
+    box-shadow: var(--shadow-sm);
     border-radius: var(--radius-md);
     font: inherit;
     font-size: var(--font-size-base);
     color: var(--color-text-secondary);
     text-align: left;
     cursor: pointer;
-    transition: background var(--transition-normal);
+    transition: background var(--transition-normal), transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .card-dialog__action:hover {
-    background: var(--color-border-hover);
+    background: var(--color-surface-hover);
+}
+
+.card-dialog__action:active {
+    transform: var(--nb-press);
+    box-shadow: none;
 }
 
 .card-dialog__action--danger {
-    color: var(--color-danger);
+    margin-top: 8px;
+    background: var(--color-danger);
+    color: var(--color-on-accent);
+}
+
+.card-dialog__action--danger:hover {
+    background: var(--color-danger-hover);
 }
 
 /* Column Create Button & Form (index.html) */
@@ -738,11 +783,12 @@ body {
 
 .column-create__trigger {
     background: var(--color-bg-button-add);
-    border: none;
+    border: var(--nb-border);
+    box-shadow: var(--shadow-md);
     border-radius: var(--radius-lg);
     padding: 12px 18px;
-    font-weight: var(--font-weight-medium);
-    color: var(--color-text-light);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-primary);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -761,7 +807,7 @@ body {
     padding: 16px;
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-lg);
-    border: 1px solid var(--color-border);
+    border: var(--nb-border-sm);
     width: 280px;
     box-sizing: border-box;
 }
@@ -769,7 +815,7 @@ body {
 .column-create__input {
     width: 100%;
     padding: 8px 12px;
-    border: 1px solid var(--color-input-border);
+    border: var(--nb-border-sm);
     border-radius: var(--radius-md);
     font-size: var(--font-size-lg);
     margin-bottom: 12px;
@@ -778,7 +824,7 @@ body {
 }
 
 .column-create__input:focus {
-    border-color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
 }
 
 .column-create__color-label {
@@ -802,7 +848,7 @@ body {
     width: 100%;
     aspect-ratio: 1;
     border-radius: 50%;
-    border: 3px solid transparent;
+    border: var(--nb-border-sm);
     cursor: pointer;
     padding: 0;
     outline: none;
@@ -815,8 +861,8 @@ body {
 }
 
 .column-create__color-dot--active {
-    outline: 3px solid #000;
-    outline-offset: -3px;
+    outline: var(--nb-border);
+    outline-offset: 2px;
 }
 
 .column-create__actions {
@@ -829,16 +875,24 @@ body {
 .column-create__btn-cancel {
     padding: 6px 12px;
     font-size: var(--font-size-base);
-    font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-bold);
     border-radius: var(--radius-md);
-    border: none;
+    border: var(--nb-border-sm);
+    box-shadow: var(--shadow-sm);
     cursor: pointer;
-    transition: background var(--transition-normal);
+    transition: background var(--transition-normal), transform var(--transition-fast), box-shadow var(--transition-fast);
 }
+
+.column-create__btn-submit:active,
+.column-create__btn-cancel:active {
+    transform: var(--nb-press);
+    box-shadow: none;
+}
+
 
 .column-create__btn-submit {
     background: var(--color-primary);
-    color: white;
+    color: var(--color-on-accent);
 }
 
 .column-create__btn-submit:hover {
@@ -846,12 +900,12 @@ body {
 }
 
 .column-create__btn-cancel {
-    background: var(--color-text-muted);
-    color: white;
+    background: var(--color-surface-muted);
+    color: var(--color-text-light);
 }
 
 .column-create__btn-cancel:hover {
-    background: var(--color-text-light);
+    background: var(--color-surface-hover);
 }
 
 /* Toasts (error feedback) */
@@ -874,10 +928,11 @@ body {
     padding: 12px 16px;
     border-radius: var(--radius-lg);
     background: var(--color-danger);
-    color: white;
+    color: var(--color-on-accent);
     font-size: var(--font-size-base);
-    font-weight: var(--font-weight-medium);
-    box-shadow: var(--shadow-lg);
+    font-weight: var(--font-weight-bold);
+    border: var(--nb-border);
+    box-shadow: var(--shadow-md);
 }
 
 /* Labels */
@@ -885,6 +940,7 @@ body {
     display: inline-block;
     max-width: 100%;
     padding: 2px 8px;
+    border: var(--nb-border-sm);
     border-radius: var(--radius-sm);
     background: var(--label-color);
     color: var(--label-fg);
@@ -928,7 +984,7 @@ body {
     width: 28px;
     height: 28px;
     padding: 0;
-    border: none;
+    border: var(--nb-border-sm);
     border-radius: var(--radius-md);
     background: var(--color-bg-column);
     color: var(--color-text-secondary);
@@ -939,13 +995,13 @@ body {
 }
 
 .card-labels__add:hover {
-    background: var(--color-border-hover);
+    background: var(--color-surface-hover);
 }
 
 .label-popover {
     margin-top: 8px;
     padding: 12px;
-    border: 1px solid var(--color-border);
+    border: var(--nb-border-sm);
     border-radius: var(--radius-lg);
     background: var(--color-bg-card);
     box-shadow: var(--shadow-dropdown);
@@ -957,7 +1013,7 @@ body {
     display: block;
     width: 100%;
     padding: 6px 10px;
-    border: 1px solid var(--color-input-border);
+    border: var(--nb-border-sm);
     border-radius: var(--radius-md);
     font: inherit;
     font-size: var(--font-size-base);
@@ -967,7 +1023,7 @@ body {
 
 .label-popover__search:focus,
 .label-popover__input:focus {
-    border-color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
 }
 
 .label-popover__search {
@@ -1048,7 +1104,7 @@ body {
     width: 100%;
     aspect-ratio: 1;
     padding: 0;
-    border: 3px solid transparent;
+    border: var(--nb-border-sm);
     border-radius: 50%;
     background-color: var(--dot-color);
     outline: none;
@@ -1061,8 +1117,8 @@ body {
 }
 
 .label-popover__color-dot--active {
-    outline: 3px solid #000;
-    outline-offset: -3px;
+    outline: var(--nb-border);
+    outline-offset: 2px;
 }
 
 .card-dialog__btn--danger {
@@ -1071,23 +1127,26 @@ body {
 }
 
 .card-dialog__btn--danger:hover {
-    background: #fef2f2;
+    background: var(--color-danger-soft);
 }
 
 /* Due date */
 .badge--complete {
     background: var(--color-success);
-    color: white;
+    color: var(--color-on-accent);
+    border: var(--nb-border-sm);
 }
 
 .badge--overdue {
     background: var(--color-danger);
-    color: white;
+    color: var(--color-on-accent);
+    border: var(--nb-border-sm);
 }
 
 .badge--soon {
-    background: #f59e0b;
-    color: #1e293b;
+    background: var(--color-warning);
+    color: var(--color-on-accent);
+    border: var(--nb-border-sm);
 }
 
 .card-due__row {
@@ -1107,7 +1166,7 @@ body {
 
 .card-due__date {
     padding: 6px 10px;
-    border: none;
+    border: var(--nb-border-sm);
     border-radius: var(--radius-md);
     background: var(--color-bg-column);
     color: var(--color-text-primary);
@@ -1117,7 +1176,7 @@ body {
 }
 
 .card-due__date:hover {
-    background: var(--color-border-hover);
+    background: var(--color-surface-hover);
 }
 
 .card-due__date--empty {
@@ -1133,12 +1192,14 @@ body {
 
 .card-due__chip--overdue {
     background: var(--color-danger);
-    color: white;
+    color: var(--color-on-accent);
+    border: var(--nb-border-sm);
 }
 
 .card-due__chip--soon {
-    background: #f59e0b;
-    color: #1e293b;
+    background: var(--color-warning);
+    color: var(--color-on-accent);
+    border: var(--nb-border-sm);
 }
 
 .card-due__popover {
@@ -1147,7 +1208,7 @@ body {
     gap: 8px;
     margin-top: 8px;
     padding: 12px;
-    border: 1px solid var(--color-border);
+    border: var(--nb-border-sm);
     border-radius: var(--radius-lg);
     background: var(--color-bg-card);
     box-shadow: var(--shadow-dropdown);
@@ -1158,7 +1219,7 @@ body {
     display: block;
     width: 100%;
     padding: 6px 10px;
-    border: 1px solid var(--color-input-border);
+    border: var(--nb-border-sm);
     border-radius: var(--radius-md);
     font: inherit;
     font-size: var(--font-size-base);
@@ -1167,7 +1228,7 @@ body {
 }
 
 .card-due__input:focus {
-    border-color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
 }
 
 /* Checklists */
@@ -1219,7 +1280,7 @@ body {
 .card-checklist__delete {
     padding: 4px 8px;
     background: var(--color-bg-column);
-    border: none;
+    border: var(--nb-border-sm);
     border-radius: var(--radius-md);
     font: inherit;
     font-size: var(--font-size-sm);
@@ -1228,7 +1289,7 @@ body {
 }
 
 .card-checklist__delete:hover {
-    background: var(--color-border-hover);
+    background: var(--color-surface-hover);
 }
 
 .card-checklist__input {
@@ -1237,7 +1298,7 @@ body {
     min-width: 0;
     width: 100%;
     padding: 6px 10px;
-    border: 1px solid var(--color-input-border);
+    border: var(--nb-border-sm);
     border-radius: var(--radius-md);
     font: inherit;
     font-size: var(--font-size-base);
@@ -1246,7 +1307,7 @@ body {
 }
 
 .card-checklist__input:focus {
-    border-color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
 }
 
 .card-checklist__progress {
@@ -1264,9 +1325,10 @@ body {
 
 .card-checklist__bar {
     flex-grow: 1;
-    height: 8px;
-    border-radius: 4px;
-    background: var(--color-border);
+    height: 12px;
+    border: var(--nb-border-sm);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-muted);
     overflow: hidden;
 }
 
@@ -1354,7 +1416,7 @@ body {
     gap: 8px;
     margin-top: 8px;
     padding: 12px;
-    border: 1px solid var(--color-border);
+    border: var(--nb-border-sm);
     border-radius: var(--radius-lg);
     background: var(--color-bg-card);
     box-shadow: var(--shadow-dropdown);
@@ -1376,7 +1438,7 @@ body {
 
 .card-activity__toggle {
     padding: 4px 8px;
-    border: none;
+    border: var(--nb-border-sm);
     border-radius: var(--radius-md);
     background: var(--color-bg-column);
     font: inherit;
@@ -1386,7 +1448,7 @@ body {
 }
 
 .card-activity__toggle:hover {
-    background: var(--color-border-hover);
+    background: var(--color-surface-hover);
 }
 
 .card-activity__composer {
@@ -1402,7 +1464,7 @@ body {
     width: 100%;
     min-height: 56px;
     padding: 8px 12px;
-    border: 1px solid var(--color-input-border);
+    border: var(--nb-border-sm);
     border-radius: var(--radius-md);
     font: inherit;
     font-size: var(--font-size-base);
@@ -1412,7 +1474,7 @@ body {
 }
 
 .card-activity__input:focus {
-    border-color: var(--color-primary);
+    box-shadow: var(--shadow-sm);
 }
 
 .card-activity__list {
@@ -1426,7 +1488,7 @@ body {
 
 .comment {
     padding: 8px 12px;
-    border: 1px solid var(--color-border);
+    border: var(--nb-border-sm);
     border-radius: var(--radius-md);
 }
 

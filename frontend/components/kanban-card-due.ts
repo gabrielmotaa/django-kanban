@@ -49,7 +49,7 @@ export class KanbanCardDue extends HtmxElement {
 
       .date {
         padding: 6px 10px;
-        border: none;
+        border: var(--nb-border-sm);
         border-radius: var(--radius-md);
         background: var(--color-bg-column);
         color: var(--color-text-primary);
@@ -58,7 +58,7 @@ export class KanbanCardDue extends HtmxElement {
       }
 
       .date:hover {
-        background: var(--color-border-hover);
+        background: var(--color-surface-hover);
       }
 
       .date--empty {
@@ -74,12 +74,14 @@ export class KanbanCardDue extends HtmxElement {
 
       .chip--overdue {
         background: var(--color-danger);
-        color: white;
+        color: var(--color-on-accent);
+        border: var(--nb-border-sm);
       }
 
       .chip--soon {
-        background: #f59e0b;
-        color: #1e293b;
+        background: var(--color-warning);
+        color: var(--color-on-accent);
+        border: var(--nb-border-sm);
       }
 
       form {
@@ -88,7 +90,7 @@ export class KanbanCardDue extends HtmxElement {
         gap: 8px;
         margin-top: 8px;
         padding: 12px;
-        border: 1px solid var(--color-border);
+        border: var(--nb-border-sm);
         border-radius: var(--radius-lg);
         background: var(--color-bg-card);
         box-shadow: var(--shadow-dropdown);
@@ -99,7 +101,7 @@ export class KanbanCardDue extends HtmxElement {
         display: block;
         width: 100%;
         padding: 6px 10px;
-        border: 1px solid var(--color-input-border);
+        border: var(--nb-border-sm);
         border-radius: var(--radius-md);
         font-size: var(--font-size-base);
         outline: none;
@@ -107,7 +109,7 @@ export class KanbanCardDue extends HtmxElement {
       }
 
       .input:focus {
-        border-color: var(--color-primary);
+        box-shadow: var(--shadow-sm);
       }
 
       .actions {
@@ -118,17 +120,23 @@ export class KanbanCardDue extends HtmxElement {
 
       .btn {
         padding: 6px 12px;
-        border: none;
+        border: var(--nb-border-sm);
+        box-shadow: var(--shadow-sm);
         border-radius: var(--radius-md);
         font-size: var(--font-size-base);
-        font-weight: var(--font-weight-medium);
+        font-weight: var(--font-weight-bold);
         cursor: pointer;
-        transition: background var(--transition-normal);
+        transition: background var(--transition-normal), transform var(--transition-fast), box-shadow var(--transition-fast);
+      }
+
+      .btn:active {
+        transform: var(--nb-press);
+        box-shadow: none;
       }
 
       .btn--primary {
         background: var(--color-primary);
-        color: white;
+        color: var(--color-on-accent);
       }
 
       .btn--primary:hover {
@@ -141,7 +149,7 @@ export class KanbanCardDue extends HtmxElement {
       }
 
       .btn--danger:hover {
-        background: #fef2f2;
+        background: var(--color-danger-soft);
       }
     `,
 	];

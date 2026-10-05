@@ -27,8 +27,10 @@ export class KanbanColumnHeader extends LitElement {
         background-color: var(--column-color, var(--color-text-muted));
         color: var(--column-fg, #ffffff);
         padding: 12px 16px;
-        border-top-left-radius: var(--radius-xl);
-        border-top-right-radius: var(--radius-xl);
+        border-bottom: var(--nb-border);
+        /* Inner radius: the column's own border sits outside this strip */
+        border-top-left-radius: calc(var(--radius-xl) - var(--border-width));
+        border-top-right-radius: calc(var(--radius-xl) - var(--border-width));
         transition: background-color var(--transition-normal);
       }
 
@@ -42,7 +44,7 @@ export class KanbanColumnHeader extends LitElement {
 
       .title-text {
         font-size: var(--font-size-lg);
-        font-weight: var(--font-weight-semibold);
+        font-weight: var(--font-weight-bold);
         color: inherit;
         padding: 4px 0;
         flex-grow: 1;
@@ -56,20 +58,18 @@ export class KanbanColumnHeader extends LitElement {
 
       kanban-inline-edit::part(input) {
         padding: 6px 10px;
-        border: 1.5px solid rgba(255, 255, 255, 0.3);
+        border: var(--nb-border-sm);
         border-radius: var(--radius-md);
         font-size: var(--font-size-lg);
         outline: none;
-        background-color: rgba(255, 255, 255, 0.2);
-        color: inherit;
+        background-color: var(--color-bg-card);
+        color: var(--color-text-primary);
         font-weight: var(--font-weight-medium);
         transition: background-color var(--transition-normal), border-color var(--transition-normal);
       }
 
       kanban-inline-edit::part(input):focus {
-        background-color: white;
-        color: var(--color-text-primary);
-        border-color: white;
+        box-shadow: var(--shadow-sm);
       }
 
       kanban-inline-edit::part(save),
@@ -78,8 +78,8 @@ export class KanbanColumnHeader extends LitElement {
         padding: 6px 10px;
         border-radius: var(--radius-md);
         font-size: var(--font-size-base);
-        font-weight: var(--font-weight-semibold);
-        transition: opacity var(--transition-normal), transform var(--transition-fast);
+        font-weight: var(--font-weight-bold);
+        transition: opacity var(--transition-normal), transform var(--transition-fast), box-shadow var(--transition-fast);
       }
 
       kanban-inline-edit::part(save):hover,
@@ -88,13 +88,13 @@ export class KanbanColumnHeader extends LitElement {
       }
 
       kanban-inline-edit::part(save) {
-        background-color: white;
-        color: var(--column-color, var(--color-text-muted));
+        background-color: var(--color-bg-card);
+        color: var(--color-text-primary);
       }
 
       kanban-inline-edit::part(cancel) {
-        background-color: rgba(0, 0, 0, 0.15);
-        color: inherit;
+        background-color: var(--color-surface-muted);
+        color: var(--color-text-primary);
       }
     `,
 	];

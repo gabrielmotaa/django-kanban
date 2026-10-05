@@ -76,11 +76,12 @@ export class KanbanBoard extends HtmxElement {
 
       .trigger {
         background: var(--color-bg-button-add);
-        border: none;
+        border: var(--nb-border);
+        box-shadow: var(--shadow-md);
         border-radius: var(--radius-lg);
         padding: 12px 18px;
-        font-weight: var(--font-weight-medium);
-        color: var(--color-text-light);
+        font-weight: var(--font-weight-bold);
+        color: var(--color-text-primary);
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -99,16 +100,13 @@ export class KanbanBoard extends HtmxElement {
         padding: 16px;
         border-radius: var(--radius-xl);
         box-shadow: var(--shadow-lg);
-        border: 1px solid var(--color-border);
+        border: var(--nb-border-sm);
         width: 280px;
         box-sizing: border-box;
         --field-padding: 8px 12px;
         --btn-padding: 6px 12px;
         --btn-font-size: var(--font-size-base);
         --btn-radius: var(--radius-md);
-        --btn-secondary-bg: var(--color-text-muted);
-        --btn-secondary-fg: white;
-        --btn-secondary-hover-bg: var(--color-text-light);
       }
 
       .input {

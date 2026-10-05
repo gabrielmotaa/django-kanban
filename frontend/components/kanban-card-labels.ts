@@ -44,7 +44,7 @@ export class KanbanCardLabels extends LitElement {
         width: 28px;
         height: 28px;
         padding: 0;
-        border: none;
+        border: var(--nb-border-sm);
         border-radius: var(--radius-md);
         background: var(--color-bg-column);
         color: var(--color-text-secondary);
@@ -54,7 +54,7 @@ export class KanbanCardLabels extends LitElement {
       }
 
       .add:hover {
-        background: var(--color-border-hover);
+        background: var(--color-surface-hover);
       }
     `,
 	];

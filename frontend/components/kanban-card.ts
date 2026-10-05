@@ -18,7 +18,7 @@ export class KanbanCard extends HtmxElement {
 
       .card {
         background: var(--color-bg-card);
-        border: 1px solid var(--color-border);
+        border: var(--nb-border-sm);
         border-radius: var(--radius-lg);
         padding: 12px;
         margin-bottom: 8px;
@@ -30,7 +30,7 @@ export class KanbanCard extends HtmxElement {
 
       .card:hover {
         box-shadow: var(--shadow-md);
-        border-color: var(--color-border-hover);
+        transform: translate(-1px, -1px);
       }
 
       :host(.dragging) .card {

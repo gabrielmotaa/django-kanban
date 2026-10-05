@@ -27,17 +27,20 @@ export class KanbanBadge extends LitElement {
 
     :host([variant="complete"]) .badge {
       background: var(--color-success);
-      color: white;
+      color: var(--color-on-accent);
+      border: var(--nb-border-sm);
     }
 
     :host([variant="overdue"]) .badge {
       background: var(--color-danger);
-      color: white;
+      color: var(--color-on-accent);
+      border: var(--nb-border-sm);
     }
 
     :host([variant="soon"]) .badge {
-      background: #f59e0b;
-      color: #1e293b;
+      background: var(--color-warning);
+      color: var(--color-on-accent);
+      border: var(--nb-border-sm);
     }
   `;
 

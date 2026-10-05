@@ -13,10 +13,11 @@ export class KanbanToast extends LitElement {
       padding: 12px 16px;
       border-radius: var(--radius-lg);
       background: var(--color-danger);
-      color: white;
+      color: var(--color-on-accent);
       font-size: var(--font-size-base);
-      font-weight: var(--font-weight-medium);
-      box-shadow: var(--shadow-lg);
+      font-weight: var(--font-weight-bold);
+      border: var(--nb-border);
+      box-shadow: var(--shadow-md);
     }
   `;
 
