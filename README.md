@@ -164,6 +164,14 @@ uv run pytest -m integration
 uv run pytest -m integration --headed --slowmo 1000
 ```
 
+#### 4. Paridade visual entre as duas versões
+
+`test_visual_parity` abre cada estado da UI (board, menus, dialog, popovers…) em `/templates/` e em `/components/`, tira um screenshot de cada e compara pixel a pixel no próprio navegador. Qualquer diferença de estilo entre `templates.css` e os estilos dos componentes Lit faz o teste falhar; os screenshots e uma imagem de diff (pixels divergentes em magenta) são salvos para depuração:
+
+```bash
+PARITY_SCREENSHOTS_DIR=/tmp/parity uv run pytest -m integration -k visual_parity
+```
+
 ---
 
 ## Pre-commit Hooks
