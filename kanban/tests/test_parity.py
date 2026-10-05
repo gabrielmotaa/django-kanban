@@ -692,6 +692,9 @@ def test_completing_and_removing_the_date(live_server, page: Page, tech):
     assert Card.objects.get(pk=1).completed is False
 
     board_page.completed_checkbox().check()
+    # Wait for the server: its response re-renders the due section, which
+    # would replace a popover opened in the meantime.
+    expect(board_page.due_badge("Column A", "Concluído")).to_have_count(1)
     board_page.remove_due_date()
     expect(board_page.column("Column A").get_by_role("img")).to_have_count(0)
     card = Card.objects.get(pk=1)
