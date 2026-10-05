@@ -21,14 +21,19 @@ This document serves as a quick reference for the architecture, commands, and co
 *   `kanban/` - Main Django Kanban application:
     *   `fixtures/initial_data.json` - Initial database seed data for SQLite.
     *   `forms.py` - Django forms used to validate request data.
-    *   `models.py` - Database models (`Board`, `Column`, `Card`).
-    *   `tests/` - Unit tests (`test_models.py`, `test_views.py`) and browser integration tests (`test_integration.py`).
+    *   `models.py` - Database models (see below).
+    *   `activity.py` - `record_activity()` writes a card's history; activity messages are rendered here (pt-BR).
+    *   `middleware.py` - Sets `request.web_components` from the `X-Web-Components` header.
+    *   `utils.py` - Shared view helpers (`template_for_request`, `ApiError`, `error_response` with toast).
     *   `views.py` - Route handlers implemented as Class-Based Views (CBVs).
-    *   `static/kanban/` - Compiled assets copied by Vite.
-    *   `templates/kanban/` - Django HTML template files.
+    *   `tests/` - Unit tests (`test_*.py`) and Playwright browser tests: `test_integration.py` and `test_parity.py` (aria + pixel-diff parity between both UIs, page object in `parity.py`).
+    *   `static/kanban/css/` - `theme.css` (design tokens, neobrutalism), `templates.css` (templates UI), `components.css`, `home.css`. `static/kanban/js/` is Vite output (gitignored).
+    *   `templates/kanban/templates/` and `templates/kanban/components/` - Fragments of each UI version (`/templates/` and `/components/`).
 *   `frontend/` - TypeScript source code for Web Components (Lit):
     *   `index.ts` - Entry point (registers all custom elements).
-    *   `components/` - Individual component implementations (`kanban-board.ts`, `kanban-column.ts`, `kanban-card.ts`, `kanban-board-title.ts`).
+    *   `components/` - One `kanban-*.ts` file per custom element (board, column, card, card dialog, labels, due date, checklists, comments…).
+    *   `lib/` - Shared helpers (htmx requests, drag controllers, palette, toasts).
+    *   `styles/` - Shared Lit styles (`buttons`, `forms`, `menu`, `reset`).
 
 ---
 
@@ -99,11 +104,15 @@ npm run lint:fix
     *   `color` (CharField, default `"#64748b"`)
     *   Properties: `fg_color` (returns contrasting text color for accessibility).
     *   Constants: `COLOR_CHOICES` (available colors).
-3.  **`Card`**:
+3.  **`Label`**: ForeignKey to `Board` (`related_name="labels"`); `name` (max 30, may be blank), `color` (one of `COLOR_CHOICES`). Properties: `fg_color`, `color_name`.
+4.  **`Card`**:
     *   ForeignKey to `Column` (`related_name="cards"`, Cascade Delete).
-    *   `title` (CharField, max 200)
-    *   `order` (PositiveIntegerField)
-    *   `created_at` / `updated_at` (DateTimeField, auto populated)
+    *   `title` (CharField, max 200), `description` (TextField, blank)
+    *   `labels` (ManyToMany to `Label`), `due_date` (DateField, optional), `completed` (BooleanField)
+    *   `order` (PositiveIntegerField), `created_at` / `updated_at`
+    *   Properties computed on the server for both UIs: `due_status` / `due_label` / `due_chip`, `checklist_*`, `comment_count` / `comment_label`; `timeline()` merges comments and activity.
+5.  **`Checklist`** (FK `Card`, `related_name="checklists"`; `title`, `order`; `done_count`, `total_count`, `percent`) and **`ChecklistItem`** (FK `Checklist`, `related_name="items"`; `text`, `done`, `order`).
+6.  **`Comment`** (FK `Card`, `related_name="comments"`; `text`, timestamps) and **`Activity`** (FK `Card`, `related_name="activities"`; `kind`, `data` JSON, `created_at`; `message` rendered by `activity.py`). No authentication, so neither has an author.
 
 ---
 
@@ -119,6 +128,9 @@ npm run lint:fix
 *   Use `npm run lint` to check for issues and `npm run lint:fix` to apply safe auto-fixes.
 *   To suppress a rule on a specific line, use a `// biome-ignore lint: <reason>` comment (prefer the broad `lint` category over a specific rule unless targeting a single rule).
 
-### 4. Tests
+### 4. UI Parity
+*   Every feature exists in both UIs and must look and behave the same. Style changes go to both `templates.css` and the Lit component styles, using the tokens in `theme.css`; `test_visual_parity` compares screenshots of both versions pixel by pixel.
+
+### 5. Tests
 *   Always ensure unit test coverage in [kanban/tests/](file:///Users/gabrieldamota/Code/django-kanban/kanban/tests/) for any new model properties, form validations, views, or endpoints.
 *   Template tests must verify error handling paths (e.g. invalid form submits, missing parameters) in addition to success paths.
