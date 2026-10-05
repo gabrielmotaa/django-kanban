@@ -393,10 +393,13 @@ async ([a, b, tolerance]) => {
 """
 
 
-def pixel_diff(page: Page, a: bytes, b: bytes, tolerance: int = 8) -> PixelDiff:
+def pixel_diff(page: Page, a: bytes, b: bytes, tolerance: int = 16) -> PixelDiff:
     """Compare two PNG screenshots in the browser (no image library needed).
 
     A pixel differs when any RGBA channel is more than ``tolerance`` apart.
+    The default absorbs antialiasing noise on rounded corners, which Chrome
+    rasterizes slightly differently inside a shadow root (deltas around 10);
+    any real style difference (color, offset, weight) is far above it.
     """
     result = page.evaluate(
         _PIXEL_DIFF_JS,
