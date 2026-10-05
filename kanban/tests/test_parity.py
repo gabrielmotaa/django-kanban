@@ -812,8 +812,8 @@ def test_complete_checklist_badge_state(live_server, page: Page, tech):
     badge = board_page.column("Column A").get_by_role("img", name="Checklist 1 de 1")
     expect(badge).to_have_text("☑ 1/1")
     # Complete is green (--color-success), unlike the neutral state.
-    assert badge.evaluate(BADGE_BACKGROUND) == "rgb(16, 185, 129)"
-    assert neutral != "rgb(16, 185, 129)"
+    assert badge.evaluate(BADGE_BACKGROUND) == "rgb(74, 222, 128)"
+    assert neutral != "rgb(74, 222, 128)"
 
 
 @pytest.mark.parametrize("tech", TECHS)
