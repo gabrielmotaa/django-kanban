@@ -119,6 +119,10 @@ body {
     transform: scale(1.05);
 }
 
+.board-header__edit-btn svg {
+    fill: var(--color-text-primary);
+}
+
 .board-header__form {
     display: flex;
     align-items: center;
@@ -211,6 +215,7 @@ body {
     background: none;
     border: none;
     font-size: 18px;
+    font-weight: var(--font-weight-bold);
     cursor: pointer;
     color: inherit;
     padding: 4px 8px;
@@ -253,6 +258,7 @@ body {
     border: none;
     cursor: pointer;
     font-size: var(--font-size-base);
+    font-weight: var(--font-weight-normal);
     color: var(--color-text-secondary);
     font-family: inherit;
     transition: background var(--transition-normal);

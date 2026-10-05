@@ -43,7 +43,6 @@ export class KanbanBoardTitle extends HtmxElement {
         border-radius: var(--radius-md);
         outline: none;
         color: var(--color-text-primary);
-        background: var(--color-bg-column);
         transition: border-color var(--transition-normal);
       }
 
