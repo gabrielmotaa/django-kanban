@@ -17,14 +17,13 @@ O objetivo central é comparar e integrar essas duas estratégias num mesmo proj
 
 - Python 3.14+
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
-- Node.js 20+ e npm
+- Node.js 20.19+ ou 22.12+ (exigido pelo Vite 8) e npm
 
 ### Instalação
 
 ```bash
 # 1. Clonar o repositório
 git clone https://github.com/gabrielmotaa/django-kanban
-git checkout main
 cd django-kanban
 
 # 2. Criar o ambiente virtual e instalar dependências Python
@@ -38,6 +37,9 @@ uv run manage.py migrate
 
 # 5. Carregar os dados iniciais (fixture)
 uv run manage.py loaddata initial_data
+
+# 6. Gerar o bundle do frontend (Web Components, htmx e Alpine)
+npm run build
 ```
 
 ---
@@ -62,7 +64,7 @@ npm run build
 # Checar tipos TypeScript sem buildar
 npm run typecheck
 
-# Lint + verificar formatação (Biome)
+# Lint (Biome)
 npm run lint
 
 # Lint + auto-fix (safe fixes)
@@ -108,8 +110,8 @@ PARITY_SCREENSHOTS_DIR=/tmp/parity uv run pytest -m integration -k visual_parity
 
 ```bash
 # Instalar os hooks (primeira vez)
-uv run pre-commit install
+uvx pre-commit install
 
 # Rodar manualmente
-uv run pre-commit run --all-files
+uvx pre-commit run --all-files
 ```
