@@ -11,76 +11,6 @@ O objetivo central é comparar e integrar essas duas estratégias num mesmo proj
 
 ---
 
-## Stack
-
-| Camada | Tecnologia |
-|---|---|
-| Backend | Python 3.14 · Django 6 |
-| Gerenciador de pacotes Python | [uv](https://github.com/astral-sh/uv) |
-| Frontend (Web Components) | [Lit](https://lit.dev/) · TypeScript |
-| Hipermídia / Interatividade | [HTMX](https://htmx.org/) · [Alpine.js](https://alpinejs.dev/) |
-| Bundler | Vite (library mode) |
-| Linter / Formatter (Python) | Ruff · pyupgrade |
-| Linter / Formatter (TypeScript) | [Biome](https://biomejs.dev/) |
-| Pre-commit hooks | uv-lock · ruff-check · ruff-format · pyupgrade |
-
----
-
-## Estrutura do Projeto
-
-```
-django-kanban/
-│
-├── core/                          # Configurações do projeto Django
-│   ├── settings.py
-│   ├── urls.py
-│   ├── asgi.py
-│   └── wsgi.py
-│
-├── kanban/ 
-│   ├── views.py
-│   ├── templates/
-│   │   ├── base.html
-│   │   └── kanban/
-│   │       ├── templates/*.html   # Abordagem Django Templates
-│   │       └── components/*.html  # Abordagem Web Components (Lit)
-│   ├── static/
-│   │   └── kanban/
-│   │       ├── css/
-│   │       └── js/                # ← bundle gerado pelo Vite
-│   ├── urls.py
-│   ├── models.py
-│   ├── apps.py
-│   └── migrations/
-│
-├── frontend/                      # Código-fonte dos Web Components
-│   ├── index.ts
-│   └── components/
-│       └── kanban-*.ts
-│
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-├── pyproject.toml
-├── .pre-commit-config.yaml
-└── manage.py
-```
-
-### Rotas disponíveis
-
-| URL | View Class | Métodos | Descrição |
-|---|---|---|---|
-| `/templates/` | `index` | GET | Página renderizada com Django Templates |
-| `/components/` | `index` | GET | Página com Web Components (Lit) |
-| `/card/` | `CardCreateView` | POST | Criação de novo card |
-| `/card/<id>/` | `CardDetailView` | GET, PATCH, DELETE | Visualização, atualização (movimentação/título) e deleção de card |
-| `/column/` | `ColumnCreateView` | POST | Criação de nova coluna |
-| `/column/<id>/` | `ColumnDetailView` | GET, PATCH, DELETE | Visualização, atualização (movimentação/detalhes) e deleção de coluna |
-| `/board/<id>/` | `BoardDetailView` | GET, PATCH | Visualização e edição do título do quadro |
-| `/admin/` | Django Admin | - | Painel de administração |
-
----
-
 ## Setup
 
 ### Pré-requisitos
@@ -93,7 +23,7 @@ django-kanban/
 
 ```bash
 # 1. Clonar o repositório
-git clone <repo-url>
+git clone https://github.com/gabrielmotaa/django-kanban
 git checkout main
 cd django-kanban
 
@@ -183,5 +113,3 @@ uv run pre-commit install
 # Rodar manualmente
 uv run pre-commit run --all-files
 ```
-
-Hooks configurados: `uv-lock` (lockfile atualizado), `ruff-check --fix`, `ruff-format`, `pyupgrade --py314-plus`.
